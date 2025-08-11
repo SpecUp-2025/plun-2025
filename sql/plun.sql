@@ -1,6 +1,6 @@
 CREATE TABLE `TB_ROLE_CODE` (
   `group_no` varchar(4) NOT NULL,
-  `name` varchar(20) NOT NULL,
+  `group_name` varchar(20) NOT NULL,
   PRIMARY KEY (`group_no`)
 );
 
