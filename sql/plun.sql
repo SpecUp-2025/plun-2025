@@ -39,7 +39,7 @@ CREATE TABLE `TB_TEAM_MEMBER` (
   CONSTRAINT `TB_TEAM_MEMBER_TB_TEAM_FK` FOREIGN KEY (`team_no`) REFERENCES `TB_TEAM` (`team_no`)
 );
 
-INSERT INTO TB_ROLE_CODE (group_no, group) VALUES
+INSERT INTO TB_ROLE_CODE (group_no, group_name) VALUES
 ('A001', '관리자'),
 ('A002', '회원'),
 ('B001', '팀장'),
