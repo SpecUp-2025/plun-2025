@@ -1,7 +1,7 @@
 CREATE TABLE `TB_ROLE_CODE` (
-  `no` varchar(4) NOT NULL,
+  `group_no` varchar(4) NOT NULL,
   `name` varchar(20) NOT NULL,
-  PRIMARY KEY (`no`)
+  PRIMARY KEY (`group_no`)
 );
 
 CREATE TABLE `TB_TEAM` (
@@ -23,23 +23,23 @@ CREATE TABLE `TB_MEMBER` (
   `update_date` datetime DEFAULT NULL,
   PRIMARY KEY (`user_no`),
   KEY `TB_MEMBER_TB_ROLE_CODE_FK` (`role`),
-  CONSTRAINT `TB_MEMBER_TB_ROLE_CODE_FK` FOREIGN KEY (`role`) REFERENCES `TB_ROLE_CODE` (`no`)
+  CONSTRAINT `TB_MEMBER_TB_ROLE_CODE_FK` FOREIGN KEY (`role`) REFERENCES `TB_ROLE_CODE` (`group_no`)
 );
 
 CREATE TABLE `TB_TEAM_MEMBER` (
   `team_no` int(11) NOT NULL,
   `user_no` int(11) NOT NULL,
-  `group_no` varchar(4) NOT NULL,
+  `role_no` varchar(4) NOT NULL,
   `join_date` datetime DEFAULT current_timestamp(),
-  KEY `TB_TEAM_MEMBER_TB_ROLE_CODE_FK` (`group_no`),
   KEY `TB_TEAM_MEMBER_TB_TEAM_FK` (`team_no`),
   KEY `TB_TEAM_MEMBER_TB_MEMBER_FK` (`user_no`),
+  KEY `TB_TEAM_MEMBER_TB_ROLE_CODE_FK` (`role_no`),
   CONSTRAINT `TB_TEAM_MEMBER_TB_MEMBER_FK` FOREIGN KEY (`user_no`) REFERENCES `TB_MEMBER` (`user_no`),
-  CONSTRAINT `TB_TEAM_MEMBER_TB_ROLE_CODE_FK` FOREIGN KEY (`group_no`) REFERENCES `TB_ROLE_CODE` (`no`),
+  CONSTRAINT `TB_TEAM_MEMBER_TB_ROLE_CODE_FK` FOREIGN KEY (`role_no`) REFERENCES `TB_ROLE_CODE` (`group_no`),
   CONSTRAINT `TB_TEAM_MEMBER_TB_TEAM_FK` FOREIGN KEY (`team_no`) REFERENCES `TB_TEAM` (`team_no`)
 );
 
-INSERT INTO TB_ROLE_CODE (no, name) VALUES
+INSERT INTO TB_ROLE_CODE (group_no, name) VALUES
 ('A001', '관리자'),
 ('A002', '회원'),
 ('B001', '팀장'),
@@ -53,14 +53,6 @@ INSERT INTO TB_ROLE_CODE (no, name) VALUES
 ('E002', '진행 중'),
 ('E003', '완료'),
 ('E004', '실패');
-
-
-INSERT INTO TB_MEMBER (user_no, role, email, password, name, delete_yn, delete_date, create_date, update_date) VALUES
-('U001', 'A001', 'admin1@example.com', 'pass1234', '관리자1', 'N', NULL, NOW(), NULL),
-('U002', 'A002', 'user1@example.com', 'pass1234', '회원1', 'N', NULL, NOW(), NULL),
-('U003', 'A002', 'user2@example.com', 'pass1234', '회원2', 'N', NULL, NOW(), NULL),
-('U004', 'A002', 'user3@example.com', 'pass1234', '회원3', 'N', NULL, NOW(), NULL),
-('U005', 'A001', 'admin2@example.com', 'pass1234', '관리자2', 'N', NULL, NOW(), NULL);
 
 
 INSERT INTO TB_MEMBER (role, email, password, name, delete_yn, delete_date, create_date, update_date) VALUES
