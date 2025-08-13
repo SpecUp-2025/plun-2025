@@ -1,0 +1,14 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper
+  PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+  "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+  
+<mapper namespace="com.spec.plun.chat.dao.ChatDAO">
+
+  <select id="getChatMessagesByRoomNo" resultType="com.spec.plun.chat.model.ChatMessage">
+    SELECT * FROM TB_CHAT_MESSAGE
+    WHERE room_no = #{roomNo}
+    ORDER BY create_date ASC
+  </select>
+  
+</mapper>
