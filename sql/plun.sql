@@ -57,7 +57,7 @@ INSERT INTO TB_MEMBER (role, email, password, name, delete_yn, delete_date, crea
 ('A001', 'admin1@example.com', 'pass1234', '관리자1', 'N', NULL, NOW(), NULL),
 ('A002', 'user1@example.com', 'pass1234', '회원1', 'N', NULL, NOW(), NULL),
 ('A002', 'user2@example.com', 'pass1234', '회원2', 'N', NULL, NOW(), NULL),
-('A002', 'user3@example.com', 'pass1234', '회원3', 'N', NULL, NOW(), NULL),
+('A002', 'user3@example.com', 'pass1234', '회원3', 'N', NULL, NOW(), NULL)
 
 
 회의 테이블 아직 생성X 지금은 초안만
