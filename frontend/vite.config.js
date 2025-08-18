@@ -23,6 +23,14 @@ export default defineConfig({
         rewrite: path => path.replace(/^\/api/, '')
       }
     },
+    '/ws-chat': {
+      target: 'http://localhost:8080/',
+      changeOrigin: true,
+      ws: true
+    }
   },
+  define: {
+    global: 'globalThis' 
+  } 
   
 })
