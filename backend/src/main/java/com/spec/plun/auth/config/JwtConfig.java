@@ -13,4 +13,8 @@ public class JwtConfig {
 	    public JwtUtil accessJwtUtil(@Value("${jwt.access-token-secret}") String accessTokenSecret) {
 	        return new JwtUtil(accessTokenSecret);
 	    }
+	 @Bean(name = "refreshJwtUtil")
+	    public JwtUtil refreshJwtUtil(@Value("${jwt.refresh-token-secret}") String refreshTokenSecret) {
+	        return new JwtUtil(refreshTokenSecret);
+	    }
 }
