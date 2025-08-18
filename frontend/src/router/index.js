@@ -1,8 +1,12 @@
 import { createRouter, createWebHistory } from 'vue-router'
-import HelloWorld from '@/components/HelloWorld.vue' 
+
+import LoginForm from '@/components/LoginForm.vue'
+import Success from '@/components/Success.vue'
+
 
 const routes = [
-  { path: '/', name: 'home', component: HelloWorld },
+  { path: '/', name: 'login', component: LoginForm },
+  { path: '/s', name: 's', component: Success },
 ]
 
 const router = createRouter({
