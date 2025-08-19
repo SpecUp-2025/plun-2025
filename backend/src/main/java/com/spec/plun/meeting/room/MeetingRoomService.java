@@ -1,6 +1,7 @@
 package com.spec.plun.meeting.room;
 
 import java.security.SecureRandom;
+import java.util.List;
 
 import org.springframework.stereotype.Service;
 
@@ -29,6 +30,11 @@ public class MeetingRoomService {
         return mapper.findById(roomNo);
     }
 
+    /** 최근 회의방 목록 조회 */
+    public List<MeetingRoom> listRecent() {
+        return mapper.listRecent();
+    }
+    
     // ----------------- 내부 유틸 -----------------
     private String generateUniqueCode(int len) {
         // 중복 가능성 낮지만 혹시 모르니 몇 번 체크

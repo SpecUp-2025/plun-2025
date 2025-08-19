@@ -8,6 +8,7 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
 import java.time.LocalDateTime;
+import java.util.List;
 
 @RestController
 @RequestMapping("/api/meeting-rooms")
@@ -44,6 +45,12 @@ public class MeetingRoomController {
         String roomCode = room.getRoomCode();
         String joinUrl = "https://meet.jit.si/" + roomCode;
         return ResponseEntity.ok(new JoinInfoRes(roomCode, joinUrl));
+    }
+    
+    // 최근 회의방 목록
+    @GetMapping("/recent")
+    public List<MeetingRoom> listRecent() {
+        return service.listRecent();
     }
 
     public record JoinInfoRes(String roomCode, String joinUrl) {}
