@@ -23,7 +23,7 @@ public class RefreshTokenService {
 		
 		public String generateToken(String email) {
 			Map<String, Object> claims = Map.of("email",email);
-			Date fiveMinites = Date.from(Instant.now().plus(5,ChronoUnit.MINUTES));
+			Date fiveMinites = Date.from(Instant.now().plus(14,ChronoUnit.DAYS));
 			return jwtUtil.generateToken(claims, fiveMinites);
 		}
 		
