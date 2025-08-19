@@ -27,9 +27,10 @@ export default defineConfig({
         changeOrigin: true,
         ws: true
       },
-  },
-  define: {
-    global: 'globalThis'
-  }
+    },
+    define: {
+      global: 'globalThis'
+    }
+}
 });
 
