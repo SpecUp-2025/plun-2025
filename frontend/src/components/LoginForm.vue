@@ -25,6 +25,7 @@ const login = async () => {
         })
         if(status ==200){
             localStorage.setItem('accessToken', data.accessToken)
+            localStorage.setItem('refreshToken', data.refreshToken)
 
       // 2) 이후 요청에 Authorization 자동 첨부
       const authHeader = `${data.tokenType ?? 'Bearer'} ${data.accessToken}`

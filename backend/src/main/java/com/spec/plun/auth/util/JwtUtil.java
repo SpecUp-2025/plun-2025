@@ -18,33 +18,21 @@ public class JwtUtil {
 	
 	public JwtUtil(String secret) {
 		this.secretKey = Keys.hmacShaKeyFor(secret.getBytes(StandardCharsets.UTF_8));
-	}
-	
-
-	  public String generateToken(Map<String,Object> claims, int minutes) {
-		    long now = System.currentTimeMillis();
+		}
+	  public String generateToken(Map<String,Object> claims, Date exp) {
 		    return Jwts.builder()
 		      .claims(claims)
-		      .issuedAt(new Date(now))
-		      .expiration(new Date(now + minutes * 60_000L))
-		      .signWith(secretKey, Jwts.SIG.HS256)
+		      .expiration(exp)
+		      .signWith(secretKey)
 		      .compact();
 		  }
-
 	
-	public Claims vaildToken(String token){
-		
-		 //인증 토큰 문자열을 이용하여 클래임 객체를 얻는다
+	public Claims validToken(String token){
         return Jwts.parser()
         		.verifyWith(secretKey)
   				.build()
   				.parseSignedClaims(token)
   				.getPayload();
-
-    
 	}
-	
-
-	
 	
 }

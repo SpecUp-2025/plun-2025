@@ -1,6 +1,5 @@
 package com.spec.plun.auth.controller;
 
-import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
@@ -9,7 +8,6 @@ import org.springframework.web.bind.annotation.RestController;
 
 import com.spec.plun.auth.DTO.LoginDTO;
 import com.spec.plun.auth.service.AuthService;
-import com.spec.plun.auth.util.JwtUtil;
 
 import lombok.RequiredArgsConstructor;
 
@@ -17,9 +15,6 @@ import lombok.RequiredArgsConstructor;
 @RequestMapping("/auth")
 @RequiredArgsConstructor
 public class AuthController {
-	
-	@Qualifier("accessJwtUtil")
-	private final JwtUtil jwtUtil;
 	
 	private final AuthService authService;
 	
