@@ -1,11 +1,13 @@
 package com.spec.plun.auth.filter;
 
 import java.io.IOException;
+import java.util.Arrays;
 import java.util.List;
 
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Component;
+import org.springframework.util.AntPathMatcher;
 import org.springframework.web.filter.OncePerRequestFilter;
 
 import com.spec.plun.auth.service.AccessTokenService;
@@ -24,12 +26,16 @@ import lombok.RequiredArgsConstructor;
 public class JwtAuthenticationFilter extends OncePerRequestFilter{
 
 	private final AccessTokenService accessTokenService;
+	private static final String[] PUBLICE_URL = {"/auth/**","/swagger-ui/**","/v3/api-docs/**","/ws-chat","/error"};
+	private final AntPathMatcher matcher = new AntPathMatcher();
+
 	
 	@Override
 	protected boolean shouldNotFilter(HttpServletRequest request) {
 		String path = request.getServletPath();
 		if("OPTIONS".equalsIgnoreCase(request.getMethod())) return true;
-		return path.startsWith("/auth");
+	    return Arrays.stream(PUBLICE_URL)
+	                 .anyMatch(p -> matcher.match(p, path));
 	}
 	
 	@Override
@@ -50,7 +56,7 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter{
 			
 		} catch (JwtException e) {
 			response.setStatus(HttpServletResponse.SC_UNAUTHORIZED);
-		}
+			return;		}
 		chain.doFilter(request, response);
 	
 	}
