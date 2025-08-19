@@ -19,7 +19,7 @@ public class SecurityConfig {
 	      .csrf(csrf -> csrf.disable())
 	      .sessionManagement(sm -> sm.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
 	      .authorizeHttpRequests(auth -> auth
-	        .requestMatchers("/auth/**").permitAll()
+	        .requestMatchers("/auth/**","/ws-chat/**").permitAll()
 	        .anyRequest().authenticated()
 	      )
 	      .build();
