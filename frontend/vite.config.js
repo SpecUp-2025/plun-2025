@@ -26,11 +26,10 @@ export default defineConfig({
         target: 'http://localhost:8080',
         changeOrigin: true,
         ws: true
-      },
-    },
-    define: {
-      global: 'globalThis'
+      }
     }
-}
+  },
+  define: {
+    global: 'globalThis'
+  }
 });
-
