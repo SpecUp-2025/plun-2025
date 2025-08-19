@@ -51,6 +51,7 @@ public class SecurityConfig {
 			objectMapper.writeValue(response.getOutputStream(), Map.of("error","Unauthorized"));
 		};
 	}
+
 	
 	private AccessDeniedHandler denied403() {
 		return (request,response,accessDeniedHandler) -> {

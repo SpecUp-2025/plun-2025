@@ -1,0 +1,51 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper
+  PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+  "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+  
+<mapper namespace="com.spec.plun.chat.dao.ChatDAO">
+
+  <select id="getChatMessageByRoomNo" resultType="com.spec.plun.chat.entity.ChatMessage">
+    SELECT * FROM TB_CHAT_MESSAGE
+    WHERE room_no = #{roomNo}
+    ORDER BY create_date ASC
+  </select>
+  
+  <select id="getChatRooms" resultType="com.spec.plun.chat.entity.ChatRoom">
+  	SELECT room_no, room_name, create_date FROM TB_CHAT_ROOM ORDER BY create_date DESC
+  </select>
+  
+  <insert id="createChatRoom" parameterType="com.spec.plun.chat.entity.ChatRoom" useGeneratedKeys="true" keyProperty="roomNo">
+  	INSERT INTO TB_CHAT_ROOM (room_name, create_date)
+  	VALUES (#{roomName}, NOW())
+  </insert>
+  
+  <insert id="insertMessage" parameterType="com.spec.plun.chat.entity.ChatMessage">
+  	INSERT INTO TB_CHAT_MESSAGE (room_no, user_no, content, create_date, message_type)
+  	VALUES (#{roomNo},#{userNo}, #{content}, #{createDate}, #{messageType})
+  </insert>
+  
+  <select id="getChatMembers" parameterType="int" resultType="com.spec.plun.chat.entity.ChatMember">
+  	SELECT cm.user_no, m.name AS user_name
+  	FROM TB_CHAT_MEMBER cm
+  	JOIN TB_MEMBER m ON cm.user_no = m.user_no
+  	WHERE cm.room_no = #{roomNo}
+  </select>
+  
+  <select id="existMember" parameterType="map" resultType="boolean">
+	  SELECT EXISTS (
+	    SELECT 1 FROM tb_chat_member WHERE room_no = #{roomNo} AND user_no = #{userNo}
+	  )
+  </select>
+
+  <insert id="insertMember" parameterType="map">
+	  INSERT INTO tb_chat_member (room_no, user_no) VALUES (#{roomNo}, #{userNo})
+  </insert>
+  
+  <delete id="deleteChatMember" parameterType="map">
+    DELETE FROM tb_chat_member 
+    WHERE room_no = #{roomNo} 
+      AND user_no = #{userNo}
+  </delete>
+  
+</mapper>

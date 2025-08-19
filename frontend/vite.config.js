@@ -15,22 +15,21 @@ export default defineConfig({
       '@': fileURLToPath(new URL('./src', import.meta.url))
     },
   },
-  server:{
+  server: {
     proxy: {
       '/api': {
-        target: 'http://localhost:8080',  
+        target: 'http://localhost:8080',
         changeOrigin: true,
         rewrite: path => path.replace(/^\/api/, '')
-      }
-    },
-    '/ws-chat': {
-      target: 'http://localhost:8080/',
-      changeOrigin: true,
-      ws: true
-    }
+      },
+      '/ws-chat': {
+        target: 'http://localhost:8080',
+        changeOrigin: true,
+        ws: true
+      },
   },
   define: {
-    global: 'globalThis' 
-  } 
-  
-})
+    global: 'globalThis'
+  }
+});
+
