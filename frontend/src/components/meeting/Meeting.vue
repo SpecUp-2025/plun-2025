@@ -1,5 +1,5 @@
 <script setup>
-import { ref, onBeforeUnmount } from 'vue'
+import { ref, onBeforeUnmount, onMounted } from 'vue'
 import { Client } from '@stomp/stompjs'
 import SockJS from 'sockjs-client'
 
@@ -9,6 +9,10 @@ const nickname = ref('user-' + Math.floor(Math.random() * 1000))
 const started  = ref(false)
 const logs     = ref([])
 const log = m => logs.value.push(`[${new Date().toLocaleTimeString()}] ${m}`)
+const cameras = ref([]) 
+const mics = ref([])
+const selectedCam = ref('')
+const selectedMic = ref('')
 
 const localVideo  = ref(null)   // 내 <video> DOM 참조
 const remoteVideo = ref(null)   // 상대 <video> DOM 참조
@@ -19,13 +23,33 @@ let pc = null                   // RTCPeerConnection
 let localStream = null          // 내 카메라/마이크 MediaStream
 let otherUser = null            // 1:1에서 상대 닉네임 기억
 
+// 현재 PC에서 video/audio 발송에 쓰이는 sender 캐시(교체 용이)
+let videoSender = null
+let audioSender = null
+
 /** ---------- 서버 경로 상수 (Spring 설정과 일치) ---------- */
 const SOCKJS_ENDPOINT = '/ws-chat'                  // registerStompEndpoints("/ws-chat")
 const SUB_DEST = rid => `/topic/webrtc/${rid}`      // enableSimpleBroker("/topic") + webrtc 네임스페이스
 const PUB_DEST = '/app/webrtc.signal'               // setApplicationDestinationPrefixes("/app")
 
-/** ---------- ICE 서버(초기엔 STUN만) ---------- */
-const ICE_SERVERS = [{ urls: 'stun:stun.l.google.com:19302' }]
+/** ---------- ICE 서버(STUN + TURN) ---------- */
+const ICE_SERVERS = [
+  { urls: 'stun:stun.l.google.com:19302' }, // 구글 STUN
+  {
+    urls: 'turn:192.168.92.129:3478',       // 👉 coturn 서버 IP (내부 테스트용)
+    username: 'kim',
+    credential: '1004'
+  }
+];
+
+/** ---------- 컴포넌트 라이프사이클 ---------- */
+// 마운트시 초기화
+onMounted(async () => {
+  try {
+    // 일부 브라우저에선 권한 전엔 label이 안 나옴 → 첫 페이지에서 리스트만 먼저 채우는 정도
+    await listDevices()
+  } catch {}
+})
 
 /** ---------- 언마운트시 정리 ---------- */
 onBeforeUnmount(() => endMeeting())
@@ -33,9 +57,16 @@ onBeforeUnmount(() => endMeeting())
 /** ---------- 1) 로컬 미디어 얻기 ---------- */
 async function getLocalMedia() {
   try {
-    localStream = await navigator.mediaDevices.getUserMedia({ video: true, audio: true })
+    const constraints = {
+      video: selectedCam.value ? { deviceId: { exact: selectedCam.value } } : true,
+      audio: selectedMic.value ? { deviceId: { exact: selectedMic.value } } : true,
+    }
+    localStream = await navigator.mediaDevices.getUserMedia(constraints)
     localVideo.value.srcObject = localStream
     log('got local media')
+
+    // 장치 목록 갱신
+    await listDevices()
   } catch (err) {
     log('getUserMedia error: ' + err)
     alert('카메라/마이크 권한을 허용해주세요.')
@@ -82,16 +113,19 @@ function connectStomp() {
 function createPC() {
   pc = new RTCPeerConnection({ iceServers: ICE_SERVERS })
 
-  // 내 오디오/비디오 트랙을 연결
-  localStream.getTracks().forEach(track => pc.addTrack(track, localStream))
+  // 내 트랙 올리고 sender 기억
+  localStream.getAudioTracks().forEach(track => {
+    audioSender = pc.addTrack(track, localStream)
+  })
+  localStream.getVideoTracks().forEach(track => {
+    videoSender = pc.addTrack(track, localStream)
+  })
 
-  // 상대 트랙 수신 → 원격 <video>에 바인딩
   pc.ontrack = (e) => {
     log('ontrack')
     remoteVideo.value.srcObject = e.streams[0]
   }
 
-  // ICE 후보가 생길 때마다 시그널링으로 전송
   pc.onicecandidate = (e) => {
     if (e.candidate) sendSignal({ type: 'candidate', payload: e.candidate })
   }
@@ -169,6 +203,70 @@ async function startMeeting() {
   connectStomp()
 }
 
+async function listDevices() {
+  // 권한 전에는 label이 비어 있을 수 있으니,
+  // getUserMedia를 한 번은 호출한 뒤 enumerateDevices()를 추천.
+  const devices = await navigator.mediaDevices.enumerateDevices()
+  cameras.value = devices
+    .filter(d => d.kind === 'videoinput')
+    .map(d => ({ deviceId: d.deviceId, label: d.label || 'Camera' }))
+  mics.value = devices
+    .filter(d => d.kind === 'audioinput')
+    .map(d => ({ deviceId: d.deviceId, label: d.label || 'Microphone' }))
+
+  // 기본 선택값
+  if (!selectedCam.value && cameras.value[0]) selectedCam.value = cameras.value[0].deviceId
+  if (!selectedMic.value && mics.value[0])    selectedMic.value = mics.value[0].deviceId
+}
+
+// 카메라/마이크 변경 함수
+// 선택된 장치로 교체하고, 송신 중이면 replaceTrack으로 교체
+async function changeCamera() {
+  if (!localStream) return
+  try {
+    const newStream = await navigator.mediaDevices.getUserMedia({
+      video: { deviceId: { exact: selectedCam.value } },
+      audio: false
+    })
+    const newTrack = newStream.getVideoTracks()[0]
+    // 로컬 미리보기 교체
+    const [oldVideoTrack] = localStream.getVideoTracks()
+    if (oldVideoTrack) localStream.removeTrack(oldVideoTrack)
+    localStream.addTrack(newTrack)
+    localVideo.value.srcObject = localStream
+
+    // 송신 중이면 교체(재협상 없이)
+    if (videoSender) await videoSender.replaceTrack(newTrack)
+
+    // 임시 스트림 정리
+    newStream.getTracks().forEach(t => t.stop())
+    log('camera switched')
+  } catch (e) {
+    log('changeCamera error: ' + e)
+  }
+}
+
+async function changeMic() {
+  if (!localStream) return
+  try {
+    const newStream = await navigator.mediaDevices.getUserMedia({
+      audio: { deviceId: { exact: selectedMic.value } },
+      video: false
+    })
+    const newTrack = newStream.getAudioTracks()[0]
+    const [oldAudioTrack] = localStream.getAudioTracks()
+    if (oldAudioTrack) localStream.removeTrack(oldAudioTrack)
+    localStream.addTrack(newTrack)
+
+    if (audioSender) await audioSender.replaceTrack(newTrack)
+
+    newStream.getTracks().forEach(t => t.stop())
+    log('mic switched')
+  } catch (e) {
+    log('changeMic error: ' + e)
+  }
+}
+
 function teardownPC() {
   if (pc) { try { pc.close() } catch {}
     pc = null
@@ -214,6 +312,12 @@ function toggleCam() {
       <button @click="endMeeting"   :disabled="!started">회의 종료</button>
       <button @click="toggleMic"    :disabled="!localStream">마이크 {{ micOn ? '끄기' : '켜기' }}</button>
       <button @click="toggleCam"    :disabled="!localStream">카메라 {{ camOn ? '끄기' : '켜기' }}</button>
+      <select v-model="selectedCam" @change="changeCamera" :disabled="!localStream">
+        <option v-for="c in cameras" :key="c.deviceId" :value="c.deviceId">{{ c.label }}</option>
+      </select>
+      <select v-model="selectedMic" @change="changeMic" :disabled="!localStream">
+        <option v-for="m in mics" :key="m.deviceId" :value="m.deviceId">{{ m.label }}</option>
+      </select>
     </div>
 
     <div class="videos">
