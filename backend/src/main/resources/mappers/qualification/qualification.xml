@@ -12,6 +12,5 @@
 		password
 	FROM TB_MEMBER
 	WHERE email = #{email} AND delete_yn='N' 
-
 </select>
 </mapper>	
