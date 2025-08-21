@@ -3,8 +3,11 @@ import { createRouter, createWebHistory } from 'vue-router'
 import ChatRoomForm from '@/components/chat/ChatRoomForm.vue'
 import ChatRoomList from '@/components/chat/ChatRoomList.vue'
 import ChatRoom from '@/components/chat/ChatRoom.vue'
-import Success from '@/auth/components/Success.vue'
-import LoginForm from '@/auth/components/LoginForm.vue'
+import LoginForm from '@/components/LoginForm.vue'
+import Success from '@/components/Success.vue'
+import SignalTest from '@/components/meeting/SignalTest.vue'
+import Meeting from '@/components/meeting/Meeting.vue'
+import MeetingTest from '@/components/meeting/MeetingTest.vue'
 
 const routes = [
   {
@@ -25,7 +28,9 @@ const routes = [
   },
   { path: '/', name: 'login', component: LoginForm },
   { path: '/s', name: 's', component: Success },
-  
+  { path: '/signal-test', component: SignalTest },
+  { path: '/meeting', name: 'Meeting', component: Meeting},
+  { path: '/meeting-test', name: 'MeetingTest', component: MeetingTest},
 ]
 
 const router = createRouter({
