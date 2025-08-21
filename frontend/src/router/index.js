@@ -7,6 +7,7 @@ import LoginForm from '@/components/LoginForm.vue'
 import Success from '@/components/Success.vue'
 import SignalTest from '@/components/meeting/SignalTest.vue'
 import Meeting from '@/components/meeting/Meeting.vue'
+import MeetingTest from '@/components/meeting/MeetingTest.vue'
 
 const routes = [
   {
@@ -29,6 +30,7 @@ const routes = [
   { path: '/s', name: 's', component: Success },
   { path: '/signal-test', component: SignalTest },
   { path: '/meeting', name: 'Meeting', component: Meeting},
+  { path: '/meeting-test', name: 'MeetingTest', component: MeetingTest},
 ]
 
 const router = createRouter({

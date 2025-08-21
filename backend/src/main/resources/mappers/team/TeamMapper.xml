@@ -1,0 +1,21 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper
+  PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+  "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<mapper namespace="com.spec.plun.team.dao.TeamDAO">
+
+    <!-- 팀별 회원 조회 -->
+    <select id="selectByTeam" parameterType="int" resultType="com.spec.plun.team.dto.TeamMemberDTO">
+        SELECT 
+            m.user_no   AS userNo,
+            m.name      AS name
+        FROM tb_team_member tm
+        JOIN tb_member m 
+          ON tm.user_no = m.user_no
+        WHERE tm.team_no = #{teamNo}
+          AND m.delete_yn = 'N'   <!-- 삭제된 회원은 제외 -->
+        ORDER BY m.user_no
+    </select>
+
+</mapper>
