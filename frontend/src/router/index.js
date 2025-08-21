@@ -3,8 +3,8 @@ import { createRouter, createWebHistory } from 'vue-router'
 import ChatRoomForm from '@/components/chat/ChatRoomForm.vue'
 import ChatRoomList from '@/components/chat/ChatRoomList.vue'
 import ChatRoom from '@/components/chat/ChatRoom.vue'
-import LoginForm from '@/components/LoginForm.vue'
-import Success from '@/components/Success.vue'
+import Success from '@/auth/components/Success.vue'
+import LoginForm from '@/auth/components/LoginForm.vue'
 
 const routes = [
   {
