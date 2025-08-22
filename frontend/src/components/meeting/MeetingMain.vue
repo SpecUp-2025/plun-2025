@@ -1,3 +1,4 @@
+<!-- src/components/meeting/MeetingMain.vue -->
 <template>
   <div>
     <button @click="open = !open">
@@ -12,6 +13,7 @@
           {{ loading ? '불러오는 중…' : '회의 목록' }}
         </button>
         <div v-if="error" style="color:red; white-space:pre-line">{{ error }}</div>
+
         <ul v-if="rooms.length">
           <li v-for="m in rooms" :key="m.roomNo">
             <button @click="onEnter(m)">
@@ -23,15 +25,23 @@
       </div>
     </div>
 
-    <!-- 모달 -->
+    <!-- 생성 모달 -->
     <MeetingCreateModal v-model:open="modalOpen" :team-no="10" @created="onCreated" />
+    <!-- 프리조인 모달은 라우터로 처리 -->
+    <router-view />
   </div>
 </template>
 
 <script setup>
-import { ref } from "vue";
+import { ref, computed } from 'vue'
+import { useRouter } from 'vue-router'
 import instance from '@/util/interceptors'
 import MeetingCreateModal from './MeetingCreateModal.vue'
+import { useUserStore } from '@/store/userStore'
+
+const router = useRouter()
+const userStore = useUserStore()
+const userNo = computed(() => userStore.user?.userNo ?? null)
 
 const open = ref(false)
 const modalOpen = ref(false)
@@ -41,13 +51,15 @@ const loaded = ref(false)
 const error = ref('')
 const rooms = ref([])
 
-async function loadActive() {
+async function loadActive () {
   loading.value = true
   loaded.value = false
   error.value = ''
   try {
-    const res = await instance.get('/meeting-rooms/active')
-    rooms.value = res.data || []
+    const { data } = await instance.get('/meeting-rooms/active', {
+      params: { teamNo: 10, userNo: userNo.value }
+    })
+    rooms.value = Array.isArray(data) ? data : []
     loaded.value = true
   } catch (e) {
     error.value = e?.response?.data?.message || e.message || String(e)
@@ -56,13 +68,12 @@ async function loadActive() {
   }
 }
 
-function onEnter(m) {
-  console.log('입장 클릭:', m.roomNo, m.roomCode)
-  // TODO: 프리조인/라우팅 연결
+async function onCreated () {
+  await loadActive()
 }
 
-async function onCreated(created) {
-  // created: { roomNo, roomCode }
-  await loadActive()
+// 프리조인 라우팅
+function onEnter (m) {
+  router.push({ name: 'MeetingPrejoin', params: { roomCode: m.roomCode } })
 }
 </script>

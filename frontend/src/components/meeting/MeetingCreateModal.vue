@@ -17,13 +17,13 @@
         <div v-else>
           <div v-for="m in members" :key="m.userNo">
             <label>
-              <!-- 화면엔 이름만, 선택 값은 userNo -->
               <input
                 type="checkbox"
                 :value="m.userNo"
                 v-model="form.participantIds"
+                :disabled="m.userNo === myUserNo"
               />
-              {{ m.name }}
+              {{ m.name }} <span v-if="m.userNo === myUserNo"> (나)</span>
             </label>
           </div>
           <div v-if="mError" style="color:#d33; white-space:pre-line">{{ mError }}</div>
@@ -71,8 +71,9 @@
 </template>
 
 <script setup>
-import { ref, watch } from 'vue'
+import { ref, watch, computed } from 'vue'
 import instance from '@/util/interceptors'
+import { useUserStore } from '@/store/userStore'
 
 // props / emits
 const props = defineProps({
@@ -80,6 +81,10 @@ const props = defineProps({
   teamNo: { type: Number,  required: true }
 })
 const emit = defineEmits(['update:open', 'created'])
+
+// 내 정보
+const userStore = useUserStore()
+const myUserNo = computed(() => Number(userStore.user?.userNo ?? 0))
 
 // state
 const members   = ref([])          // [{ userNo:number, name:string }]
@@ -97,7 +102,7 @@ const form = ref({
   participantIds: [] // number[]
 })
 
-// effects
+// 모달 열릴 때 초기화 + 팀원 로드
 watch(() => props.open, (v) => {
   if (v) {
     initDefaults()
@@ -105,7 +110,6 @@ watch(() => props.open, (v) => {
   }
 })
 
-// functions
 function initDefaults () {
   err.value = ''
   const now = new Date()
@@ -116,7 +120,8 @@ function initDefaults () {
     endLocal: toLocalDT(end),
     privateRoom: false,
     roomPassword: '',
-    participantIds: []
+    // 본인 자동 선택
+    participantIds: myUserNo.value ? [myUserNo.value] : []
   }
 }
 
@@ -126,7 +131,6 @@ async function loadMembersByTeam () {
   members.value = []
   try {
     const { data } = await instance.get(`/teams/${props.teamNo}/members`)
-    // 방어적 정규화: userNo/ name만 사용, 타입 고정
     members.value = (data ?? []).map(x => ({
       userNo: Number(x.userNo),
       name: String(x.name ?? '')
@@ -143,7 +147,7 @@ function toLocalDT(d) {
   return `${d.getFullYear()}-${pad(d.getMonth()+1)}-${pad(d.getDate())}T${pad(d.getHours())}:${pad(d.getMinutes())}`
 }
 function toISO(localStr) {
-  return localStr ? new Date(localStr).toISOString() : null
+  return localStr || null; // 그냥 로컬 문자열을 보냄
 }
 
 function close () {
@@ -171,7 +175,12 @@ async function submit () {
     }
   }
 
-  const participantIds = (form.value.participantIds || []).map(n => Number(n)).filter(n => Number.isFinite(n))
+  // 숫자화 + 중복 제거 + 본인 강제 포함
+  const set = new Set((form.value.participantIds || [])
+    .map(n => Number(n))
+    .filter(n => Number.isFinite(n)))
+  if (myUserNo.value) set.add(myUserNo.value)
+  const participantIds = Array.from(set)
 
   const body = {
     teamNo: props.teamNo,
@@ -180,14 +189,15 @@ async function submit () {
     scheduledEndTime: toISO(form.value.endLocal),
     privateRoom: !!form.value.privateRoom,
     roomPassword: form.value.privateRoom ? form.value.roomPassword : null,
-    participantIds
+    participantIds,
+    creatorUserNo: myUserNo.value 
   }
 
   creating.value = true
   try {
     const { data } = await instance.post('/meeting-rooms', body)
-    emit('created', data)      // { roomNo, roomCode }
-    emit('update:open', false) // 닫기
+    emit('created', data)     
+    emit('update:open', false) 
   } catch (e) {
     err.value = e?.response?.data?.message || e.message || String(e)
   } finally {

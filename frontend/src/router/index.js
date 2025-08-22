@@ -4,10 +4,10 @@ import ChatRoomForm from '@/components/chat/ChatRoomForm.vue'
 import ChatRoomList from '@/components/chat/ChatRoomList.vue'
 import ChatRoom from '@/components/chat/ChatRoom.vue'
 import SignalTest from '@/components/meeting/SignalTest.vue'
-import Meeting from '@/components/meeting/Meeting.vue'
-import MeetingTest from '@/components/meeting/MeetingTest.vue'
+import MeetingMain from '@/components/meeting/MeetingMain.vue'
 import LoginForm from '@/auth/components/LoginForm.vue'
 import Success from '@/auth/components/Success.vue'
+import MeetingPrejoinModal from '@/components/meeting/MeetingPrejoinModal.vue'
 
 const routes = [
   {
@@ -29,13 +29,12 @@ const routes = [
   { path: '/', name: 'login', component: LoginForm },
   { path: '/s', name: 's', component: Success },
   { path: '/signal-test', component: SignalTest },
-  { path: '/meeting', name: 'Meeting', component: Meeting},
-  { path: '/meeting-test', name: 'MeetingTest', component: MeetingTest},
+  { path: '/meeting-main', name: 'MeetingMain', component: MeetingMain,
+    children: [{ path: ':roomCode/prejoin', name: 'MeetingPrejoin', component: MeetingPrejoinModal }],
+  },
 ]
 
-const router = createRouter({
+export default createRouter({
   history: createWebHistory(),
-  routes
+  routes,
 })
-
-export default router
