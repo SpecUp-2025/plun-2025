@@ -11,6 +11,11 @@ export const useUserStore = defineStore('user',{
         },
         removeUser(){
             this.user=null;
-        }
+        },
+        
+    },
+    persist: {
+        storage : localStorage,
+        paths:['users'],
     }
 })

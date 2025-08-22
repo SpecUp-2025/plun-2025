@@ -32,11 +32,21 @@ const check = async () => {
         console.log('[ERR]', e.response?.status, e.response?.data ?? e.message)
     }
 }
-const logout = () => {
-  localStorage.removeItem('accessToken')
-  localStorage.removeItem('refreshToken')
-  userStore.removeUser()
-  router.push({ name: 'login' })
+const logout = async () => {
+  try {
+    const {status} = await instance.post('/auth/logout',{
+        refreshToken : localStorage.getItem('refreshToken')
+    })
+    if(status==200){
+      localStorage.removeItem('accessToken')
+      localStorage.removeItem('refreshToken')
+      userStore.removeUser()
+      router.push({ name: 'login' })
+    }
+  } catch (error) {
+    console.error("로그아웃 실패",error)
+  }
+  
 }
 </script>
 
