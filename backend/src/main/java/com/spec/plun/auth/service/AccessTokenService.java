@@ -22,7 +22,8 @@ public class AccessTokenService {
 	}
 	
 	public String generateToken(String email) {
-		 Map<String, Object> claims = Map.of("email", email);
+		 Map<String, Object> claims = Map.of(
+		            "email", email);
 		 Date twoMinites = Date.from(Instant.now().plus(1,ChronoUnit.DAYS));
 		 return jwtUtil.generateToken(claims, twoMinites);
 	}
