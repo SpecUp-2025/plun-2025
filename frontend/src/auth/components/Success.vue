@@ -2,7 +2,8 @@
     <div>
         <h2>성공입니당</h2>
         <h3>{{ email }}</h3>
-        <h3>{{ name }}</h3>
+        <h3>{{ name }} 환영합니다.</h3>
+        <h3>{{ userNo }}</h3>
         
         <button @click="check" >토큰 전송 확인</button>
         <button @click ="logout">로그아웃</button>
@@ -19,6 +20,7 @@ const userStore = useUserStore()
 const router = useRouter()
 const email = computed(() => userStore.user?.email ?? '');
 const name = computed(() => userStore.user?.name ?? '');
+const userNo = computed(() => userStore.user?.userNo ?? '');
 
 const check = async () => {
     try {

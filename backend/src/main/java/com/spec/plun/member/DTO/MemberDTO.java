@@ -4,7 +4,8 @@ import lombok.Data;
 
 @Data
 public class MemberDTO {
-	public String email;
-	public String name;
+	private Integer userNo;
+	private String email;
+	private String name;
 
 }
