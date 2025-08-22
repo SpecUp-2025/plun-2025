@@ -6,8 +6,10 @@ import org.springframework.web.server.ResponseStatusException;
 
 import com.spec.plun.auth.DTO.LoginDTO;
 import com.spec.plun.auth.DTO.QualificationCheckDTO;
+import com.spec.plun.auth.DTO.RefreshTokenRequest;
 import com.spec.plun.auth.DTO.TokenResponse;
 
+import io.jsonwebtoken.Claims;
 import lombok.RequiredArgsConstructor;
 
 @Service
@@ -28,6 +30,23 @@ public class AuthService {
 	    		accessTokenService.generateToken(qualification.getEmail()),
 	    		refreshTokenService.generateToken(qualification.getEmail())
 	    		);
+	}
+
+	public TokenResponse newAcessToken(RefreshTokenRequest refreshTokenRequest) {
+		Claims claims = refreshTokenService.validToken(refreshTokenRequest.getRefreshToken());
+		String jti = claims.get("jti",String.class);
+		if(jti== null || !refreshTokenService.revokeByRefreshToken(jti)) {
+			throw new ResponseStatusException(HttpStatus.UNAUTHORIZED,"토큰이 유효하지 않습니다.");
+		}
+		String email = claims.get("email",String.class);
+		return new TokenResponse(
+	    		accessTokenService.generateToken(email),
+	    		refreshTokenService.generateToken(email));
+	}
+
+	public void logout(RefreshTokenRequest refreshTokenRequest) {
+		Claims claims = refreshTokenService.validToken(refreshTokenRequest.getRefreshToken());
+		refreshTokenService.revokeByRefreshToken(claims.get("jti",String.class));
 	}
 
 }
