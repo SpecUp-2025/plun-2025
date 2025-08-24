@@ -1,6 +1,9 @@
 package com.spec.plun.chat.entity;
 
 import java.time.LocalDateTime;
+import java.util.List;
+
+import com.spec.plun.attachment.entity.Attachment;
 
 import lombok.Data;
 
@@ -14,4 +17,7 @@ public class ChatMessage {
 	private LocalDateTime createDate;
 	
     private MessageType messageType; // 메시지 종류 규뷴 (텍스트, 파일 등)
+    
+    private List<Attachment> attachments;
+
 }
