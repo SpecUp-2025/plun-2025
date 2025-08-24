@@ -20,7 +20,7 @@
   	VALUES (#{roomName}, NOW())
   </insert>
   
-  <insert id="insertMessage" parameterType="com.spec.plun.chat.entity.ChatMessage">
+  <insert id="insertMessage" parameterType="com.spec.plun.chat.entity.ChatMessage" useGeneratedKeys="true" keyProperty="messageNo" keyColumn="message_no">
   	INSERT INTO TB_CHAT_MESSAGE (room_no, user_no, content, create_date, message_type)
   	VALUES (#{roomNo},#{userNo}, #{content}, #{createDate}, #{messageType})
   </insert>
