@@ -1,0 +1,42 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper
+        PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+        
+<mapper namespace="com.spec.plun.attachment.dao.AttachmentDAO">
+	
+	<!-- 파일 저장 -->
+    <insert id="insertAttachment" parameterType="com.spec.plun.attachment.entity.Attachment">
+        INSERT INTO TB_ATTACHMENT (
+            attachment_no, message_no, original_name, file_name, path, size,
+            content_type, extension, create_date
+        ) VALUES (
+            #{attachmentNo}, #{messageNo}, #{originalName}, #{fileName}, #{path}, #{size},
+            #{contentType}, #{extension}, #{createDate}
+        )
+    </insert>
+	
+	<!-- 삭제 되지 않은 파일 조회  -->
+    <select id="getAttachmentsByMessageNo" parameterType="int" resultType="com.spec.plun.attachment.entity.Attachment">
+        SELECT *
+        FROM TB_ATTACHMENT
+        WHERE message_no = #{messageNo}
+          AND delete_date IS NULL
+        ORDER BY create_date ASC
+    </select>
+	
+	<!-- 파일 조회 -->
+    <select id="getAttachmentById" parameterType="String" resultType="com.spec.plun.attachment.entity.Attachment">
+        SELECT *
+        FROM TB_ATTACHMENT
+        WHERE attachment_no = #{attachmentNo}
+    </select>
+    
+	<!-- 파일 삭제 -->
+    <update id="deleteAttachment" parameterType="String">
+        UPDATE TB_ATTACHMENT
+        SET delete_date = NOW()
+        WHERE attachment_no = #{attachmentNo}
+    </update>
+
+</mapper>
