@@ -26,7 +26,7 @@ import lombok.RequiredArgsConstructor;
 public class JwtAuthenticationFilter extends OncePerRequestFilter{
 
 	private final AccessTokenService accessTokenService;
-	private static final String[] PUBLICE_URL = {"/auth/**","/swagger-ui/**","/v3/api-docs/**","/ws-chat","/error"};
+	private static final String[] PUBLICE_URL = {"/auth/**","/swagger-ui/**","/v3/api-docs/**","/ws-chat","/error","/attachments/**"};
 	private final AntPathMatcher matcher = new AntPathMatcher();
 
 	
