@@ -24,7 +24,7 @@ import lombok.RequiredArgsConstructor;
 @RequiredArgsConstructor
 public class SecurityConfig {
 	
-	private static final String[] PUBLICE_URL = {"/auth/**","/swagger-ui/**","/v3/api-docs/**","/ws-chat","/error"};
+	private static final String[] PUBLICE_URL = {"/auth/**","/swagger-ui/**","/v3/api-docs/**","/ws-chat","/error","/attachments/**","/chat/**"};
 	private final ObjectMapper objectMapper;
 	private final JwtAuthenticationFilter jwtAuthenticationFilter;
 	
