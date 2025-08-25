@@ -28,7 +28,7 @@ public class RefreshTokenService {
 	        this.stringRedisTemplate = stringRedisTemplate;
 	    }
 	
- 	private static final String PRE = "whitelist:jti:";
+ 	private static final String PRE = "jti:";
 	
 
 	
