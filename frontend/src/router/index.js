@@ -8,6 +8,7 @@ import MeetingMain from '@/components/meeting/MeetingMain.vue'
 import LoginForm from '@/auth/components/LoginForm.vue'
 import Success from '@/auth/components/Success.vue'
 import MeetingPrejoinModal from '@/components/meeting/MeetingPrejoinModal.vue'
+import MeetingRoom from '@/components/meeting/MeetingRoom.vue'
 
 const routes = [
   {
@@ -29,6 +30,7 @@ const routes = [
   { path: '/', name: 'login', component: LoginForm },
   { path: '/s', name: 's', component: Success },
   { path: '/signal-test', component: SignalTest },
+  { path: '/meeting-room/:roomCode', name: 'MeetingRoom', component: MeetingRoom},
   { path: '/meeting-main', name: 'MeetingMain', component: MeetingMain,
     children: [{ path: ':roomCode/prejoin', name: 'MeetingPrejoin', component: MeetingPrejoinModal }],
   },
