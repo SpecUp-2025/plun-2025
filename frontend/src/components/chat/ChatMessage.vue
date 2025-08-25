@@ -1,7 +1,7 @@
 <template>
   <div class="chat-message">
-    <strong>{{ message.sender || 'User ' + message.userNo }}</strong>
-          <small>{{ formattedTime }}</small>
+    <strong>{{ senderName }}</strong>
+    <small>{{ formattedTime }}</small>
 
     <!-- 첨부파일 존재 여부 -->
     <div v-if="message.attachments && message.attachments.length > 0">
@@ -22,7 +22,10 @@
                 </a>
             </template>
             <!-- 삭제 버튼 -->
-            <button @click="deleteAttachment(file.attachmentNo)">삭제</button>
+            <button 
+            v-if="currentUserNo === message.userNo"
+            @click="deleteAttachment(file.attachmentNo)">삭제
+            </button>
         </div>
     </div>
 
@@ -34,7 +37,7 @@
 </template>
 
 <script>
-import axios from 'axios'; 
+import instance from '@/util/interceptors'
 
 export default {
   name: 'ChatMessage',
@@ -42,14 +45,28 @@ export default {
     message: {
       type: Object,
       required: true
+    },
+    currentUserNo: {
+      type: Number,
+      required: true
+    },
+    chatMembers: {
+      type: Array,
+      required: true
     }
   },
-  computed: {
-    formattedTime() {
-      const date = new Date(this.message.timestamp);
-      return date.toLocaleTimeString();
-    }
-  },
+    computed: {
+        formattedTime() {
+            const date = new Date(this.message.timestamp);
+            return date.toLocaleTimeString();
+        },
+        senderName() {               // userNo -> userName 변환
+                  const member = this.chatMembers.find(
+                    m => String(m.userNo) === String(this.message.userNo)
+                );
+            return member ? member.userName : 'User ' + this.message.userNo;
+        }
+    },
     methods: {
         isImage(contentType) {
         return contentType.startsWith('image/');
@@ -59,7 +76,7 @@ export default {
       if (!confirm('정말 이 파일을 삭제하시겠습니까?')) return;
 
       try {
-       await axios.delete(`/api/attachments/delete/${attachmentNo}`, {
+       await instance.delete(`/attachments/delete/${attachmentNo}`, {
         withCredentials: true
         }); // ✅ 백엔드 API로 삭제 요청
 

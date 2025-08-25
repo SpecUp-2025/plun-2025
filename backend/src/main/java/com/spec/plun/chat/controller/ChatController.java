@@ -12,6 +12,7 @@ import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.PutMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
@@ -57,7 +58,6 @@ public class ChatController {
 	        return ResponseEntity.status(500).body("메시지 전송 실패");
 	    }
 	}
-	
 	// 채팅방 메시지 및 파일 목록을 조회
 	@GetMapping("/message")
 	public ResponseEntity<List<ChatMessage>> getMessageWithAttachments(@RequestParam int roomNo){
@@ -66,7 +66,24 @@ public class ChatController {
 		// 2. HTTP 200 OK와 함께 메시지 리스트를 반환
 		return ResponseEntity.ok(messages);
 	}
-	
+	// 채팅방 이름 조회
+	@GetMapping("/room/{roomNo}")
+	public ResponseEntity<ChatRoom> getChatRoom(@PathVariable("roomNo") int roomNo) {
+	    ChatRoom chatRoom = chatService.getChatRoom(roomNo);
+	    if (chatRoom != null) {
+	        return ResponseEntity.ok(chatRoom);
+	    } else {
+	        return ResponseEntity.notFound().build();
+	    }
+	}
+
+	// 채팅방 이름 변경
+	@PutMapping("/room/{roomNo}/name")
+	public ResponseEntity<?> updateRoomName(@PathVariable("roomNo") int roomNo, @RequestBody Map<String, String> request) {
+	    String newName = request.get("roomName");
+	    chatService.updateRoomName(roomNo, newName);
+	    return ResponseEntity.ok().build();
+	}
 	// 채팅방 생성
 	@PostMapping("/room")
 	public ChatRoom createChatRoom(@RequestBody Map<String, String> roomName) {

@@ -12,14 +12,14 @@
 <script setup>
 import { ref, onMounted } from 'vue'
 import { useRouter } from 'vue-router'
-import axios from 'axios'
+import instance from '@/util/interceptors'
 
 const chatRooms = ref([])
 const router = useRouter()
 
 const fetchChatRooms = async () => {
   try {
-    const res = await axios.get('api/chat/rooms')  // 백엔드에서 채팅방 리스트 가져오는 API 경로 맞게 변경
+    const res = await instance.get('/chat/rooms')  // 백엔드에서 채팅방 리스트 가져오는 API 경로 맞게 변경
     console.log('받은 채팅방 데이터:',res.data)
     chatRooms.value = res.data
   } catch (error) {
