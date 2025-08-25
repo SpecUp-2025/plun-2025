@@ -16,6 +16,7 @@ import com.spec.plun.email.DTO.EmailRequest;
 import com.spec.plun.email.DTO.VerifyCodeRequest;
 import com.spec.plun.email.service.EmailService;
 import com.spec.plun.member.DTO.MemberDTO;
+import com.spec.plun.member.DTO.RegisterRequest;
 import com.spec.plun.member.service.MemberService;
 
 import jakarta.mail.MessagingException;
@@ -30,6 +31,7 @@ public class AuthController {
 	private final AuthService authService;
 	private final EmailService emailService;
 	private final MemberService memberService;
+	
 	@PostMapping("/login")
 	public ResponseEntity<Object> login(@RequestBody LoginDTO member){
 		return ResponseEntity.ok(authService.login(member));
@@ -68,12 +70,10 @@ public class AuthController {
 	}
 	
 	@PostMapping("/register")
-	public ResponseEntity<Object> register(@RequestBody MemberDTO memberDTO){
-		boolean ok =  memberService.register(memberDTO);
-		if(!ok) return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(Map.of("msg","회원가입 실패"));
-		return ResponseEntity.ok().build();
+	public ResponseEntity<Object> register(@RequestBody @Valid RegisterRequest registerRequest){
+		authService.register(registerRequest);
+		return ResponseEntity.status(HttpStatus.CREATED).body(Map.of("msg","회원가입 성"));		
 	}
 
-	
 	}
 
