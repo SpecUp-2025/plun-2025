@@ -137,7 +137,7 @@ async function register() {
       password: form.password,
       name: form.name
     });
-    if (status === 200) {
+    if (status === 201) {
       alert('회원가입에 성공했습니다.');
       router.push({ name: 'login' });
     }
