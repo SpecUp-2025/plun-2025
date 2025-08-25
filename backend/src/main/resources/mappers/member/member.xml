@@ -15,4 +15,18 @@
 </select>
 
 
+<select id="findEmail">
+	SELECT COUNT(1) 
+	FROM tb_member 
+	WHERE email=#{email};
+</select>
+
+
+<insert id="register" parameterType="com.spec.plun.member.DTO.MemberDTO" >
+	INSERT INTO TB_MEMBER (email, password, name,role)
+    VALUES (#{email}, #{password}, #{name},'A002')
+
+</insert>
+
+
 </mapper>

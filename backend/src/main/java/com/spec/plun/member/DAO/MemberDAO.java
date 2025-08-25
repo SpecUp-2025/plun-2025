@@ -9,4 +9,8 @@ public interface MemberDAO {
 
 	MemberDTO getEmail(String email);
 
+	int findEmail(String email);
+
+	int register(MemberDTO memberDTO);
+
 }
