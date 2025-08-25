@@ -8,7 +8,7 @@
 
 <script setup>
 import { ref } from 'vue'
-import axios from 'axios'
+import instance from '@/util/interceptors'
 
 const roomName = ref('')
 
@@ -19,7 +19,7 @@ const createRoom = async () => {
   }
 
   try {
-    const response = await axios.post('/api/chat/room', {
+    const response = await instance.post('/chat/room', {
       roomName: roomName.value
     })
     console.log('채팅방 생성 성공:', response.data)

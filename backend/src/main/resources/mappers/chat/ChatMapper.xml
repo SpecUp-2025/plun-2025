@@ -4,6 +4,18 @@
   "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
   
 <mapper namespace="com.spec.plun.chat.dao.ChatDAO">
+	
+  <select id="getChatRoom" parameterType="int" resultType="com.spec.plun.chat.entity.ChatRoom">
+	SELECT room_no AS roomNo, room_name AS roomName, create_date AS createDate
+	FROM TB_CHAT_ROOM
+	WHERE room_no = #{roomNo}
+  </select>
+	
+  <update id="updateRoomName" parameterType="map">
+	UPDATE TB_CHAT_ROOM
+	SET room_name = #{newName}
+	WHERE room_no = #{roomNo}
+  </update>
 
   <select id="getChatMessageByRoomNo" resultType="com.spec.plun.chat.entity.ChatMessage">
     SELECT * FROM TB_CHAT_MESSAGE

@@ -1,9 +1,22 @@
 <template>
   <div class="chat-room">
     <!-- 사용자 번호 입력창 테스트용-->
-    <div>
+    <!-- <div>
       <label>사용자 번호: </label>
       <input type="number" v-model.number="userNo" min="1" />
+    </div> -->
+    <div class="room-name">
+    <template v-if="isEditingRoomName">
+        <input v-model="newRoomName" />
+        <button @click="saveRoomName">저장</button>
+        <button @click="cancelEditRoomName">취소</button>
+    </template>
+    <template v-else>
+        <h2>
+        {{ roomName }}
+        <button @click="startEditRoomName">✏️</button>
+        </h2>
+    </template>
     </div>
 
     <!-- 참여자 목록 표시 -->
@@ -18,6 +31,8 @@
       v-for="msg in filteredMessages"
     :key="msg.messageNo + '-' + (msg.attachments ? msg.attachments.length : 0)"
     :message="msg"
+    :current-user-no="userNo"
+    :chatMembers="chatMembers"
     @check-empty-message="removeMessageIfEmpty"
     @attachment-deleted="handleAttachmentDeleted"
     />
@@ -32,39 +47,62 @@
 <script>
 import ChatMessage from './ChatMessage.vue';
 import ChatInput from './ChatInput.vue';
-import axios from 'axios';
+import instance from '@/util/interceptors'
 import SockJS from 'sockjs-client';
-import Stomp from 'stompjs'; 
+import Stomp from 'stompjs';
+import { useUserStore } from '@/store/userStore';
 
 export default {
   name: 'ChatRoom',
   components: { ChatMessage, ChatInput },
   data() {
     return {
-      messages: [],
-      stompClient: null,   // 추가
-      stompConnected: false,
-      roomNo: null, // 임시로 하드코딩. 나중엔 route param에서 받아오는 게 이상적
-      userNo: 1,  // 기본 유저 번호를 데이터에 추가 로그인 완료 후 변경예정
-      chatMembers: []
-    }
+        userStore: useUserStore(), // ✅ 이렇게 선언
+        messages: [],
+        stompClient: null,   // 추가
+        stompConnected: false,
+        roomNo: null, // 임시로 하드코딩. 나중엔 route param에서 받아오는 게 이상적
+        chatMembers: [],
+        roomName: '',            // ✅ 현재 채팅방 이름
+        isEditingRoomName: false,
+        newRoomName: ''          // ✅ 수정 입력값
+        }
   },
   mounted() {
+    if (!this.userNo) {
+    console.warn('❌ 로그인되지 않았습니다.');
+    this.$router.push('/login');
+    return;
+  }
+  console.log("✅ 현재 로그인한 사용자:", this.userStore.user);
     this.roomNo = Number(this.$route.params.roomNo); 
     this.registerChatMember(); // 참여자 등록
     this.loadMessages(); // 메시지 데이터
     this.connectWebSocket(); // 웹소켓
     this.loadChatMembers(); // 참여자목록
+    this.loadRoomInfo(); // ✅ 채팅방 이름 불러오기
   },
     computed: {
     filteredMessages() {
       return this.messages.filter(
         msg => msg && (msg.content || (msg.attachments && msg.attachments.length > 0))
       );
+    },  
+    userNo() {
+    return this.userStore.user?.userNo;
     }
   },
 
   methods: {
+
+    async loadRoomInfo() {
+        try {
+            const res = await instance.get(`/chat/room/${this.roomNo}`);
+            this.roomName = res.data.roomName;
+        } catch (err) {
+            console.error("❌ 채팅방 정보 불러오기 실패:", err);
+        }
+        },
 
     handleAttachmentDeleted({ messageNo, attachmentNo }) {
         if (!this.stompConnected || !this.stompClient) return;
@@ -75,7 +113,6 @@ export default {
             messageNo,
             attachmentNo
         };
-
         console.log('🗑️ 첨부파일 삭제 브로드캐스트:', payload);
         console.log('🗑️ 첨부파일 삭제 WebSocket 전송:', payload);
         this.stompClient.send('/app/chat.deleteAttachment', {}, JSON.stringify(payload));
@@ -89,16 +126,16 @@ export default {
             console.log(`🗑️ 메시지 ${message.messageNo} 삭제됨 (내용 없음)`);
         }
         },
+
     goToCreateRoom() {
-      this.$router.push('/room/new');
-      // 또는 이름 기반 라우팅이면:
-      // this.$router.push({ name: 'ChatRoomForm' });
+        this.$router.push('/room/new');
     },
     
     // 채팅방 퇴장
     async leaveChatRoom() {
+
         try {
-            await axios.delete(`/api/chat/room/${this.roomNo}/member/${this.userNo}`);
+            await instance.delete(`/chat/room/${this.roomNo}/member/${this.userNo}`);
             console.log("🚪 채팅방 나가기 성공");
             this.$router.push('/chat'); // 또는 이전 화면
         } catch (error) {
@@ -108,8 +145,9 @@ export default {
 
     // 참여자 등록
     async registerChatMember() {
+
             try {
-                await axios.post(`/api/chat/room/${this.roomNo}/member/${this.userNo}`);
+                await instance.post(`/chat/room/${this.roomNo}/member/${this.userNo}`);
                 console.log("✅ 참여자 등록 성공");
             } catch (error) {
                 console.error("❌ 참여자 등록 실패:", error);
@@ -117,8 +155,9 @@ export default {
         },
     // 참여자 목록
     async loadChatMembers() {
+
         try {
-            const response = await axios.get(`/api/chat/rooms/${this.roomNo}/members`);
+            const response = await instance.get(`/chat/rooms/${this.roomNo}/members`);
             this.chatMembers = response.data;
             console.log("👥 참여자 목록 불러오기 성공:", this.chatMembers);
         } catch (error) {
@@ -128,49 +167,64 @@ export default {
     // 기존 메시지
     async loadMessages() {
         try {
-        //const response = await axios.get(`/api/chat/message?roomNo=${this.roomNo}`);
-        const response = await axios.get(`/api/chat/room/${this.roomNo}/messages`);
+            const response = await instance.get(`/chat/room/${this.roomNo}/messages`);
 
-        // 서버 메시지 배열에서 createDate를 timestamp로 변환
-        this.messages = response.data.map(msg => ({
-        ...msg,
-        timestamp: new Date(msg.createDate).getTime() // or Date.parse(msg.createDate)
+            // 서버 메시지 배열에서 createDate를 timestamp로 변환
+            this.messages = response.data.map(msg => ({
+            ...msg,
+            timestamp: new Date(msg.createDate).getTime() // or Date.parse(msg.createDate)
         }));
-        console.log('✅ 초기 메시지 불러오기 성공:', this.messages);
+            console.log('✅ 초기 메시지 불러오기 성공:', this.messages);
         } catch (e) {
-        console.error('메시지 불러오기 실패', e);
+            console.error('메시지 불러오기 실패', e);
         }
     },
 
     handleSendMessage(newMsg) {
-    if (!this.stompConnected) {
-    console.warn('⚠️ WebSocket 연결이 되어 있지 않습니다.');
-    return;
-    }
-      const message = {
-        roomNo: this.roomNo,
-        userNo: this.userNo, // 로그인 되면 변경예정
-        //userNo: 1,this.currentUserNo, 실제 로그인된 유저 번호를 넣어야 함
-        content: newMsg,
-        createDate: new Date().toISOString()
-      };
-      //this.messages.push(message);
-      console.log('➡️ 전송 준비 메시지:', message);
-    // WebSocket으로 서버에 전송
-      if (this.stompClient && this.stompClient.connected) {
+        if (!this.stompConnected) {
+        console.warn('⚠️ WebSocket 연결이 되어 있지 않습니다.');
+        return;
+        }
+        const message = {
+            roomNo: this.roomNo,
+            userNo: this.userNo, // 로그인 되면 변경예정
+            content: newMsg,
+            createDate: new Date().toISOString()
+        };
+
+        console.log('➡️ 전송 준비 메시지:', message);
+        // WebSocket으로 서버에 전송
+        if (this.stompClient && this.stompClient.connected) {
         console.log('➡️ 메시지 발신:', message);
         this.stompClient.send(
             '/app/chat.sendMessage', // 백엔드에서 처리하는 경로
             {}, // 추가
             JSON.stringify(message)
             );
-      } else {
-      console.warn('⚠️ stompClient가 없거나 연결되어 있지 않습니다.');
+        } else {
+        console.warn('⚠️ stompClient가 없거나 연결되어 있지 않습니다.');
     }
-
-      // 화면에 즉시 반영
-      //this.messages.push(message);
-      //this.messages.push({...message, timestamp: new Date(message.createDate).getTime()});
+},
+        startEditRoomName() {
+        this.isEditingRoomName = true;
+        this.newRoomName = this.roomName;
+    },
+    cancelEditRoomName() {
+        this.isEditingRoomName = false;
+        this.newRoomName = '';
+    },
+    async saveRoomName() {
+        try {
+        await instance.put(`/chat/room/${this.roomNo}/name`, {
+            roomName: this.newRoomName
+        });
+        this.roomName = this.newRoomName;
+        this.isEditingRoomName = false;
+        alert('채팅방 이름이 변경되었습니다.');
+        } catch (err) {
+        console.error("❌ 채팅방 이름 변경 실패:", err);
+        alert('이름 변경에 실패했습니다.');
+        }
     },
 
     // WebSocket 연결
@@ -217,9 +271,9 @@ export default {
 
 <style scoped>
 .messages {
-  max-height: 400px;
-  overflow-y: auto;
-  border: 1px solid #ddd;
-  padding: 10px;
+    max-height: 400px;
+    overflow-y: auto;
+    border: 1px solid #ddd;
+    padding: 10px;
 }
 </style>

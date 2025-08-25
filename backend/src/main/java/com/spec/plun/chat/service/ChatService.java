@@ -83,6 +83,17 @@ public class ChatService {
 	public List<ChatRoom> getChatRooms(){
 		return chatDAO.getChatRooms();
 	}
+	// 채팅방 이름 변경
+	public void updateRoomName(int roomNo, String newName) {
+		if (newName == null || newName.trim().isEmpty()) {
+			throw new IllegalArgumentException("❌ 채팅방 이름은 비워둘 수 없습니다.");
+		}
+		
+		int updatedCount = chatDAO.updateRoomName(roomNo, newName);
+		if (updatedCount == 0) {
+			throw new RuntimeException("❌ 채팅방 이름 변경 실패 (roomNo=" + roomNo + ")");
+		}	
+	}
 	// 채팅방 생성
 	public ChatRoom createChatRoom(String roomName) {
 	    ChatRoom room = new ChatRoom();
@@ -113,11 +124,14 @@ public class ChatService {
 			return;
 		}
 		chatDAO.insertMember(roomNo, userNo);
-		
 	}
-	//  채팅방 퇴장
+	// 채팅방 퇴장
 	public void removeMemberFromRoom(int roomNo, int userNo) {
 		chatDAO.deleteChatMember(roomNo, userNo);
+	}
+	// 채팅방 이름 조회
+	public ChatRoom getChatRoom(int roomNo) {
+		return chatDAO.getChatRoom(roomNo);
 	}
 
 }
