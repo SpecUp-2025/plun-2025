@@ -56,7 +56,7 @@ public class AuthService {
 		refreshTokenService.revokeByRefreshToken(claims.get("jti",String.class));
 	}
 	
-	@Transactional
+
 	public void register(RegisterRequest registerRequest) {
 		String hashed = passwordEncoder.encode(registerRequest.getPassword());
 		MemberDTO memberDTO = new MemberDTO();
