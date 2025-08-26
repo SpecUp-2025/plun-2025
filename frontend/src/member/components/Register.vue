@@ -151,7 +151,7 @@ function checkEmail() {
   touched.email = true;
 
   if (!REGEX_PATTERN.EMAIL.test(form.email)) {
-    unvaild.email = "이메일 형식에 맞게 입력해주세요.";
+    unvaild.email = "올바르지 않은 이메일 형식입니다.";
     return;
   }
   unvaild.email = "";
