@@ -8,7 +8,8 @@ import Meeting from '@/components/meeting/Meeting.vue'
 import MeetingTest from '@/components/meeting/MeetingTest.vue'
 import LoginForm from '@/auth/components/LoginForm.vue'
 import Register from '@/member/components/Register.vue'
-import TeamList from '@/auth/components/TeamList.vue'
+import TeamList from '@/member/components/TeamList.vue'
+import Main from '@/main/components/Main.vue'
 
 
 const routes = [
@@ -34,6 +35,7 @@ const routes = [
   { path: '/meeting', name: 'Meeting', component: Meeting},
   { path: '/meeting-test', name: 'MeetingTest', component: MeetingTest},
   { path: '/register', name: 'register', component: Register},
+  { path: '/main/:id', name: 'main', component: Main},
 ]
 
 const router = createRouter({

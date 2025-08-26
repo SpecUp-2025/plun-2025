@@ -17,5 +17,20 @@
           AND m.delete_yn = 'N'   <!-- 삭제된 회원은 제외 -->
         ORDER BY m.user_no
     </select>
+    
+    <select id="teamList" parameterType="int" resultType="com.spec.plun.team.dto.TeamDTO">
+	SELECT 
+		tm.team_no,
+	    team_name,
+	    create_date
+	FROM tb_team_member tm
+	JOIN tb_team t
+	  ON tm.team_no = t.team_no
+	WHERE tm.user_no = #{userNo}
+	  AND tm.delete_yn = 'N';
+	 
+	 </select>
+    
+    
 
 </mapper>
