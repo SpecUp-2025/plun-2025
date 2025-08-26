@@ -1,33 +1,36 @@
-<!-- src/components/meeting/MeetingMain.vue -->
 <template>
   <div>
-    <button @click="open = !open">
+    <button @click="toggleOpen">
       회의 {{ open ? '▲' : '▼' }}
     </button>
 
-    <div v-if="open">
+    <div v-if="open" style="margin-top:8px;">
       <button @click="modalOpen = true">회의 생성하기</button>
 
-      <div>
+      <div style="margin-top:8px;">
         <button @click="loadActive" :disabled="loading">
           {{ loading ? '불러오는 중…' : '회의 목록' }}
         </button>
-        <div v-if="error" style="color:red; white-space:pre-line">{{ error }}</div>
 
-        <ul v-if="rooms.length">
-          <li v-for="m in rooms" :key="m.roomNo">
+        <div v-if="error" style="color:red; white-space:pre-line; margin-top:6px">{{ error }}</div>
+
+        <ul v-if="rooms.length" style="margin-top:8px;">
+          <li v-for="m in rooms" :key="m.roomNo" style="margin-bottom:6px;">
             <button @click="onEnter(m)">
-              {{ m.title }} | {{ m.scheduledTime }} ~ {{ m.scheduledEndTime || '(미지정)' }}
+              {{ m.title }}
+              | {{ fmtDateTime(m.scheduledTime) }}
+              ~ {{ m.scheduledEndTime ? fmtDateTime(m.scheduledEndTime) : '(미지정)' }}
             </button>
           </li>
         </ul>
-        <div v-else-if="loaded && !loading">표시할 회의가 없습니다.</div>
+
+        <div v-else-if="loaded && !loading" style="margin-top:8px;">
+          표시할 회의가 없습니다.
+        </div>
       </div>
     </div>
 
-    <!-- 생성 모달 -->
     <MeetingCreateModal v-model:open="modalOpen" :team-no="10" @created="onCreated" />
-    <!-- 프리조인 모달은 라우터로 처리 -->
     <router-view />
   </div>
 </template>
@@ -45,11 +48,26 @@ const userNo = computed(() => userStore.user?.userNo ?? null)
 
 const open = ref(false)
 const modalOpen = ref(false)
-
 const loading = ref(false)
 const loaded = ref(false)
 const error = ref('')
 const rooms = ref([])
+
+// 날짜/시간 포맷: "YYYY-MM-DD HH:mm" (로컬 타임존)
+function fmtDateTime(v) {
+  if (!v) return ''
+  try {
+    const d = new Date(v)
+    const yyyy = d.getFullYear()
+    const mm = String(d.getMonth() + 1).padStart(2, '0')
+    const dd = String(d.getDate()).padStart(2, '0')
+    const hh = String(d.getHours()).padStart(2, '0')
+    const mi = String(d.getMinutes()).padStart(2, '0')
+    return `${yyyy}-${mm}-${dd} ${hh}:${mi}`
+  } catch {
+    return String(v)
+  }
+}
 
 async function loadActive () {
   loading.value = true
@@ -72,7 +90,13 @@ async function onCreated () {
   await loadActive()
 }
 
-// 프리조인 라우팅
+function toggleOpen () {
+  open.value = !open.value
+  if (open.value && !loaded.value && !loading.value) {
+    loadActive()
+  }
+}
+
 function onEnter (m) {
   router.push({ name: 'MeetingPrejoin', params: { roomCode: m.roomCode } })
 }
