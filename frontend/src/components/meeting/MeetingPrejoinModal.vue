@@ -53,13 +53,8 @@
         <div class="grid">
           <div class="preview">
             <!-- 카메라 프리뷰 (좌우 반전 인라인 스타일) -->
-            <video
-              ref="videoEl"
-              autoplay
-              playsinline
-              muted
-              :style="{ transform: mirror ? 'scaleX(-1)' : 'none' }"
-            ></video>
+            <video ref="videoEl" autoplay playsinline muted
+              :style="{ transform: mirror ? 'scaleX(-1)' : 'none' }"></video>
 
             <!-- 마이크 레벨 미터 -->
             <div class="vu-wrap">
@@ -143,12 +138,15 @@ onMounted(async () => {
     loading.value = false
     if (authorized.value) {
       await nextTick()
-      // 한 번 권한요청으로 라벨 노출 → 장치목록 로드 → 선택값 보정 → 프리뷰 시작
       await ensurePermission()
       await listDevices()
       setDefaultSelectionsIfEmpty()
       await startPreview()
       navigator.mediaDevices?.addEventListener?.('devicechange', onDeviceChange)
+    } else {
+      // 혹시 남아있을 수 있는 리소스 정리
+      stopPreview()
+      teardownAnalyser()
     }
   } catch (e) {
     error.value = e?.response?.data?.message || e.message || String(e)
@@ -161,25 +159,29 @@ onBeforeUnmount(() => {
   navigator.mediaDevices?.removeEventListener?.('devicechange', onDeviceChange)
 })
 
-function savePrefs () {
+function savePrefs() {
   localStorage.setItem('pref.videoId', selectedVideoId.value)
   localStorage.setItem('pref.audioId', selectedAudioId.value)
   localStorage.setItem('pref.speakerId', selectedSpeakerId.value)
   localStorage.setItem('pref.mirror', String(mirror.value))
+  // 테스트 오디오 엘리먼트에도 즉시 반영 (지원 브라우저 한정)
+  if (speakerEl.value && typeof speakerEl.value.setSinkId === 'function' && selectedSpeakerId.value) {
+    speakerEl.value.setSinkId(selectedSpeakerId.value).catch(() => { })
+  }
 }
 
-async function ensurePermission () {
-  try { await navigator.mediaDevices.getUserMedia({ video: true, audio: true }) } catch {}
+async function ensurePermission() {
+  try { await navigator.mediaDevices.getUserMedia({ video: true, audio: true }) } catch { }
 }
 
-async function listDevices () {
+async function listDevices() {
   const devices = await navigator.mediaDevices.enumerateDevices()
   videoInputs.value = devices.filter(d => d.kind === 'videoinput')
   audioInputs.value = devices.filter(d => d.kind === 'audioinput')
   audioOutputs.value = devices.filter(d => d.kind === 'audiooutput') // 크롬/엣지 등
 }
 
-function setDefaultSelectionsIfEmpty () {
+function setDefaultSelectionsIfEmpty() {
   if (!selectedVideoId.value && videoInputs.value[0]) {
     selectedVideoId.value = videoInputs.value[0].deviceId
   }
@@ -190,7 +192,7 @@ function setDefaultSelectionsIfEmpty () {
   savePrefs()
 }
 
-async function fetchAuthz () {
+async function fetchAuthz() {
   if (!userNo.value) throw new Error('로그인 정보가 없습니다.')
   const { data } = await instance.get(`/meeting-rooms/${roomCode}/authz`, {
     params: { userNo: userNo.value }
@@ -198,8 +200,8 @@ async function fetchAuthz () {
   info.value = data
 }
 
-/* ── 프리뷰 & 분석기 ──────────────────────────── */
-async function startPreview () {
+/*  프리뷰  */
+async function startPreview() {
   stopPreview()
   teardownAnalyser()
 
@@ -223,7 +225,7 @@ async function startPreview () {
         const handler = () => { v.removeEventListener('loadedmetadata', handler); resolve() }
         v.addEventListener('loadedmetadata', handler)
       })
-      try { await v.play() } catch {}
+      try { await v.play() } catch { }
     }
 
     // 마이크 레벨 분석기 세팅
@@ -237,12 +239,12 @@ async function startPreview () {
   }
 }
 
-function stopPreview () {
-  try { stream?.getTracks()?.forEach(t => t.stop()) } catch {}
+function stopPreview() {
+  try { stream?.getTracks()?.forEach(t => t.stop()) } catch { }
   stream = null
 }
 
-async function restartPreview () {
+async function restartPreview() {
   try {
     await startPreview()
   } catch (e) {
@@ -250,7 +252,7 @@ async function restartPreview () {
   }
 }
 
-async function fallbackToDefaultDevices (err) {
+async function fallbackToDefaultDevices(err) {
   const recoverable = ['NotReadableError', 'OverconstrainedError', 'NotFoundError', 'TrackStartError'].includes(err?.name)
   if (!recoverable) {
     error.value = prettyGumError(err)
@@ -268,8 +270,8 @@ async function fallbackToDefaultDevices (err) {
   }
 }
 
-/* ── 마이크 레벨미터(Web Audio) ──────────────── */
-function setupAnalyser (mediaStream) {
+/*  마이크 레벨미터(Web Audio)  */
+function setupAnalyser(mediaStream) {
   try {
     audioCtx = audioCtx || new (window.AudioContext || window.webkitAudioContext)()
     sourceNode = audioCtx.createMediaStreamSource(mediaStream)
@@ -283,22 +285,22 @@ function setupAnalyser (mediaStream) {
   }
 }
 
-function teardownAnalyser () {
+function teardownAnalyser() {
   if (vuRaf) cancelAnimationFrame(vuRaf)
   vuRaf = 0
-  try { sourceNode?.disconnect(); } catch {}
-  try { analyser?.disconnect(); } catch {}
+  try { sourceNode?.disconnect(); } catch { }
+  try { analyser?.disconnect(); } catch { }
   sourceNode = null
   analyser = null
-  // audioCtx는 재사용(사용자 제스처 문제 방지)
+  // audioCtx는 재사용
 }
 
-function startVuLoop () {
+function startVuLoop() {
   const data = new Uint8Array(analyser.frequencyBinCount)
   const loop = () => {
     if (!analyser) return
     analyser.getByteTimeDomainData(data)
-    // RMS 근사 → 0~100%
+    // RMS 근사 0~100%
     let sum = 0
     for (let i = 0; i < data.length; i++) {
       const val = (data[i] - 128) / 128 // -1 ~ 1
@@ -312,10 +314,10 @@ function startVuLoop () {
   vuRaf = requestAnimationFrame(loop)
 }
 
-/* ── 스피커 테스트 ─────────────────────────── */
-async function testSpeaker () {
+/* 스피커 테스트 */
+async function testSpeaker() {
   try {
-    // 테스트 톤을 WebAudio로 생성 → MediaStreamDestination → <audio>로 재생
+    // 테스트 톤을 WebAudio로 생성 - MediaStreamDestination - audio로 재생
     audioCtx = audioCtx || new (window.AudioContext || window.webkitAudioContext)()
     if (audioCtx.state === 'suspended') await audioCtx.resume()
 
@@ -324,8 +326,8 @@ async function testSpeaker () {
     const dest = audioCtx.createMediaStreamDestination()
 
     osc.type = 'sine'
-    osc.frequency.value = 440 // A4
-    gain.gain.value = 0.001   // 시작은 아주 작게 (클릭음 방지)
+    osc.frequency.value = 440 
+    gain.gain.value = 0.001   // 시작은 아주 작게
 
     osc.connect(gain)
     gain.connect(dest)
@@ -335,7 +337,7 @@ async function testSpeaker () {
     gain.gain.setTargetAtTime(0.2, now, 0.02)
     gain.gain.setTargetAtTime(0.0001, now + 0.45, 0.05)
 
-    // <audio>로 출력(장치 선택 지원 시 setSinkId 적용)
+    // audio로 출력(장치 선택 지원 시 setSinkId 적용)
     const el = speakerEl.value
     el.srcObject = dest.stream
     el.volume = 1.0
@@ -357,8 +359,8 @@ async function testSpeaker () {
   }
 }
 
-/* ── 기타 이벤트 ─────────────────────────── */
-async function onDeviceChange () {
+/* 기타 이벤트 */
+async function onDeviceChange() {
   await listDevices()
   const vids = videoInputs.value.map(d => d.deviceId)
   const aids = audioInputs.value.map(d => d.deviceId)
@@ -368,16 +370,16 @@ async function onDeviceChange () {
   await restartPreview()
 }
 
-function toggleCam () {
+function toggleCam() {
   camOn.value = !camOn.value
   stream?.getVideoTracks()?.forEach(t => (t.enabled = camOn.value))
 }
-function toggleMic () {
+function toggleMic() {
   micOn.value = !micOn.value
   stream?.getAudioTracks()?.forEach(t => (t.enabled = micOn.value))
 }
 
-async function retryPreview () {
+async function retryPreview() {
   error.value = ''
   try {
     await restartPreview()
@@ -386,9 +388,9 @@ async function retryPreview () {
   }
 }
 
-function prettyGumError (e) {
+function prettyGumError(e) {
   const name = e?.name || ''
-  const msg  = e?.message || String(e)
+  const msg = e?.message || String(e)
   if (name === 'NotAllowedError' || name === 'SecurityError') {
     return '카메라/마이크 권한이 거부되었습니다.\n브라우저 주소창의 카메라 아이콘에서 “허용”으로 변경 후 다시 시도하세요.'
   }
@@ -404,9 +406,9 @@ function prettyGumError (e) {
   return `미디어 장치 초기화에 실패했습니다.\n(${name || 'Error'}: ${msg})`
 }
 
-function close () { router.back() }
+function close() { router.back() }
 
-async function enter () {
+async function enter() {
   if (!authorized.value) return
   entering.value = true
   try {
@@ -418,26 +420,111 @@ async function enter () {
 </script>
 
 <style scoped>
-.overlay { position: fixed; inset: 0; background: rgba(0,0,0,.4); display: grid; place-items: center; z-index: 40; }
-.modal { position: relative; background: #fff; width: min(920px, 96vw); padding: 16px; border-radius: 12px; }
-.x { position: absolute; top: 8px; right: 8px; border: 0; background: transparent; font-size: 20px; cursor: pointer; }
+.overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(0, 0, 0, .4);
+  display: grid;
+  place-items: center;
+  z-index: 40;
+}
 
-.err { color: #d33; white-space: pre-line; }
-.warn { color: #d33; margin-top: 8px; }
-.note { color: #666; margin-top: 6px; font-size: 12px; }
+.modal {
+  position: relative;
+  background: #fff;
+  width: min(920px, 96vw);
+  padding: 16px;
+  border-radius: 12px;
+}
 
-.grid { display: grid; gap: 12px; grid-template-columns: 1fr 320px; }
-.preview video { width: 100%; aspect-ratio: 16/9; background: #000; border-radius: 8px; }
+.x {
+  position: absolute;
+  top: 8px;
+  right: 8px;
+  border: 0;
+  background: transparent;
+  font-size: 20px;
+  cursor: pointer;
+}
 
-.vu-wrap { position: relative; height: 12px; background: #eee; border-radius: 6px; margin: 8px 0; overflow: hidden; }
-.vu-bar { position: absolute; top:0; left:0; bottom:0; width:0%; background:#22c55e; transition: width .05s linear; }
-.vu-label { position: absolute; right: 6px; top: -20px; font-size: 12px; color:#444; }
+.err {
+  color: #d33;
+  white-space: pre-line;
+}
 
-.row { display: flex; gap: 8px; margin-top: 8px; }
-.row.wrap { flex-wrap: wrap; gap: 12px; }
+.warn {
+  color: #d33;
+  margin-top: 8px;
+}
 
-.meta { margin-bottom: 8px; }
-.mirror { user-select: none; }
+.note {
+  color: #666;
+  margin-top: 6px;
+  font-size: 12px;
+}
 
-@media (max-width: 880px) { .grid { grid-template-columns: 1fr; } }
+.grid {
+  display: grid;
+  gap: 12px;
+  grid-template-columns: 1fr 320px;
+}
+
+.preview video {
+  width: 100%;
+  aspect-ratio: 16/9;
+  background: #000;
+  border-radius: 8px;
+}
+
+.vu-wrap {
+  position: relative;
+  height: 12px;
+  background: #eee;
+  border-radius: 6px;
+  margin: 8px 0;
+  overflow: hidden;
+}
+
+.vu-bar {
+  position: absolute;
+  top: 0;
+  left: 0;
+  bottom: 0;
+  width: 0%;
+  background: #22c55e;
+  transition: width .05s linear;
+}
+
+.vu-label {
+  position: absolute;
+  right: 6px;
+  top: -20px;
+  font-size: 12px;
+  color: #444;
+}
+
+.row {
+  display: flex;
+  gap: 8px;
+  margin-top: 8px;
+}
+
+.row.wrap {
+  flex-wrap: wrap;
+  gap: 12px;
+}
+
+.meta {
+  margin-bottom: 8px;
+}
+
+.mirror {
+  user-select: none;
+}
+
+@media (max-width: 880px) {
+  .grid {
+    grid-template-columns: 1fr;
+  }
+}
 </style>

@@ -72,4 +72,24 @@
 		LIMIT 1
 	</select>
 
+	<update id="updateJoinTime">
+		UPDATE tb_meeting_participant
+		SET
+		join_time =
+		COALESCE(join_time, COALESCE(#{joinedAt}, NOW())),
+		out_time = NULL
+		WHERE room_no = #{roomNo}
+		AND user_no = #{userNo}
+	</update>
+
+	<update id="updateOutTime">
+		UPDATE tb_meeting_participant
+		SET
+		out_time =
+		COALESCE(#{leftAt}, NOW())
+		WHERE room_no = #{roomNo}
+		AND user_no =
+		#{userNo}
+	</update>
+
 </mapper>

@@ -35,13 +35,24 @@
 
       <div style="margin-bottom:6px;">
         <label>시작 예정시간:
-          <input type="datetime-local" v-model="form.startLocal" />
+          <input
+            type="datetime-local"
+            v-model="form.startLocal"
+            :min="minStartLocal"
+            step="60"
+          />
         </label>
       </div>
 
       <div style="margin-bottom:6px;">
         <label>종료 예정시간:
-          <input type="datetime-local" v-model="form.endLocal" required />
+          <input
+            type="datetime-local"
+            v-model="form.endLocal"
+            :min="form.startLocal || minStartLocal"
+            step="60"
+            required
+          />
         </label>
       </div>
 
@@ -59,7 +70,7 @@
       </div>
 
       <div style="margin-top:8px; display:flex; gap:8px;">
-        <button @click="submit" :disabled="creating">
+        <button @click="submit" :disabled="creating || !canSubmit">
           {{ creating ? '생성 중…' : '생성' }}
         </button>
         <button @click="close" :disabled="creating">취소</button>
@@ -75,18 +86,15 @@ import { ref, watch, computed } from 'vue'
 import instance from '@/util/interceptors'
 import { useUserStore } from '@/store/userStore'
 
-// props / emits
 const props = defineProps({
   open:   { type: Boolean, default: false },
   teamNo: { type: Number,  required: true }
 })
 const emit = defineEmits(['update:open', 'created'])
 
-// 내 정보
 const userStore = useUserStore()
 const myUserNo = computed(() => Number(userStore.user?.userNo ?? 0))
 
-// state
 const members   = ref([])          // [{ userNo:number, name:string }]
 const mLoading  = ref(false)
 const mError    = ref('')
@@ -102,7 +110,9 @@ const form = ref({
   participantIds: [] // number[]
 })
 
-// 모달 열릴 때 초기화 + 팀원 로드
+// 지금 시각(분 단위) 이상만 선택 가능
+const minStartLocal = computed(() => toLocalDT(floorToMinute(new Date())))
+
 watch(() => props.open, (v) => {
   if (v) {
     initDefaults()
@@ -110,9 +120,25 @@ watch(() => props.open, (v) => {
   }
 })
 
+// 시작 시간이 바뀌면 종료 시간이 앞설 수 없도록 보정
+watch(() => form.value.startLocal, (v) => {
+  if (!v) return
+  if (!form.value.endLocal || new Date(form.value.endLocal).getTime() < new Date(v).getTime()) {
+    // 기본 30분 뒤로 맞춤
+    const base = new Date(v)
+    const end  = new Date(base.getTime() + 30 * 60 * 1000)
+    form.value.endLocal = toLocalDT(end)
+  }
+})
+
+// 비공개 해제 시 비밀번호 초기화
+watch(() => form.value.privateRoom, (isPrivate) => {
+  if (!isPrivate) form.value.roomPassword = ''
+})
+
 function initDefaults () {
   err.value = ''
-  const now = new Date()
+  const now = floorToMinute(new Date())
   const end = new Date(now.getTime() + 30 * 60 * 1000)
   form.value = {
     title: '',
@@ -120,7 +146,6 @@ function initDefaults () {
     endLocal: toLocalDT(end),
     privateRoom: false,
     roomPassword: '',
-    // 본인 자동 선택
     participantIds: myUserNo.value ? [myUserNo.value] : []
   }
 }
@@ -142,38 +167,41 @@ async function loadMembersByTeam () {
   }
 }
 
+function floorToMinute(d) {
+  const n = new Date(d)
+  n.setSeconds(0, 0)
+  return n
+}
+function pad(n){ return String(n).padStart(2,'0') }
 function toLocalDT(d) {
-  const pad = n => String(n).padStart(2, '0')
   return `${d.getFullYear()}-${pad(d.getMonth()+1)}-${pad(d.getDate())}T${pad(d.getHours())}:${pad(d.getMinutes())}`
 }
+
+// 서버가 UTC/ISO8601(타임존 포함)을 원하면 아래처럼 한 줄로 바꾸세요:
+//   return new Date(localStr).toISOString();
 function toISO(localStr) {
-  return localStr || null; // 그냥 로컬 문자열을 보냄
+  return localStr || null; // 현재는 'YYYY-MM-DDTHH:mm' 그대로 보냄
 }
 
 function close () {
   emit('update:open', false)
 }
 
-async function submit () {
-  err.value = ''
-
-  if (!form.value.title?.trim()) {
-    err.value = '제목을 입력하세요.'
-    return
-  }
-  if (!form.value.endLocal) {
-    err.value = '종료 예정시간은 필수입니다.'
-    return
-  }
-
+// 유효성: 제목, 종료시간 존재 + 종료≥시작
+const canSubmit = computed(() => {
+  if (!form.value.title?.trim()) return false
+  if (!form.value.endLocal) return false
   if (form.value.startLocal && form.value.endLocal) {
     const s = new Date(form.value.startLocal).getTime()
     const e = new Date(form.value.endLocal).getTime()
-    if (Number.isFinite(s) && Number.isFinite(e) && e < s) {
-      err.value = '종료 시간이 시작 시간보다 빠릅니다.'
-      return
-    }
+    if (Number.isFinite(s) && Number.isFinite(e) && e < s) return false
   }
+  if (form.value.privateRoom && !form.value.roomPassword) return false
+  return true
+})
+
+async function submit () {
+  err.value = ''
 
   // 숫자화 + 중복 제거 + 본인 강제 포함
   const set = new Set((form.value.participantIds || [])
@@ -190,14 +218,14 @@ async function submit () {
     privateRoom: !!form.value.privateRoom,
     roomPassword: form.value.privateRoom ? form.value.roomPassword : null,
     participantIds,
-    creatorUserNo: myUserNo.value 
+    creatorUserNo: myUserNo.value
   }
 
   creating.value = true
   try {
     const { data } = await instance.post('/meeting-rooms', body)
-    emit('created', data)     
-    emit('update:open', false) 
+    emit('created', data)
+    emit('update:open', false)
   } catch (e) {
     err.value = e?.response?.data?.message || e.message || String(e)
   } finally {
