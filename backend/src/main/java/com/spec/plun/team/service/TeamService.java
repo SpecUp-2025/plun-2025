@@ -18,4 +18,8 @@ public class TeamService {
 	public List<TeamMemberDTO> listMembersByTeam(Integer teamNo) {
 		return teamDAO.selectByTeam(teamNo);
 	}
+
+	public List<TeamMemberDTO> teamList(Integer userNo) {
+		return teamDAO.teamList(userNo);
+	}
 }

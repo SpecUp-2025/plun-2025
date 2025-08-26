@@ -25,4 +25,10 @@ public class TeamController {
     public ResponseEntity<List<TeamMemberDTO>> listByTeam(@PathVariable("teamNo") Integer teamNo) {
         return ResponseEntity.ok(teamService.listMembersByTeam(teamNo));
     }
+    
+    
+    @GetMapping("/teamList/{userNo}")
+    public ResponseEntity<List<TeamMemberDTO>> teamList(@PathVariable("userNo") Integer userNo) {
+        return ResponseEntity.ok(teamService.teamList(userNo));
+    }
 }

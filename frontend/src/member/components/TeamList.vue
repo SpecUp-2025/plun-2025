@@ -5,6 +5,17 @@
         <h3>{{ name }} 환영합니다.</h3>
         <h3>{{ userNo }}</h3>
         
+        <h1>팀 리스트</h1>
+        <ul>
+          <li v-for="(item,index) in team.list" :key="item.teamNo">
+            {{ index }}
+            {{ item.teamNo }}
+            {{ item.teamName }}
+            {{ item.createDate }}
+            <button @click = "join(item.teamNo)">입장하기</button>
+          </li>
+        </ul>
+        <button @click="invite">팀 추가하기</button>
         <button @click="check" >토큰 전송 확인</button>
         <button @click ="logout">로그아웃</button>
     </div>
@@ -13,7 +24,7 @@
 <script setup>
 import { useUserStore } from '@/store/userStore';
 import instance from '@/util/interceptors';
-import { computed } from 'vue';
+import { computed, onMounted, reactive } from 'vue';
 import { useRouter } from 'vue-router';
 
 const userStore = useUserStore()
@@ -21,6 +32,25 @@ const router = useRouter()
 const email = computed(() => userStore.user?.email ?? '');
 const name = computed(() => userStore.user?.name ?? '');
 const userNo = computed(() => userStore.user?.userNo ?? '');
+const team = reactive({
+  list:[],
+})
+
+onMounted(async ()=>{
+  await teamList()
+}) 
+
+
+const teamList = async ()=>{
+  try {
+    const {status , data} = await instance.get(`/teams/teamList/${userNo.value}`)
+    if(status===200){
+      team.list = data
+    }
+  } catch (error) {
+    console.error("리스트를 불러오는데 실패했습니다.",error)
+  }
+}
 
 const check = async () => {
     try {
@@ -47,6 +77,11 @@ const logout = async () => {
     console.error("로그아웃 실패",error)
   }
   
+}
+
+const join = (teamNo) =>{
+  if(!teamNo) return;
+  router.push({name : 'TeamMain', params:{ id: teamNo }})
 }
 </script>
 

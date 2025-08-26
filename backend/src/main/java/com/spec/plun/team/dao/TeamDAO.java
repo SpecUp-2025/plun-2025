@@ -12,4 +12,6 @@ public interface TeamDAO {
 
     
 	List<TeamMemberDTO> selectByTeam(Integer teamNo);
+
+	List<TeamMemberDTO> teamList(Integer userNo);
 }
