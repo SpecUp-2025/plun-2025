@@ -1,7 +1,7 @@
 import axios from 'axios';
 
 const instance = axios.create({
-    baseURL: '/api'
+    baseURL: `/api`
 })
 
 instance.interceptors.request.use(
@@ -42,7 +42,7 @@ instance.interceptors.response.use(
 async function newAcessToken(){
     const refreshToken = localStorage.getItem("refreshToken");
     try {
-        const {status,data} = await axios.post('/api/auth/newAcessToken',{
+        const {status,data} = await axios.post(`/api/auth/newAcessToken`,{
             refreshToken : refreshToken
         })
         if(status===200){

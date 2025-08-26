@@ -7,7 +7,9 @@ import SignalTest from '@/components/meeting/SignalTest.vue'
 import Meeting from '@/components/meeting/Meeting.vue'
 import MeetingTest from '@/components/meeting/MeetingTest.vue'
 import LoginForm from '@/auth/components/LoginForm.vue'
-import Success from '@/auth/components/Success.vue'
+import Register from '@/member/components/Register.vue'
+import TeamList from '@/auth/components/TeamList.vue'
+
 
 const routes = [
   {
@@ -27,10 +29,11 @@ const routes = [
     props: true
   },
   { path: '/', name: 'login', component: LoginForm },
-  { path: '/s', name: 's', component: Success },
+  { path: '/TeamList', name: 'TeamList', component: TeamList },
   { path: '/signal-test', component: SignalTest },
   { path: '/meeting', name: 'Meeting', component: Meeting},
   { path: '/meeting-test', name: 'MeetingTest', component: MeetingTest},
+  { path: '/register', name: 'register', component: Register},
 ]
 
 const router = createRouter({

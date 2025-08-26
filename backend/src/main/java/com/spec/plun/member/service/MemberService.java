@@ -18,4 +18,12 @@ public class MemberService {
 		return memberDAO.getEmail(email);
 	}
 
+	public boolean findEmail(String email) {
+		return memberDAO.findEmail(email)>0;
+	}
+
+	public boolean register(MemberDTO memberDTO) {
+		return memberDAO.register(memberDTO) == 1;
+	}
+
 }
