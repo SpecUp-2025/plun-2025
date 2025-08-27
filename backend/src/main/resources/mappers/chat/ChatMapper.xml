@@ -18,9 +18,18 @@
   </update>
 
   <select id="getChatMessageByRoomNo" resultType="com.spec.plun.chat.entity.ChatMessage">
-    SELECT * FROM TB_CHAT_MESSAGE
-    WHERE room_no = #{roomNo}
-    ORDER BY create_date ASC
+	SELECT 
+	  m.message_no,
+	  m.room_no,
+	  m.user_no,
+	  u.name,
+	  m.content,
+	  m.create_date,
+	  m.message_type
+	FROM tb_chat_message m
+	LEFT JOIN tb_member u ON m.user_no = u.user_no
+	WHERE m.room_no = #{roomNo}
+	ORDER BY m.create_date ASC
   </select>
   
   <select id="getChatRooms" resultType="com.spec.plun.chat.entity.ChatRoom">
@@ -59,5 +68,9 @@
     WHERE room_no = #{roomNo} 
       AND user_no = #{userNo}
   </delete>
+  
+  <select id="getUserNameByUserNo" parameterType="int" resultType="string">
+    SELECT name FROM tb_member WHERE user_no = #{userNo}
+  </select>
   
 </mapper>

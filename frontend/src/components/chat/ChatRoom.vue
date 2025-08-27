@@ -1,10 +1,6 @@
 <template>
   <div class="chat-room">
-    <!-- 사용자 번호 입력창 테스트용-->
-    <!-- <div>
-      <label>사용자 번호: </label>
-      <input type="number" v-model.number="userNo" min="1" />
-    </div> -->
+
     <div class="room-name">
     <template v-if="isEditingRoomName">
         <input v-model="newRoomName" />
@@ -61,11 +57,12 @@ export default {
         messages: [],
         stompClient: null,   // 추가
         stompConnected: false,
-        roomNo: null, // 임시로 하드코딩. 나중엔 route param에서 받아오는 게 이상적
+        //roomNo: Number(this.$route.params.roomNo), // 💡 여기서 초기화, // 임시로 하드코딩. 나중엔 route param에서 받아오는 게 이상적
         chatMembers: [],
         roomName: '',            // ✅ 현재 채팅방 이름
         isEditingRoomName: false,
-        newRoomName: ''          // ✅ 수정 입력값
+        newRoomName: '' ,         // ✅ 수정 입력값
+        alarms: []
         }
   },
   mounted() {
@@ -106,7 +103,6 @@ export default {
 
     handleAttachmentDeleted({ messageNo, attachmentNo }) {
         if (!this.stompConnected || !this.stompClient) return;
-
         const payload = {
             type: 'DELETE_ATTACHMENT',
             roomNo: this.roomNo,
@@ -117,35 +113,31 @@ export default {
         console.log('🗑️ 첨부파일 삭제 WebSocket 전송:', payload);
         this.stompClient.send('/app/chat.deleteAttachment', {}, JSON.stringify(payload));
         },
-
+        
     removeMessageIfEmpty(message) {
         const isEmpty = !message.content && (!message.attachments || message.attachments.length === 0);
-
         if (isEmpty) {
             this.messages = this.messages.filter(m => m.messageNo !== message.messageNo);
             console.log(`🗑️ 메시지 ${message.messageNo} 삭제됨 (내용 없음)`);
         }
         },
-
+        
     goToCreateRoom() {
         this.$router.push('/room/new');
     },
     
     // 채팅방 퇴장
     async leaveChatRoom() {
-
         try {
-            await instance.delete(`/chat/room/${this.roomNo}/member/${this.userNo}`);
+            //await instance.delete(`/chat/room/${this.roomNo}/member/${this.userNo}`);
             console.log("🚪 채팅방 나가기 성공");
             this.$router.push('/chat'); // 또는 이전 화면
         } catch (error) {
             console.error("❌ 채팅방 나가기 실패:", error);
         }
         },
-
     // 참여자 등록
     async registerChatMember() {
-
             try {
                 await instance.post(`/chat/room/${this.roomNo}/member/${this.userNo}`);
                 console.log("✅ 참여자 등록 성공");
@@ -155,7 +147,6 @@ export default {
         },
     // 참여자 목록
     async loadChatMembers() {
-
         try {
             const response = await instance.get(`/chat/rooms/${this.roomNo}/members`);
             this.chatMembers = response.data;
@@ -232,15 +223,15 @@ export default {
       const socket = new SockJS('/ws-chat'); // ✅ 백엔드 설정과 일치
       this.stompClient = Stomp.over(socket); // ✅ 기존 Client(...) 대신
 
-      this.stompClient.connect({}, () => {
+        this.stompClient.connect({}, () => {
         console.log('✅ WebSocket 연결 성공');
         this.stompConnected = true; 
 
         this.stompClient.subscribe(`/topic/chat/room/${this.roomNo}`, (msg) => {
-          console.log('⬅️ 서버로부터 메시지 수신:', msg.body);
-          const received = JSON.parse(msg.body);
-        
-          if (received.type === 'DELETE_ATTACHMENT') {
+            console.log('⬅️ 서버로부터 메시지 수신:', msg.body);
+            const received = JSON.parse(msg.body);
+            
+            if (received.type === 'DELETE_ATTACHMENT') {
             const msgToUpdate = this.messages.find(m => m.messageNo === received.messageNo);
             if (msgToUpdate) {
             msgToUpdate.attachments = msgToUpdate.attachments.filter(
@@ -254,18 +245,48 @@ export default {
             return;
         }
         
-        // ✅ timestamp 없으면 현재 시각으로 보정
+        // timestamp 없으면 현재 시각으로 보정
         if (!received.timestamp && received.createDate) {
-          received.timestamp = new Date(received.createDate).getTime();
+            received.timestamp = new Date(received.createDate).getTime();
         }
-          this.messages.push(received);
-          console.log('📝 messages 배열 업데이트:', this.messages);
+            this.messages.push(received);
+            console.log('📝 messages 배열 업데이트:', this.messages);
         });
-      }, (error) => {
-        console.error('❌ WebSocket 연결 실패:', error);
-      });
+        // 참여자 목록 구독
+        this.stompClient.subscribe(`/topic/chat/room/${this.roomNo}/members`, (msg) => {
+            const members = JSON.parse(msg.body);
+            console.log('👥 실시간 참여자 목록 수신:', members);
+            this.chatMembers = members;
+        });
+        // 알림 구독 추가
+        this.stompClient.subscribe(`/topic/notifications/${this.userNo}`, (msg) => {
+        const alarm = JSON.parse(msg.body);
+        console.log('🔔 알림 수신 전체:', alarm);
+        console.log('🔔 알림 수신 - 이름:', alarm.name);
+        console.log('🔔 알림 수신:', alarm.name, alarm.content);
+
+        // 현재 보고있는 방과 알림 방이 다를 때만 알림 처리
+        if (alarm.referenceNo !== this.roomNo) {  
+            this.alarms.push(alarm);  // 알림 배열에 저장
+            this.showToast(alarm.content);  // 팝업 노출 함수 (Toast 등)
+        } else {
+            // 현재 채팅방에 있으면 알림 무시 (이미 메시지로 보여짐)
+            console.log('채팅방에 있어 알림 무시:', alarm);
+        }
+        });
+
+        // this.stompClient.subscribe(`/topic/notifications/${this.userNo}`, (msg) => {
+        // const alarm = JSON.parse(msg.body);
+        // console.log('🔔 알림 수신:', alarm);
+
+        // // 알림 배열에 추가하거나 팝업 표시 등
+        // this.$emit('alarm-received', alarm); // 부모로 이벤트 보낼 수도 있고
+        // });
+        }, (error) => {
+            console.error('❌ WebSocket 연결 실패:', error);
+        });
     }
-  }
+}
 };
 </script>
 

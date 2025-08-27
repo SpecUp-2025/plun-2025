@@ -27,8 +27,8 @@ export default {
 
     async send() {
         if (!this.inputMessage.trim() && !this.file) return;
-    const userStore = useUserStore();
-    const userNo = userStore.user?.name;
+            const userStore = useUserStore();
+            const userNo = userStore.user?.userNo;
         if (!userNo) {
         console.warn('❌ 로그인된 사용자 정보가 없습니다.');
         return;
@@ -48,9 +48,9 @@ export default {
         formData.append('file', this.file);
 
         try {
-          const response = await instance.post('/chat/send', formData, {
-            headers: { 'Content-Type': 'multipart/form-data' }
-          });
+          const response = await instance.post('/chat/send', formData
+           
+          );
           console.log('📁 파일 전송 성공:', response.data);
           this.inputMessage = '';
           this.file = null;

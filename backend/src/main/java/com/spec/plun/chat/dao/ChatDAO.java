@@ -32,5 +32,7 @@ public interface ChatDAO {
     int updateRoomName(@Param("roomNo") int roomNo, @Param("newName") String newName);
     // 채팅방 이름 조회
     ChatRoom getChatRoom(int roomNo);
+    
+    String getUserNameByUserNo(int userNo);
 
 }
