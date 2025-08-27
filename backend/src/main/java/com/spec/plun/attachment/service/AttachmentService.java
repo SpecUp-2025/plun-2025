@@ -9,6 +9,7 @@ import java.time.LocalDateTime;
 import java.util.UUID;
 
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 import org.springframework.web.multipart.MultipartFile;
 
@@ -21,8 +22,11 @@ public class AttachmentService {
 	@Autowired
 	private AttachmentDAO attachmentDAO;
 	
+    @Value("${file.upload-path}")
+    private String uploadPath;
+	
 	// 실제 파일 저장 위치 (나중에 설정 파일로 빼기)
-	private final String uploadPath = "C:/upload/chat"; // 본인 pc에 맞게 설정 변경
+	//private final String uploadPath = "C:/upload/chat"; // 본인 pc에 맞게 설정 변경
 
 	// 파일 삭제
 	public boolean deleteAttachmentById(String attachmentNo) {
