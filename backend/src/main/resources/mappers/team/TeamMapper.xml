@@ -23,14 +23,27 @@
 		tm.team_no,
 	    team_name,
 	    create_date
-	FROM tb_team_member tm
-	JOIN tb_team t
+	FROM TB_TEAM_MEMBER tm
+	JOIN TB_TEAM t
 	  ON tm.team_no = t.team_no
 	WHERE tm.user_no = #{userNo}
 	  AND tm.delete_yn = 'N';
 	 
 	 </select>
     
+    <insert id="createTeam"  parameterType="com.spec.plun.team.dto.TeamDTO" useGeneratedKeys="true" keyProperty="teamNo" keyColumn="team_no">
+   	INSERT INTO TB_TEAM(team_name) VALUES(#{teamName})
     
+    </insert>
+    
+    <insert id="createTeamLeader">
+   	INSERT INTO TB_TEAM_MEMBER(team_no,user_no,role_no) VALUES(#{teamNo},#{userNo},'B001')
+    
+    </insert>
+    
+    <insert id="insertInvite">
+   	INSERT INTO TB_INVITED(team_no,user_no,group_no,invited_email) VALUES(#{teamNo},#{userNo},'F001',#{inviteEmail})
+    
+    </insert>
 
 </mapper>
