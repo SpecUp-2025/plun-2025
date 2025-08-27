@@ -2,12 +2,17 @@ package com.spec.plun.team.controller;
 
 import java.util.List;
 
+import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
+import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
+import com.spec.plun.team.dto.TeamCreateRequest;
+import com.spec.plun.team.dto.TeamCreateResponse;
 import com.spec.plun.team.dto.TeamMemberDTO;
 import com.spec.plun.team.service.TeamService;
 
@@ -31,4 +36,11 @@ public class TeamController {
     public ResponseEntity<List<TeamMemberDTO>> teamList(@PathVariable("userNo") Integer userNo) {
         return ResponseEntity.ok(teamService.teamList(userNo));
     }
+    
+    @PostMapping("/createTeam")
+    public ResponseEntity<Object> createTeam( @RequestBody TeamCreateRequest teamCreateRequest) {
+    	TeamCreateResponse teamCreateResponse = teamService.createTeam(teamCreateRequest);
+        return ResponseEntity.status(HttpStatus.CREATED).body(teamCreateResponse);
+    }
+    
 }

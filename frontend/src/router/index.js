@@ -8,6 +8,7 @@ import LoginForm from '@/auth/components/LoginForm.vue'
 import Register from '@/member/components/Register.vue'
 import TeamList from '@/member/components/TeamList.vue'
 import TeamMain from '@/main/components/TeamMain.vue'
+import TeamCreate from '@/member/components/TeamCreate.vue'
 import MeetingPrejoinModal from '@/components/meeting/MeetingPrejoinModal.vue'
 import MeetingRoom from '@/components/meeting/MeetingRoom.vue'
 
@@ -30,12 +31,20 @@ const routes = [
     props: true
   },
   { path: '/', name: 'login', component: LoginForm },
-  { path: '/TeamList', name: 'TeamList', component: TeamList },
+  { path: '/teamList', name: 'teamList', component: TeamList,
+    children : [
+      {
+        path: '/teamCreate',
+        name: 'teamCreate',
+        component: TeamCreate
+      }
+    ]
+  },
   { path: '/signal-test', component: SignalTest },
   { path: '/meeting', name: 'Meeting', component: Meeting},
   { path: '/meeting-test', name: 'MeetingTest', component: MeetingTest},
   { path: '/register', name: 'register', component: Register},
-  { path: '/TeamMain/:id', name: 'TeamMain', component: TeamMain},
+  { path: '/teamMain/:id', name: 'TeamMain', component: TeamMain},
   { path: '/meeting-room/:roomCode', name: 'MeetingRoom', component: MeetingRoom},
   { path: '/meeting-main', name: 'MeetingMain', component: MeetingMain,
     children: [{ path: ':roomCode/prejoin', name: 'MeetingPrejoin', component: MeetingPrejoinModal }],
