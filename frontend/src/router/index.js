@@ -10,22 +10,9 @@ import LoginForm from '@/auth/components/LoginForm.vue'
 import Success from '@/auth/components/Success.vue'
 
 const routes = [
-  {
-    path: '/chat',
-    name: 'ChatRoomList',
-    component: ChatRoomList
-  },
-  {
-    path: '/room/new',
-    name: 'ChatRoomForm',
-    component: ChatRoomForm
-  },
-  {
-    path: '/room/:roomNo',
-    name: 'ChatRoom',
-    component: ChatRoom,
-    props: true
-  },
+  { path: '/chat', name: 'ChatRoomList', component: ChatRoomList },
+  { path: '/room/new', name: 'ChatRoomForm', component: ChatRoomForm },
+  { path: '/room/:roomNo', name: 'ChatRoom', component: ChatRoom },
   { path: '/', name: 'login', component: LoginForm },
   { path: '/s', name: 's', component: Success },
   { path: '/signal-test', component: SignalTest },
