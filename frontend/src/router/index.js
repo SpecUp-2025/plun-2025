@@ -3,7 +3,7 @@ import { createRouter, createWebHistory } from 'vue-router'
 import ChatRoomForm from '@/components/chat/ChatRoomForm.vue'
 import ChatRoomList from '@/components/chat/ChatRoomList.vue'
 import ChatRoom from '@/components/chat/ChatRoom.vue'
-import MeetingMain from '@/components/meeting/MeetingMain.vue'
+import MeetingNav from '@/components/meeting/MeetingNav.vue'
 import LoginForm from '@/auth/components/LoginForm.vue'
 import Register from '@/member/components/Register.vue'
 import TeamList from '@/member/components/TeamList.vue'
@@ -31,13 +31,10 @@ const routes = [
   },
   { path: '/', name: 'login', component: LoginForm },
   { path: '/TeamList', name: 'TeamList', component: TeamList },
-  { path: '/signal-test', component: SignalTest },
-  { path: '/meeting', name: 'Meeting', component: Meeting},
-  { path: '/meeting-test', name: 'MeetingTest', component: MeetingTest},
   { path: '/register', name: 'register', component: Register},
-  { path: '/TeamMain/:id', name: 'TeamMain', component: TeamMain},
+  { path: '/TeamMain/:teamNo', name: 'TeamMain', component: TeamMain},
   { path: '/meeting-room/:roomCode', name: 'MeetingRoom', component: MeetingRoom},
-  { path: '/meeting-main', name: 'MeetingMain', component: MeetingMain,
+  { path: '/meeting-Nav', name: 'MeetingNav', component: MeetingNav,
     children: [{ path: ':roomCode/prejoin', name: 'MeetingPrejoin', component: MeetingPrejoinModal }],
   },
 ]

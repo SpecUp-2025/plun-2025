@@ -12,4 +12,5 @@ public class MeetingRoomListDto {
     private LocalDateTime scheduledTime;
     private LocalDateTime scheduledEndTime;
     private String  isPrivate; // 'Y'/'N'
+    private LocalDateTime endedTime;
 }

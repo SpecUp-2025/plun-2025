@@ -48,18 +48,19 @@
 		mr.room_code AS roomCode,
 		mr.title AS title,
 		mr.scheduled_time AS scheduledTime,
-		mr.scheduled_end_time AS scheduledEndTime,
-		mr.is_private AS isPrivate
+		mr.scheduled_end_time AS scheduledEndTime
 		FROM tb_meeting_room mr
-		JOIN tb_meeting_participant mp ON mp.room_no =
-		mr.room_no
-		WHERE (mr.scheduled_end_time IS NULL OR
-		mr.scheduled_end_time > #{now})
-		AND mr.team_no = #{teamNo}
-		AND
-		mp.user_no = #{userNo}
-		ORDER BY mr.scheduled_time DESC, mr.create_date
-		DESC
+		INNER JOIN tb_meeting_participant mp
+		ON mp.room_no = mr.room_no
+		AND mp.user_no = #{userNo}
+		WHERE mr.team_no = #{teamNo}
+		AND mr.ended_time IS NULL                        
+		AND (mr.scheduled_end_time IS NULL           
+		OR mr.scheduled_end_time >= #{now})
+		ORDER BY
+		mr.scheduled_time ASC,
+		COALESCE(mr.scheduled_end_time, mr.scheduled_time) ASC,
+		mr.room_no ASC
 	</select>
 
 	<select id="findRole" parameterType="map" resultType="string">
