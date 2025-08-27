@@ -63,7 +63,7 @@ public class AuthController {
 	public ResponseEntity<Object> verifyCode(@RequestBody VerifyCodeRequest verifyCodeRequest)throws MessagingException{
 		boolean isSend = emailService.verifyCode(verifyCodeRequest.email(),verifyCodeRequest.code());
 		if(!isSend) {
-			return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(Map.of("mesg","인증코드가 일치하지 않습니다."));
+			return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(Map.of("msg","인증코드가 일치하지 않습니다."));
 		}
 		
 		return ResponseEntity.ok(Map.of("msg", "인증코드가 일치합니다."));
@@ -72,7 +72,7 @@ public class AuthController {
 	@PostMapping("/register")
 	public ResponseEntity<Object> register(@RequestBody @Valid RegisterRequest registerRequest){
 		authService.register(registerRequest);
-		return ResponseEntity.status(HttpStatus.CREATED).body(Map.of("msg","회원가입 성"));		
+		return ResponseEntity.status(HttpStatus.CREATED).body(Map.of("msg","회원가입 성공"));		
 	}
 
 	}

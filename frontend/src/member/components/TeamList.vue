@@ -6,7 +6,11 @@
         <h3>{{ userNo }}</h3>
         
         <h1>팀 리스트</h1>
-        <ul>
+
+        <div v-if="!team.list.length">
+          팀 리스트가 없습니다.
+        </div>
+        <ul v-else>
           <li v-for="(item,index) in team.list" :key="item.teamNo">
             {{ index }}
             {{ item.teamNo }}
@@ -15,9 +19,11 @@
             <button @click = "join(item.teamNo)">입장하기</button>
           </li>
         </ul>
-        <button @click="invite">팀 추가하기</button>
+        <button @click="router.push({name:'teamCreate'})">팀 추가하기</button>
         <button @click="check" >토큰 전송 확인</button>
         <button @click ="logout">로그아웃</button>
+
+        <RouterView/>
     </div>
 </template>
 
@@ -25,7 +31,7 @@
 import { useUserStore } from '@/store/userStore';
 import instance from '@/util/interceptors';
 import { computed, onMounted, reactive } from 'vue';
-import { useRouter } from 'vue-router';
+import { RouterView, useRouter } from 'vue-router';
 
 const userStore = useUserStore()
 const router = useRouter()
