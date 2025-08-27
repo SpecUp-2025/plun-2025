@@ -4,42 +4,24 @@
   "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
 <mapper namespace="com.spec.plun.meeting.room.MeetingRoomDAO">
 
-	<!-- MeetingRoom 매핑 -->
-	<resultMap id="MeetingRoomMap"
-		type="com.spec.plun.meeting.room.MeetingRoom">
-		<id property="roomNo" column="room_no" />
-		<result property="teamNo" column="team_no" />
-		<result property="title" column="title" />
-		<result property="scheduledTime" column="scheduled_time" />
-		<result property="scheduledEndTime" column="scheduled_end_time" />
-		<result property="startedTime" column="started_time" />
-		<result property="endedTime" column="ended_time" />
-		<result property="roomCode" column="room_code" />
-		<result property="isPrivate" column="is_private" />
-		<result property="roomPasswordHash" column="room_password_hash" />
-		<result property="createDate" column="create_date" />
-		<result property="updateDate" column="update_date" />
-	</resultMap>
-
-	<!-- INSERT: AUTO_INCREMENT PK(room_no)를 room.roomNo에 채워줌 -->
 	<insert id="insert"
 		parameterType="com.spec.plun.meeting.room.MeetingRoom"
 		useGeneratedKeys="true" keyProperty="roomNo">
 		INSERT INTO tb_meeting_room
-		(team_no, title, scheduled_time,
-		scheduled_end_time, room_code, is_private,
+		(team_no, title, scheduled_time, scheduled_end_time, room_code,
+		is_private,
 		room_password_hash)
 		VALUES
 		(#{teamNo},
 		#{title},
-		<!-- TODO(정책): scheduled_time null 처리 위치 확정 지금은 DB에서 NOW()로 보정 -->
-		COALESCE(#{scheduledTime}, NOW()),
+		#{scheduledTime},
 		#{scheduledEndTime},
 		#{roomCode},
 		COALESCE(#{isPrivate}, 'N'),
 		#{roomPasswordHash})
 	</insert>
 
+	<!-- 참가자 일괄 INSERT -->
 	<insert id="insertParticipants">
 		INSERT INTO tb_meeting_participant (room_no, role_no, user_no,
 		join_time, out_time)
@@ -49,25 +31,65 @@
 		</foreach>
 	</insert>
 
-	<select id="selectActive" resultMap="MeetingRoomMap">
-		SELECT *
-		FROM tb_meeting_room
-		WHERE
-		(scheduled_end_time IS NULL OR scheduled_end_time > #{now})
-		ORDER BY scheduled_time ASC, create_date DESC
-	</select>
-
 	<!-- room_code 중복 체크용 -->
-	<select id="findByCode" resultMap="MeetingRoomMap">
+	<select id="findByCode"
+		resultType="com.spec.plun.meeting.room.MeetingRoom">
 		SELECT *
 		FROM tb_meeting_room
 		WHERE room_code = #{roomCode}
 		LIMIT 1
 	</select>
 
-	<!-- TODO(목록/필터 필요해지면 추가) <select id="selectActiveByUser" resultMap="MeetingRoomMap"> 
-		SELECT m.* FROM tb_meeting_room m JOIN tb_meeting_participant p ON p.room_no 
-		= m.room_no WHERE p.user_no = #{userNo} AND (m.scheduled_end_time IS NULL 
-		OR m.scheduled_end_time > #{now}) ORDER BY m.scheduled_time ASC </select> -->
+	<!--팀 + 사용자 기준 '종료되지 않은 회의' 목록 (목록 DTO로 반환) -->
+	<select id="selectActiveByTeamAndMember" parameterType="map"
+		resultType="com.spec.plun.meeting.dto.MeetingRoomListDto">
+		SELECT
+		mr.room_no AS roomNo,
+		mr.room_code AS roomCode,
+		mr.title AS title,
+		mr.scheduled_time AS scheduledTime,
+		mr.scheduled_end_time AS scheduledEndTime,
+		mr.is_private AS isPrivate
+		FROM tb_meeting_room mr
+		JOIN tb_meeting_participant mp ON mp.room_no =
+		mr.room_no
+		WHERE (mr.scheduled_end_time IS NULL OR
+		mr.scheduled_end_time > #{now})
+		AND mr.team_no = #{teamNo}
+		AND
+		mp.user_no = #{userNo}
+		ORDER BY mr.scheduled_time DESC, mr.create_date
+		DESC
+	</select>
+
+	<select id="findRole" parameterType="map" resultType="string">
+		SELECT
+		role_no
+		FROM tb_meeting_participant
+		WHERE room_no = #{roomNo}
+		AND user_no
+		= #{userNo}
+		LIMIT 1
+	</select>
+
+	<update id="updateJoinTime">
+		UPDATE tb_meeting_participant
+		SET
+		join_time =
+		COALESCE(join_time, COALESCE(#{joinedAt}, NOW())),
+		out_time = NULL
+		WHERE room_no = #{roomNo}
+		AND user_no = #{userNo}
+	</update>
+
+	<update id="updateOutTime">
+		UPDATE tb_meeting_participant
+		SET
+		out_time =
+		COALESCE(#{leftAt}, NOW())
+		WHERE room_no = #{roomNo}
+		AND user_no =
+		#{userNo}
+	</update>
 
 </mapper>
