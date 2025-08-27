@@ -60,11 +60,8 @@ export default {
             const date = new Date(this.message.timestamp);
             return date.toLocaleTimeString();
         },
-        senderName() {               // userNo -> userName 변환
-                  const member = this.chatMembers.find(
-                    m => String(m.userNo) === String(this.message.userNo)
-                );
-            return member ? member.userName : 'User ' + this.message.userNo;
+        senderName() {
+        return this.message.name || '탈퇴한 사용자';
         }
     },
     methods: {

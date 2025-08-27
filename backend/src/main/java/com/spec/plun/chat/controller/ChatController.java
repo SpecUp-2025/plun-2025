@@ -20,6 +20,7 @@ import org.springframework.web.bind.annotation.RequestPart;
 import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.multipart.MultipartFile;
 
+import com.spec.plun.alarm.service.AlarmService;
 import com.spec.plun.chat.dto.ChatMessageRequestDTO;
 import com.spec.plun.chat.entity.ChatMember;
 import com.spec.plun.chat.entity.ChatMessage;
@@ -33,6 +34,7 @@ public class ChatController {
 	private ChatService chatService;
 	@Autowired
 	private SimpMessagingTemplate messagingTemplate;
+	@Autowired AlarmService alarmService;
 	
 	// 메시지와 파일(선택사항) 함께 전송
 	@PostMapping("/send")
@@ -41,19 +43,22 @@ public class ChatController {
 	        @RequestPart(value = "file", required = false) MultipartFile file
 	) {
 	    try {
-	    	// 1. 서비스 호출하여 메시지와 첨부파일 저장 처리
 	        ChatMessage savedMessage = chatService.sendMessageWithOptionalAttachment(messageDTO, file);
-	        
-	        // 2. 파일 메시지도 WebSocket으로 브로드캐스트
+
+	        // WebSocket으로 메시지 브로드캐스트
 	        messagingTemplate.convertAndSend(
 	            "/topic/chat/room/" + savedMessage.getRoomNo(),
 	            savedMessage
 	        );
-	        // 3. HTTP 200 OK와 함께 저장된 메시지 정보를 클라이언트에 반환
+
+	        // 알림 생성 (서비스에 넣어도 되지만 컨트롤러에서 호출해도 무방)
+	        int toUserNo = chatService.findOtherUserInRoom(savedMessage.getRoomNo(), savedMessage.getUserNo());
+	        if (toUserNo != -1) {
+	            alarmService.createChatAlarm(savedMessage.getUserNo(), toUserNo, savedMessage.getRoomNo(), savedMessage.getContent());
+	        }
+
 	        return ResponseEntity.ok(savedMessage);
-	        
 	    } catch (Exception e) {
-	    	// 4. 에러 발생 시 스택 트레이스 출력 후 500 서버 에러 반환
 	        e.printStackTrace();
 	        return ResponseEntity.status(500).body("메시지 전송 실패");
 	    }
@@ -125,16 +130,32 @@ public class ChatController {
     	List<ChatMember> members = chatService.getChatMembers(roomNo);
     	return ResponseEntity.ok(members);
     }
-    // 채팅방 입장 시 참여자 등록
+    // 채팅방 입장
     @PostMapping("/room/{roomNo}/member/{userNo}")
     public ResponseEntity<Void> addMemberToRoom(@PathVariable("roomNo") int roomNo, @PathVariable("userNo") int userNo ){
+    	// 기존 참여자 등록
         chatService.addMemberToRoom(roomNo, userNo);
+
+        // 참여자 목록 조회
+        List<ChatMember> members = chatService.getChatMembers(roomNo);
+
+        // WebSocket으로 참여자 목록 전송
+        messagingTemplate.convertAndSend("/topic/chat/room/" + roomNo + "/members", members);
+
         return ResponseEntity.ok().build();
     }
     // 채팅방 퇴장
     @DeleteMapping("/room/{roomNo}/member/{userNo}")
     public ResponseEntity<Void> leaveChatRoom(@PathVariable("roomNo") int roomNo, @PathVariable("userNo") int userNo) {
+        // 기존 퇴장 처리
         chatService.removeMemberFromRoom(roomNo, userNo);
+
+        // 참여자 목록 조회
+        List<ChatMember> members = chatService.getChatMembers(roomNo);
+
+        // WebSocket으로 참여자 목록 전송
+        messagingTemplate.convertAndSend("/topic/chat/room/" + roomNo + "/members", members);
+
         return ResponseEntity.ok().build();
     }
 }

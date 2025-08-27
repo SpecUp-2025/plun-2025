@@ -8,6 +8,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.web.multipart.MultipartFile;
 
+import com.spec.plun.alarm.service.AlarmService;
 import com.spec.plun.attachment.dao.AttachmentDAO;
 import com.spec.plun.attachment.entity.Attachment;
 import com.spec.plun.attachment.service.AttachmentService;
@@ -29,6 +30,9 @@ public class ChatService {
 	@Autowired
 	private AttachmentService attachmentService;
 	
+	@Autowired
+	private AlarmService alarmService;
+	
 	public ChatMessage sendMessageWithOptionalAttachment(ChatMessageRequestDTO dto, MultipartFile file) throws IOException {
 		System.out.println("[ChatService] sendMessageWithOptionalAttachment 호출됨: dto=" + dto + ", file=" + (file != null ? file.getOriginalFilename() : "null"));
 		ChatMessage message = new ChatMessage();
@@ -41,6 +45,10 @@ public class ChatService {
 	    // 1. 메시지 저장
 	    chatDAO.insertMessage(message); // messageNo가 생성됨
 	    System.out.println("[ChatService] 메시지 저장 완료: messageNo=" + message.getMessageNo());
+	    
+	    // 작성자 이름 세팅 추가
+	    String name = chatDAO.getUserNameByUserNo(message.getUserNo());
+	    message.setName(name);
 
 
 	    // 2. 파일이 있을 경우 첨부파일 저장
@@ -111,8 +119,29 @@ public class ChatService {
 	    }
 	    message.setCreateDate(LocalDateTime.now());
 		chatDAO.insertMessage(message);
+		
+	    // userNo -> name 변환 후 세팅
+	    String name = chatDAO.getUserNameByUserNo(message.getUserNo());
+	    message.setName(name);
 		System.out.println("[ChatService] 메시지 저장 완료: messageNo=" + message.getMessageNo());
-	}
+		
+        // 상대방 userNo 조회 (간단한 예)
+        int toUserNo = findOtherUserInRoom(message.getRoomNo(), message.getUserNo());
+        if (toUserNo != -1) {
+            alarmService.createChatAlarm(message.getUserNo(),toUserNo, message.getRoomNo(), message.getContent());
+        }
+    }
+
+    // 상대방 userNo 찾는 헬퍼 메서드
+    public int findOtherUserInRoom(int roomNo, int senderUserNo) {
+        List<ChatMember> members = getChatMembers(roomNo);
+        for (ChatMember member : members) {
+            if (member.getUserNo() != senderUserNo) {
+                return member.getUserNo();
+            }
+        }
+        return -1;
+    }
 	// 채팅방 목록 조회
 	public List<ChatMember> getChatMembers(int roomNo){
 		return chatDAO.getChatMembers(roomNo);
