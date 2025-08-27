@@ -1,0 +1,35 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper
+  PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+  "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<mapper namespace="com.spec.plun.alarm.dao.AlarmDAO" >
+
+  <insert id="insertAlarm" parameterType="com.spec.plun.alarm.entity.Alarm">
+	<selectKey keyProperty="createDate" resultType="java.time.LocalDateTime" order="AFTER">
+	  SELECT create_date FROM TB_ALARM WHERE alarm_no = LAST_INSERT_ID()
+	</selectKey>
+	INSERT INTO TB_ALARM (user_no, sender_no, alarm_type, reference_no, content, is_read, create_date)
+	VALUES (#{userNo}, #{senderNo}, #{alarmType}, #{referenceNo}, #{content}, 'N', NOW())
+  </insert>
+
+  <select id="selectAlarmsByUserNo" resultType="com.spec.plun.alarm.entity.Alarm">
+	SELECT 
+	  a.*, 
+	  u.name AS sender_name
+	FROM TB_ALARM a
+	JOIN TB_MEMBER u ON a.sender_no = u.user_no
+	WHERE a.user_no = #{userNo}
+	ORDER BY a.create_date DESC
+  </select>
+
+  
+  <select id="selectUserNameByUserNo">
+	SELECT name FROM TB_MEMBER WHERE user_no = #{userNo}
+  </select>
+
+  <update id="updateAlarmIsRead">
+    UPDATE TB_ALARM SET is_read = 'Y' WHERE alarm_no = #{alarmNo}
+  </update>
+
+</mapper>
