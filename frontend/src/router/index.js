@@ -11,6 +11,7 @@ import TeamMain from '@/main/components/TeamMain.vue'
 import TeamCreate from '@/member/components/TeamCreate.vue'
 import MeetingPrejoinModal from '@/components/meeting/MeetingPrejoinModal.vue'
 import MeetingRoom from '@/components/meeting/MeetingRoom.vue'
+import CalendarView from '@/components/calendar/CalendarView.vue'
 
 
 const routes = [
@@ -22,11 +23,12 @@ const routes = [
     children : [{ path: '/teamCreate', name: 'teamCreate', component: TeamCreate }]
   },
   { path: '/register', name: 'register', component: Register},
-  { path: '/teamMain/:teamNo', name: 'TeamMain', component: TeamMain},
+  { path: '/teamMain/:teamNo', name: 'teamMain', component: TeamMain},
   { path: '/meeting-room/:roomCode', name: 'MeetingRoom', component: MeetingRoom},
   { path: '/meeting-Nav', name: 'MeetingNav', component: MeetingNav,
     children: [{ path: ':roomCode/prejoin', name: 'MeetingPrejoin', component: MeetingPrejoinModal }],
   },
+  { path: '/calendar', name: 'Calendar', component: CalendarView },
 ]
 
 export default createRouter({
