@@ -3,13 +3,11 @@ import { createRouter, createWebHistory } from 'vue-router'
 import ChatRoomForm from '@/components/chat/ChatRoomForm.vue'
 import ChatRoomList from '@/components/chat/ChatRoomList.vue'
 import ChatRoom from '@/components/chat/ChatRoom.vue'
-import MeetingNav from '@/components/meeting/MeetingNav.vue'
 import LoginForm from '@/auth/components/LoginForm.vue'
 import Register from '@/member/components/Register.vue'
 import TeamList from '@/member/components/TeamList.vue'
 import TeamMain from '@/main/components/TeamMain.vue'
 import TeamCreate from '@/member/components/TeamCreate.vue'
-import MeetingPrejoinModal from '@/components/meeting/MeetingPrejoinModal.vue'
 import MeetingRoom from '@/components/meeting/MeetingRoom.vue'
 
 
@@ -24,9 +22,6 @@ const routes = [
   { path: '/register', name: 'register', component: Register},
   { path: '/teamMain/:teamNo', name: 'TeamMain', component: TeamMain},
   { path: '/meeting-room/:roomCode', name: 'MeetingRoom', component: MeetingRoom},
-  { path: '/meeting-Nav', name: 'MeetingNav', component: MeetingNav,
-    children: [{ path: ':roomCode/prejoin', name: 'MeetingPrejoin', component: MeetingPrejoinModal }],
-  },
 ]
 
 export default createRouter({
