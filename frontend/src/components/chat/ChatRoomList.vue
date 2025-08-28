@@ -3,7 +3,7 @@
     <h2>채팅방 목록</h2>
 
     <!-- 통합 알림 뱃지 -->
-    <div class="alarm-dropdown">
+    <!-- <div class="alarm-dropdown">
       <div class="alarm-icon" @click="toggleDropdown">
         🔔
         <span v-if="unreadCount > 0" class="badge">{{ unreadCount }}</span>
@@ -27,18 +27,24 @@
 
         <button v-if="alarms.length" @click="markAllAsRead">모두 읽음</button>
       </div>
-    </div>
+    </div> -->
 
     <ul>
-      <li v-for="room in chatRooms" :key="room.roomNo" @click="enterRoom(room.roomNo)">
+      <li
+        v-for="room in chatRooms"
+        :key="room.roomNo"
+        @click="enterRoom(room.roomNo)"
+        class="chat-room-item"
+      >
         {{ room.roomName }}
+        <span v-if="hasUnreadByRoom[room.roomNo]" class="dot">●</span>
       </li>
     </ul>
   </div>
 </template>
 
 <script setup>
-import { ref, onMounted } from 'vue'
+import { ref, onMounted, computed } from 'vue'
 import { useRouter } from 'vue-router'
 import instance from '@/util/interceptors'
 import SockJS from 'sockjs-client'
@@ -55,9 +61,17 @@ const stompClient = ref(null)
 const userStore = useUserStore()
 const userNo = userStore.user?.userNo
 
-const enterRoom = (roomNo) => {
+const enterRoom = async (roomNo) => {
+  const unread = alarms.value.filter(a => a.referenceNo === roomNo && a.isRead === 'N')
+  await Promise.all(unread.map(a => instance.put(`/alarms/${a.alarmNo}/read`)))
+  unread.forEach(a => a.isRead = 'Y')
+  unreadCount.value = alarms.value.filter(a => a.isRead === 'N').length
+
   router.push(`/room/${roomNo}`)
 }
+// const enterRoom = (roomNo) => {
+//   router.push(`/room/${roomNo}`)
+// }
 
 const fetchChatRooms = async () => {
   try {
@@ -126,6 +140,15 @@ const markAllAsRead = async () => {
   alarms.value.forEach(a => a.isRead = 'Y')
   unreadCount.value = 0
 }
+const hasUnreadByRoom = computed(() => {
+  const map = {}
+  alarms.value.forEach(alarm => {
+    if (alarm.isRead === 'N') {
+      map[alarm.referenceNo] = true
+    }
+  })
+  return map
+})
 
 // 초기 실행
 onMounted(() => {
@@ -138,6 +161,11 @@ onMounted(() => {
 
 
 <style scoped>
+.dot {
+  color: red;
+  font-size: 14px;
+  margin-left: 6px;
+}
 .badge {
   background-color: red;
   color: white;
