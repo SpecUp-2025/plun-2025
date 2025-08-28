@@ -14,7 +14,7 @@ const teamNo = computed(() => Number(route.params.teamNo)) // :id 사용
 
     <template #sidebar>
       <div style="margin-bottom:8px">
-        <router-link :to="{ name: 'TeamList' }">← 팀 목록으로</router-link>
+        <router-link :to="{ name: 'teamList' }">← 팀 목록으로</router-link>
       </div>
       <MeetingNav :team-no="teamNo" />
     </template>

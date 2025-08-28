@@ -1,6 +1,6 @@
 <!-- src/components/meeting/MeetingPrejoinModal.vue -->
 <template>
-  <div class="overlay" @click.self="close">
+  <div v-if="open" class="overlay" @click.self="close">
     <div class="modal">
       <h3>프리조인</h3>
 
@@ -91,16 +91,20 @@
 </template>
 
 <script setup>
-import { onMounted, onBeforeUnmount, ref, computed, nextTick } from 'vue'
-import { useRoute, useRouter } from 'vue-router'
+import { onMounted, onBeforeUnmount, ref, computed, nextTick, watch } from 'vue'
+import { useRouter } from 'vue-router'
 import instance from '@/util/interceptors'
 import { useUserStore } from '@/store/userStore'
 
-const route = useRoute()
 const router = useRouter()
 const userStore = useUserStore()
 
-const roomCode = route.params.roomCode
+const props = defineProps({
+  open: { type: Boolean, default: false },
+  roomCode: { type: String, required: true },
+  teamNo: { type: Number, required: false },
+})
+const emit = defineEmits(['update:open'])
 const userNo = computed(() => Number(userStore.user?.userNo ?? 0))
 
 const loading = ref(true)
@@ -132,8 +136,14 @@ let sourceNode = null
 let vuRaf = 0
 const vuLevel = ref(0) // 0~100 %
 
-onMounted(async () => {
+onMounted(async () => { if (props.open) await init() })
+watch(() => props.open, async (v) => { v ? await init() : cleanup() })
+
+onBeforeUnmount(() => { cleanup() })
+ 
+async function init () {
   try {
+    loading.value = true
     await fetchAuthz()
     loading.value = false
     if (authorized.value) {
@@ -144,20 +154,21 @@ onMounted(async () => {
       await startPreview()
       navigator.mediaDevices?.addEventListener?.('devicechange', onDeviceChange)
     } else {
-      // 혹시 남아있을 수 있는 리소스 정리
       stopPreview()
       teardownAnalyser()
     }
   } catch (e) {
+    loading.value = false
     error.value = e?.response?.data?.message || e.message || String(e)
   }
-})
+}
 
-onBeforeUnmount(() => {
+function cleanup () {
   stopPreview()
   teardownAnalyser()
   navigator.mediaDevices?.removeEventListener?.('devicechange', onDeviceChange)
-})
+}
+
 
 function savePrefs() {
   localStorage.setItem('pref.videoId', selectedVideoId.value)
@@ -194,7 +205,7 @@ function setDefaultSelectionsIfEmpty() {
 
 async function fetchAuthz() {
   if (!userNo.value) throw new Error('로그인 정보가 없습니다.')
-  const { data } = await instance.get(`/meeting-rooms/${roomCode}/authz`, {
+  const { data } = await instance.get(`/meeting-rooms/${props.roomCode}/authz`, {
     params: { userNo: userNo.value }
   })
   info.value = data
@@ -326,7 +337,7 @@ async function testSpeaker() {
     const dest = audioCtx.createMediaStreamDestination()
 
     osc.type = 'sine'
-    osc.frequency.value = 440 
+    osc.frequency.value = 440
     gain.gain.value = 0.001   // 시작은 아주 작게
 
     osc.connect(gain)
@@ -406,13 +417,14 @@ function prettyGumError(e) {
   return `미디어 장치 초기화에 실패했습니다.\n(${name || 'Error'}: ${msg})`
 }
 
-function close() { router.back() }
+function close() { emit('update:open', false) }
 
 async function enter() {
   if (!authorized.value) return
   entering.value = true
   try {
-    await router.push({ name: 'MeetingRoom', params: { roomCode } })
+    await router.push({ name: 'MeetingRoom', params: { roomCode: props.roomCode } })
+    emit('update:open', false)
   } finally {
     entering.value = false
   }
