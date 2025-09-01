@@ -3,7 +3,6 @@ package com.spec.plun.auth.service;
 import org.springframework.http.HttpStatus;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
-import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.server.ResponseStatusException;
 
 import com.spec.plun.auth.DTO.LoginDTO;
@@ -12,9 +11,11 @@ import com.spec.plun.auth.DTO.RefreshTokenRequest;
 import com.spec.plun.auth.DTO.TokenResponse;
 import com.spec.plun.member.DTO.MemberDTO;
 import com.spec.plun.member.DTO.RegisterRequest;
+import com.spec.plun.member.DTO.ResetPasswordRequest;
 import com.spec.plun.member.service.MemberService;
 
 import io.jsonwebtoken.Claims;
+import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 
 @Service
@@ -30,7 +31,7 @@ public class AuthService {
 	public TokenResponse login(LoginDTO member) {
 		QualificationCheckDTO qualification = qualificationCheckService.getByEmail(member);
 		
-		if(qualification == null || passwordEncoder.matches(qualification.getPassword(), member.getPassword())) {
+		if(qualification == null || !passwordEncoder.matches(member.getPassword(), qualification.getPassword())) {
 			 throw new ResponseStatusException(HttpStatus.UNAUTHORIZED,"아이디 혹은 비밀번호가 틀렸습니다.");
 		}
 	    return new TokenResponse(
@@ -64,6 +65,15 @@ public class AuthService {
 		memberDTO.setPassword(hashed);
 		memberDTO.setName(registerRequest.getName());
 		memberService.register(memberDTO);
+		
+	}
+
+	public void resetPassword(@Valid ResetPasswordRequest resetPasswordRequest) {
+		String hashed = passwordEncoder.encode(resetPasswordRequest.getPassword());
+		MemberDTO memberDTO = new MemberDTO();
+		memberDTO.setEmail(resetPasswordRequest.getEmail());
+		memberDTO.setPassword(hashed);
+		memberService.resetPassword(memberDTO);
 		
 	}
 

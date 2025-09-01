@@ -10,12 +10,13 @@
       <button type="submit" >로그인</button>
     </form>
     <RouterLink :to="{name : 'register'}" >회원가입</RouterLink>
+    <RouterLink :to="{name : 'find'}" >비밀번호 찾기</RouterLink>
   </template>
   
   <script setup>
 import { REGEX_PATTERN } from '@/member/util/Regex'
 import { getUser } from '@/util/getUser'
-import instance from '@/util/interceptors'
+import axios from 'axios'
 import { reactive, } from 'vue'
 import { RouterLink, useRouter } from 'vue-router'
 
@@ -31,17 +32,19 @@ const login = async () => {
   if (Object.values(unvaild).some(v => !!v)) return;
   const email = form.email?.trim().toLowerCase();
   if (!email || !form.password) return alert('이메일/비밀번호를 입력하세요.')
-  
   try {
-    const { data } = await instance.post(`/auth/login`, {
+    const { data,status } = await axios.post(`api/auth/login`, {
       email,
       password: form.password,
     })
-    localStorage.setItem('accessToken', data.accessToken)
-    localStorage.setItem('refreshToken', data.refreshToken)
-    await getUser()
-    alert('로그인 성공입니다.')
-    await router.push({ name: 'teamList' })
+    if(status ===200){
+      localStorage.setItem('accessToken', data.accessToken)
+      localStorage.setItem('refreshToken', data.refreshToken)
+      await getUser()
+      alert('로그인 성공입니다.')
+      await router.push({ name: 'teamList' })
+    }
+    
   } catch (error) {
     console.error('로그인 실패', error)
     alert('이메일/비밀번호를 확인해주세요')
@@ -57,4 +60,3 @@ function checkEmail() {
   unvaild.email = "";
 }
 </script>
-  

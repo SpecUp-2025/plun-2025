@@ -9,6 +9,7 @@ import TeamList from '@/member/components/TeamList.vue'
 import TeamMain from '@/main/components/TeamMain.vue'
 import TeamCreate from '@/member/components/TeamCreate.vue'
 import MeetingRoom from '@/components/meeting/MeetingRoom.vue'
+import FindPassword from '@/member/components/FindPassword.vue'
 import CalendarView from '@/components/calendar/CalendarView.vue'
 
 
@@ -23,6 +24,7 @@ const routes = [
   { path: '/register', name: 'register', component: Register},
   { path: '/teamMain/:teamNo', name: 'teamMain', component: TeamMain},
   { path: '/meeting-room/:roomCode', name: 'MeetingRoom', component: MeetingRoom},
+  {path: '/findPassword', name: 'find', component : FindPassword},
   { path: '/meeting-Nav', name: 'MeetingNav', component: MeetingNav,
     children: [{ path: ':roomCode/prejoin', name: 'MeetingPrejoin', component: MeetingPrejoinModal }],
   },

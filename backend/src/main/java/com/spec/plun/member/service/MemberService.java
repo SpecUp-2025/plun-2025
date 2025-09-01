@@ -5,7 +5,9 @@ import org.springframework.stereotype.Service;
 
 import com.spec.plun.member.DAO.MemberDAO;
 import com.spec.plun.member.DTO.MemberDTO;
+import com.spec.plun.member.DTO.ResetPasswordRequest;
 
+import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 
 @Service
@@ -24,6 +26,12 @@ public class MemberService {
 
 	public boolean register(MemberDTO memberDTO) {
 		return memberDAO.register(memberDTO) == 1;
+	}
+
+	
+	public boolean resetPassword(MemberDTO memberDTO) {
+		return memberDAO.resetPassword(memberDTO);
+		
 	}
 
 }

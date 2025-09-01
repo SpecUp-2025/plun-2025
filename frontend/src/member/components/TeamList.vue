@@ -87,7 +87,7 @@ const logout = async () => {
 
 const join = (teamNo) =>{
   if(!teamNo) return;
-  router.push({name : 'TeamMain', params:{ teamNo: teamNo }})
+  router.push({name : 'teamMain', params:{ teamNo: teamNo }})
 }
 </script>
 

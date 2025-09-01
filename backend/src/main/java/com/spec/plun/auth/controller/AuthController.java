@@ -15,8 +15,8 @@ import com.spec.plun.auth.service.AuthService;
 import com.spec.plun.email.DTO.EmailRequest;
 import com.spec.plun.email.DTO.VerifyCodeRequest;
 import com.spec.plun.email.service.EmailService;
-import com.spec.plun.member.DTO.MemberDTO;
 import com.spec.plun.member.DTO.RegisterRequest;
+import com.spec.plun.member.DTO.ResetPasswordRequest;
 import com.spec.plun.member.service.MemberService;
 
 import jakarta.mail.MessagingException;
@@ -74,6 +74,26 @@ public class AuthController {
 		authService.register(registerRequest);
 		return ResponseEntity.status(HttpStatus.CREATED).body(Map.of("msg","회원가입 성공"));		
 	}
-
+	
+	
+	@PostMapping("/resetPassword")
+	public ResponseEntity<Object> resetPassword(@RequestBody @Valid ResetPasswordRequest ResetPasswordRequest){
+		authService.resetPassword(ResetPasswordRequest);
+		return ResponseEntity.status(HttpStatus.CREATED).body(Map.of("msg","비밀번호 재생성 성공"));		
+	}
+	
+	@PostMapping("/reset-email-code")
+	public ResponseEntity<Object> reseteEmailCode(@RequestBody @Valid EmailRequest EmailRequest)throws MessagingException{
+		String email = EmailRequest.getEmail();
+		boolean isEmail = memberService.findEmail(email);
+		if(!isEmail) {
+			return ResponseEntity.status(HttpStatus.CONFLICT).body("등록된 메일이 없습니다.");
+		}
+		boolean isSend = emailService.sendSimpleMessage(email);
+		
+		return isSend ? ResponseEntity.ok("인증 코드가 전송되었습니다.") :
+            ResponseEntity.status(HttpStatus.BAD_REQUEST).body("인증 코드 발급에 실패하였습니다.");	
+	}
+	
 	}
 
