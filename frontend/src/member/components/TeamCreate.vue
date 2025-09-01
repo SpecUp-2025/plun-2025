@@ -63,7 +63,7 @@ const create = async () => {
         if(status ===201){
             alert("팀 생성했습니다.")
             console.log(data.teamName)
-            router.push({name:'TeamMain',params:{id:data.teamNo}})
+            router.push({name:'teamMain',params:{teamNo:data.teamNo}})
         }
     } catch (error) {
         console.error('팀을 생성하지 못했습니다.',error);
