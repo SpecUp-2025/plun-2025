@@ -1,0 +1,44 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper
+  PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+  "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<mapper namespace="com.spec.plun.calendar.dao.CalendarDAO">
+
+  <!-- 일정 조회 -->
+  <select id="getEventsBetween" resultType="com.spec.plun.calendar.entity.CalendarDetail">
+	SELECT *
+	FROM TB_CALENDARDETAIL
+	WHERE start_date &lt;= #{end}
+	  AND end_date &gt;= #{start}
+	  AND delete_yn = 'N'
+  </select>
+  <!-- 일정 등록 -->
+  <insert id="insertEvent" parameterType="com.spec.plun.calendar.entity.CalendarDetail" useGeneratedKeys="true" keyProperty="calDetailNo">
+    INSERT INTO TB_CALENDARDETAIL (
+        cal_no, title, contents, start_date, start_time,
+        end_date, end_time, delete_yn, create_date, reg_user_no
+    )
+    VALUES (
+        #{calNo}, #{title}, #{contents}, #{startDate}, #{startTime},
+        #{endDate}, #{endTime}, 'N', NOW(), #{regUserNo}
+    )
+  </insert>
+  <!-- 일정 수정 -->
+  <update id="updateEvent" parameterType="com.spec.plun.calendar.entity.CalendarDetail">
+	UPDATE tb_calendardetail
+	SET
+	  title = #{title},
+	  contents = #{contents},
+	  start_date = #{startDate},
+	  start_time = #{startTime},
+	  end_date = #{endDate},
+	  end_time = #{endTime},
+	  update_dt = NOW(),
+	  update_user_no = #{updateUserNo}
+	WHERE cal_detail_no = #{calDetailNo}
+  </update>
+  
+
+</mapper>
+  
