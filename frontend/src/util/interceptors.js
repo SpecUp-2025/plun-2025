@@ -25,6 +25,7 @@ instance.interceptors.response.use(
     async (error) =>{
         const status = error.response?.status;
         if(status===401){
+            console.log("재발급 시도 중")
             error.response.statusText = "Unauthorized";
             error.response.status=401;
             
@@ -32,6 +33,7 @@ instance.interceptors.response.use(
             if(retry && !retry.try){
                 retry.try = true;
                 await newAcessToken();
+                console.log("재발급 완료")
                 return instance(retry);
             }
         }
