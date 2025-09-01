@@ -1,0 +1,30 @@
+# venv
+.venv/
+env/
+venv/
+
+# bytecode & caches
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+.pytest_cache/
+.mypy_cache/
+.ruff_cache/
+.tox/
+
+# build artifacts
+build/
+dist/
+*.egg-info/
+
+# local env & logs
+.env
+*.log
+
+# uploads (로컬 동작용)
+_uploads/
+
+# OS/editor (혹시 하위에 생성될 수도 있으니)
+.DS_Store
+Thumbs.db
