@@ -16,7 +16,6 @@
   <script setup>
 import { REGEX_PATTERN } from '@/member/util/Regex'
 import { getUser } from '@/util/getUser'
-import instance from '@/util/interceptors'
 import axios from 'axios'
 import { reactive, } from 'vue'
 import { RouterLink, useRouter } from 'vue-router'
