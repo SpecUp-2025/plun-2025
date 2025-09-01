@@ -120,6 +120,7 @@ const verifyCode = async () => {
     
     } catch (error) {
         console.error('인증 실패', error)
+        alert('이메일 인증 실패!')
     }
 }
 
