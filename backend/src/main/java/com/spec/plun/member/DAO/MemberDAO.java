@@ -13,4 +13,6 @@ public interface MemberDAO {
 
 	int register(MemberDTO memberDTO);
 
+	boolean resetPassword(MemberDTO memberDTO);
+
 }

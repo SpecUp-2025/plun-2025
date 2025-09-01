@@ -25,8 +25,11 @@
 <insert id="register" parameterType="com.spec.plun.member.DTO.MemberDTO" >
 	INSERT INTO TB_MEMBER (email, password, name,role)
     VALUES (#{email}, #{password}, #{name},'A002')
-
 </insert>
 
-
+<update id="resetPassword" parameterType="com.spec.plun.member.DTO.MemberDTO" >
+	UPDATE TB_MEMBER
+	SET password = #{password}
+	WHERE email = #{email}
+</update>
 </mapper>
