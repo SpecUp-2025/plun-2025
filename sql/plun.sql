@@ -17,7 +17,7 @@ CREATE TABLE `TB_MEMBER` (
   `email` varchar(40) NOT NULL,
   `password` varchar(100) NOT NULL,
   `name` varchar(20) NOT NULL,
-  `delete_yn` char(1) DEFAULT 'N',
+  `delete_yn` char(1) NOT NULL DEFAULT 'N',
   `delete_date` datetime DEFAULT NULL,
   `create_date` datetime NOT NULL DEFAULT current_timestamp(),
   `update_date` datetime DEFAULT NULL,
@@ -30,7 +30,8 @@ CREATE TABLE `TB_TEAM_MEMBER` (
   `team_no` int(11) NOT NULL,
   `user_no` int(11) NOT NULL,
   `role_no` varchar(4) NOT NULL,
-  `join_date` datetime DEFAULT current_timestamp(),
+  `join_date` datetime NOT NULL DEFAULT current_timestamp(),
+  `delete_yn` char(1) NOT NULL DEFAULT 'N',
   KEY `TB_TEAM_MEMBER_TB_TEAM_FK` (`team_no`),
   KEY `TB_TEAM_MEMBER_TB_MEMBER_FK` (`user_no`),
   KEY `TB_TEAM_MEMBER_TB_ROLE_CODE_FK` (`role_no`),
@@ -46,11 +47,17 @@ INSERT INTO TB_ROLE_CODE (group_no, group_name) VALUES
 ('B002', '팀원'),
 ('C001', '방장'),
 ('C002', '참여자'),
-('R001','대기중'),
-('R002','녹음시작'),
-('R003','녹음종료'),
-('R004','파일 저장중'),
-('R005','보관 만료')
+('D001','예약'),
+('D002','시작'),
+('D003','종료'),
+('E001','업로드'),
+('E002','진행 중'),
+('E003','완료'),
+('E003','실패'),
+('F001','대기'),
+('F002','수락'),
+('F003','거절')
+
 
 
 INSERT INTO TB_MEMBER (role, email, password, name, delete_yn, delete_date, create_date, update_date) VALUES
@@ -60,9 +67,22 @@ INSERT INTO TB_MEMBER (role, email, password, name, delete_yn, delete_date, crea
 ('A002', 'user3@example.com', 'pass1234', '회원3', 'N', NULL, NOW(), NULL)
 
 
-회의 테이블 아직 생성X 지금은 초안만
--- 회의 테이블 생성은 추후에 진행할 예정입니다.
-CREATE TABLE `tb_meeting_room` (
+CREATE TABLE `TB_INVITED` (
+  `invited_id` int(11) NOT NULL AUTO_INCREMENT,
+  `team_no` int(11) NOT NULL,
+  `user_no` int(11) NOT NULL,
+  `group_no` varchar(4) NOT NULL,
+  `invited_email` varchar(40) NOT NULL,
+  `create_date` datetime NOT NULL DEFAULT current_timestamp(),
+  PRIMARY KEY (`invited_id`),
+  KEY `TB_INVITED_TB_ROLE_CODE_FK` (`group_no`),
+  KEY `TB_INVITED_TB_MEMBER_FK_1` (`user_no`),
+  CONSTRAINT `TB_INVITED_TB_MEMBER_FK` FOREIGN KEY (`user_no`) REFERENCES `TB_MEMBER` (`user_no`),
+  CONSTRAINT `TB_INVITED_TB_MEMBER_FK_1` FOREIGN KEY (`user_no`) REFERENCES `TB_MEMBER` (`user_no`),
+  CONSTRAINT `TB_INVITED_TB_ROLE_CODE_FK` FOREIGN KEY (`group_no`) REFERENCES `TB_ROLE_CODE` (`group_no`)
+);
+
+CREATE TABLE `TB_MEETING_ROOM` (
   `room_no` int(11) NOT NULL AUTO_INCREMENT,
   `team_no` int(11) DEFAULT NULL,
   `title` varchar(100) NOT NULL,
@@ -80,62 +100,80 @@ CREATE TABLE `tb_meeting_room` (
   KEY `IDX_MEETING_SCHEDULED` (`scheduled_time`),
   KEY `IDX_MEETING_SCHEDULE_END` (`scheduled_end_time`),
   KEY `IDX_MEETING_TEAM_NO` (`team_no`),
-  CONSTRAINT `FK_MEETING_TEAM_ROLE`
-    FOREIGN KEY (`team_no`) REFERENCES `tb_team` (`team_no`) ON DELETE SET NULL,
-  CONSTRAINT `CK_MEETING_SCHEDULE_RANGE`
-    CHECK (`scheduled_end_time` IS NULL OR `scheduled_end_time` >= `scheduled_time`)
+  CONSTRAINT `FK_MEETING_TEAM_ROLE` FOREIGN KEY (`team_no`) REFERENCES `tb_team` (`team_no`) ON DELETE SET NULL,
+  CONSTRAINT `CK_MEETING_SCHEDULE_RANGE` CHECK (`scheduled_end_time` is null or `scheduled_end_time` >= `scheduled_time`)
 );
 
-CREATE TABLE IF NOT EXISTS tb_meeting_recording (
-  recording_no   INT NOT NULL AUTO_INCREMENT,
-  room_no        INT NOT NULL,
-  status_no      VARCHAR(4) NOT NULL,
-  file_url       VARCHAR(500) DEFAULT NULL,
-  duration_sec   INT DEFAULT NULL,
-  started_time   DATETIME DEFAULT NULL,
-  ended_time     DATETIME DEFAULT NULL,
-  create_date    DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
-  update_date    DATETIME DEFAULT NULL ON UPDATE CURRENT_TIMESTAMP,
-  expire_at      DATETIME NOT null,
 
-  PRIMARY KEY (recording_no),
-  UNIQUE KEY UK_MR_ROOM (room_no),
-  KEY IDX_MR_STATUS (status_no),
-  KEY IDX_MR_EXPIRE (expire_at),
-
-  CONSTRAINT FK_MR_ROOM
-    FOREIGN KEY (room_no) REFERENCES tb_meeting_room (room_no) ON DELETE CASCADE,
-  CONSTRAINT FK_MR_STATUS
-    FOREIGN KEY (status_no) REFERENCES tb_role_code (group_no)
+CREATE TABLE `TB_MEETING_PARTICIPANT` (
+  `room_no` int(11) NOT NULL,
+  `role_no` varchar(4) NOT NULL,
+  `user_no` int(11) NOT NULL,
+  `join_time` datetime DEFAULT NULL,
+  `out_time` datetime DEFAULT NULL,
+  PRIMARY KEY (`room_no`,`user_no`),
+  KEY `IDX_MP_ROLE` (`role_no`),
+  KEY `FK_MP_USER` (`user_no`),
+  CONSTRAINT `FK_MP_ROLE` FOREIGN KEY (`role_no`) REFERENCES `tb_role_code` (`group_no`),
+  CONSTRAINT `FK_MP_ROOM` FOREIGN KEY (`room_no`) REFERENCES `tb_meeting_room` (`room_no`) ON DELETE CASCADE,
+  CONSTRAINT `FK_MP_USER` FOREIGN KEY (`user_no`) REFERENCES `tb_member` (`user_no`) ON DELETE CASCADE
 );
 
-CREATE TABLE IF NOT EXISTS tb_meeting_summary (
-  summary_no   INT NOT NULL AUTO_INCREMENT,
-  room_no      INT NOT NULL,  /* FK → tb_meeting_room */
-  transcript   LONGTEXT DEFAULT NULL,  /* 전체 회의록 원본 */
-  summary_text LONGTEXT DEFAULT NULL,  /* 요약본 */
-  create_date  DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
-  update_date  DATETIME DEFAULT NULL ON UPDATE CURRENT_TIMESTAMP,
-  PRIMARY KEY (summary_no),
-  KEY IDX_SUMMARY_ROOM (room_no),
-  CONSTRAINT FK_SUMMARY_ROOM FOREIGN KEY (room_no)
-    REFERENCES tb_meeting_room (room_no) ON DELETE CASCADE
+CREATE TABLE `TB_CHAT_MEMBER` (
+  `room_no` int(11) NOT NULL COMMENT '채팅방 번호 (FK)',
+  `user_no` int(11) NOT NULL COMMENT '사용자 번호 (FK)',
+  PRIMARY KEY (`room_no`,`user_no`),
+  KEY `user_no` (`user_no`),
+  CONSTRAINT `tb_chat_member_ibfk_1` FOREIGN KEY (`room_no`) REFERENCES `tb_chat_room` (`room_no`),
+  CONSTRAINT `tb_chat_member_ibfk_2` FOREIGN KEY (`user_no`) REFERENCES `tb_member` (`user_no`)
 );
 
-CREATE TABLE IF NOT EXISTS tb_meeting_participant (
-  room_no       INT NOT NULL,           /* FK → tb_meeting_room */
-  role_no       VARCHAR(4) NOT NULL,    /* FK → tb_role_code (참가자 역할) */
-  user_no       INT NOT NULL,           /* FK → tb_member */
-  join_time     DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
-  out_time      DATETIME DEFAULT NULL,
-  
-  PRIMARY KEY (room_no, user_no),    
-  KEY IDX_MP_ROLE (role_no),
-  
-  CONSTRAINT FK_MP_ROOM FOREIGN KEY (room_no)
-    REFERENCES tb_meeting_room (room_no) ON DELETE CASCADE,
-  CONSTRAINT FK_MP_ROLE FOREIGN KEY (role_no)
-    REFERENCES tb_role_code (group_no),
-  CONSTRAINT FK_MP_USER FOREIGN KEY (user_no)
-    REFERENCES tb_member (user_no) ON DELETE CASCADE
+CREATE TABLE `TB_CHAT_MESSAGE` (
+  `message_no` int(11) NOT NULL AUTO_INCREMENT,
+  `room_no` int(11) NOT NULL,
+  `user_no` int(11) NOT NULL,
+  `content` text NOT NULL,
+  `create_date` datetime NOT NULL,
+  `message_type` varchar(20) NOT NULL,
+  PRIMARY KEY (`message_no`),
+  KEY `room_no` (`room_no`),
+  KEY `user_no` (`user_no`),
+  CONSTRAINT `tb_chat_message_ibfk_1` FOREIGN KEY (`room_no`) REFERENCES `tb_chat_room` (`room_no`),
+  CONSTRAINT `tb_chat_message_ibfk_2` FOREIGN KEY (`user_no`) REFERENCES `tb_member` (`user_no`)
+);
+
+CREATE TABLE `TB_CHAT_ROOM` (
+  `room_no` int(11) NOT NULL AUTO_INCREMENT COMMENT '자동증가',
+  `room_name` varchar(100) NOT NULL,
+  `create_date` datetime NOT NULL DEFAULT current_timestamp() COMMENT '방 생성 시간',
+  PRIMARY KEY (`room_no`)
+);
+CREATE TABLE `TB_ATTACHMENT` (
+  `attachment_no` varchar(36) NOT NULL COMMENT 'UUID 형식',
+  `message_no` int(11) NOT NULL COMMENT '메시지 번호 (FK)',
+  `original_name` varchar(100) NOT NULL,
+  `file_name` varchar(100) NOT NULL,
+  `path` varchar(300) NOT NULL COMMENT '저장 경로',
+  `size` int(11) NOT NULL COMMENT '파일 크기 (바이트)',
+  `content_type` varchar(100) NOT NULL,
+  `extension` varchar(10) NOT NULL DEFAULT 'PDF,JPG',
+  `create_date` datetime NOT NULL DEFAULT current_timestamp(),
+  `delete_date` datetime DEFAULT NULL,
+  PRIMARY KEY (`attachment_no`),
+  KEY `message_no` (`message_no`),
+  CONSTRAINT `tb_attachment_ibfk_1` FOREIGN KEY (`message_no`) REFERENCES `tb_chat_message` (`message_no`)
+);
+
+CREATE TABLE TB_ALARM (
+  alarm_no int(11) NOT NULL AUTO_INCREMENT COMMENT '자동증가',
+  user_no int(11) NOT NULL COMMENT '사용자 번호 (FK)',
+  alarm_type varchar(20) NOT NULL COMMENT 'CHAT / CALENDAR 등',
+  reference_no int(11) NOT NULL COMMENT '연관된 엔티티 번호 (예: message_no, cal_no)',
+  content text NOT NULL,
+  is_read char(1) NOT NULL DEFAULT 'N' COMMENT '(Y/N 구분)',
+  create_date datetime NOT NULL DEFAULT current_timestamp(),
+  sender_no int(11) DEFAULT NULL,
+  PRIMARY KEY (alarm_no),
+  KEY user_no (user_no),
+  CONSTRAINT tb_alarm_ibfk_1 FOREIGN KEY (user_no) REFERENCES tb_member (user_no)
 );
