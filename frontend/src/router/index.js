@@ -25,9 +25,6 @@ const routes = [
   { path: '/teamMain/:teamNo', name: 'teamMain', component: TeamMain},
   { path: '/meeting-room/:roomCode', name: 'MeetingRoom', component: MeetingRoom},
   {path: '/findPassword', name: 'find', component : FindPassword},
-  { path: '/meeting-Nav', name: 'MeetingNav', component: MeetingNav,
-    children: [{ path: ':roomCode/prejoin', name: 'MeetingPrejoin', component: MeetingPrejoinModal }],
-  },
   { path: '/calendar', name: 'Calendar', component: CalendarView },
 ]
 
