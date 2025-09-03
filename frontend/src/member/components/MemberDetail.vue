@@ -96,7 +96,7 @@ const userDelete = async () =>{
     try {
         const {status,data} = await instance.put(`member/userDelete/${userNo.value}`)
         if(status ===200 && data.success){
-            alert("탈되 되셨습니다.")
+            alert("회원 탈퇴 완료")
             router.push({name:'login'})
         } else {
             alert('삭제 실패');
@@ -113,7 +113,7 @@ const dataList = async () => {
       form.date = data;
     }
   } catch (error) {
-    console.error('불러오기 실패 ', error);
+    console.error('회원 정보 확인 실패', error);
   }
 };
 

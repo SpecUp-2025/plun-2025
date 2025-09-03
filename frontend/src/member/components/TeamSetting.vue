@@ -32,7 +32,7 @@ const teamDetail = async () => {
             form.list = data.list
         }
     } catch (error) {
-        console.error("불러오지 못했습니다.",error)
+        console.error("팀 정보 확인 실패",error)
     }
     
 }
@@ -44,11 +44,11 @@ const teamDelete = async () => {
             userNo : userNo.value
         })
         if(status ===200)    {
-            alert('탈퇴 되셨습니다.')
+            alert('팀 탈퇴 완료')
             router.push({name:'teamList'})
         }
     } catch (error) {
-        console.error("탈퇴하지 못했습니다.",error)
+        console.error("탈퇴실패",error)
     }
 }
 </script>
