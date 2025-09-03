@@ -1,5 +1,7 @@
 package com.spec.plun.member.DTO;
 
+import java.time.LocalDateTime;
+
 import lombok.Data;
 
 @Data
@@ -8,5 +10,6 @@ public class MemberDTO {
 	private String password;
 	private String email;
 	private String name;
+	private LocalDateTime updateDate;
 
 }

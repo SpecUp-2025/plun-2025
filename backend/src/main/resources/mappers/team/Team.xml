@@ -43,7 +43,25 @@
     
     <insert id="insertInvite">
    	INSERT INTO TB_INVITED(team_no,user_no,group_no,invited_email) VALUES(#{teamNo},#{userNo},'F001',#{inviteEmail})
-    
     </insert>
+    
+
+	<update id="teamsDelete">
+		UPDATE TB_TEAM_MEMBER
+		SET delete_yn = 'Y'
+		WHERE user_no = #{userNo}
+	</update>
+	
+	<update id="teamDelete">
+		UPDATE TB_TEAM_MEMBER
+		SET delete_yn = 'Y'
+		WHERE user_no = #{userNo} and team_no = #{teamNo}
+	</update>
+	
+	<select id = "teamDetail">
+	SELECT team_name as teamName, create_date as createDate 
+	FROM TB_TEAM
+	WHERE team_no = #{teamNo}
+	</select>
 
 </mapper>

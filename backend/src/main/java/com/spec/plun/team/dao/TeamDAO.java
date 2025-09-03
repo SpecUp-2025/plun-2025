@@ -1,11 +1,13 @@
 package com.spec.plun.team.dao;
 
 import java.util.List;
+import java.util.Map;
 
 import org.apache.ibatis.annotations.Mapper;
 import org.apache.ibatis.annotations.Param;
 
 import com.spec.plun.team.dto.TeamCreateRequest;
+import com.spec.plun.team.dto.TeamDeleteRequest;
 import com.spec.plun.team.dto.TeamMemberDTO;
 
 
@@ -23,4 +25,14 @@ public interface TeamDAO {
 	void insertInvite(@Param("teamNo")Integer teamNo, @Param("userNo")Integer userNo, @Param("inviteEmail")String inviteEmail);
 
 	void createTeam(TeamCreateRequest teamCreateRequest);
+
+	Integer isTeam(Integer userNo);
+
+	int teamsDelete(Integer userNo);
+
+	Map<String, Object> teamDetail(Integer teamNo);
+
+	int teamDelete(TeamDeleteRequest teamDeleteRequest);
+	
+	
 }

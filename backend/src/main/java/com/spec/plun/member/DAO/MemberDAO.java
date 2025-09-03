@@ -15,4 +15,8 @@ public interface MemberDAO {
 
 	boolean resetPassword(MemberDTO memberDTO);
 
+	String getPassword(String email);
+
+	int userDelete(Integer userNo);
+
 }

@@ -1,6 +1,7 @@
 package com.spec.plun.team.service;
 
 import java.util.List;
+import java.util.Map;
 
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -11,6 +12,7 @@ import com.spec.plun.email.service.EmailSendInviteService;
 import com.spec.plun.team.dao.TeamDAO;
 import com.spec.plun.team.dto.TeamCreateRequest;
 import com.spec.plun.team.dto.TeamCreateResponse;
+import com.spec.plun.team.dto.TeamDeleteRequest;
 import com.spec.plun.team.dto.TeamMemberDTO;
 
 import lombok.RequiredArgsConstructor;
@@ -57,5 +59,17 @@ public class TeamService {
 		
 		
 		return new TeamCreateResponse(teamCreateRequest.getTeamName(),teamCreateRequest.getTeamNo());
+	}
+
+	public Object istTeam(Integer userNo) {
+		return teamDAO.isTeam(userNo);
+	}
+
+	public Map<String, Object> teamDetail(Integer teamNo) {
+		return teamDAO.teamDetail(teamNo);
+	}
+
+	public Object teamDelete(TeamDeleteRequest teamDeleteRequest) {
+		return teamDAO.teamDelete(teamDeleteRequest);
 	}
 }
