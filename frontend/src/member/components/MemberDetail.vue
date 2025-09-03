@@ -6,7 +6,7 @@
           <dd>{{ name }}</dd>
         </div>
         <div class="row">
-          <dt>이메일 관리</dt>
+          <dt>이메일</dt>
           <dd>{{ email }}</dd>
         </div>
       </dl>
@@ -30,7 +30,7 @@
   
       <details ref="delDetail">
         <summary><span>계정 탈퇴</span></summary>
-        <span>"계정탈퇴하시면 다 잃어버립니다."</span>
+        <span>계정 탈퇴시 기존 데이터는 삭제 됩니다.</span>
         <div class="panel"><button class="danger-btn" @click="userDelete">계정 삭제</button></div>
         <div class="panel"><button class="danger-btn" type="button" @click="onCancelDelete">취소</button></div>
       </details>
