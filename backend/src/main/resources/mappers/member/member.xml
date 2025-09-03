@@ -8,9 +8,10 @@
 	SELECT
 		user_no,
 		email,
-		name
+		name,
+		update_date
 	FROM TB_MEMBER
-	WHERE email = #{email}
+	WHERE email = #{email} AND delete_yn='N'
 
 </select>
 
@@ -18,7 +19,7 @@
 <select id="findEmail">
 	SELECT COUNT(1) 
 	FROM tb_member 
-	WHERE email=#{email};
+	WHERE email=#{email} AND delete_yn='N';
 </select>
 
 
@@ -29,7 +30,22 @@
 
 <update id="resetPassword" parameterType="com.spec.plun.member.DTO.MemberDTO" >
 	UPDATE TB_MEMBER
-	SET password = #{password}
+	SET 
+		password = #{password},
+		update_date = now()
 	WHERE email = #{email}
+</update>
+
+<select id = "getPassword" parameterType="com.spec.plun.member.DTO.SetPasswordRequest" >
+	SELECT password
+	FROM TB_MEMBER
+	WHERE email =#{email}
+</select>
+
+<update id="userDelete">
+	UPDATE TB_MEMBER
+	SET delete_yn = 'Y'
+	WHERE user_no = #{userNo}
+
 </update>
 </mapper>
