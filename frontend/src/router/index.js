@@ -11,6 +11,8 @@ import TeamCreate from '@/member/components/TeamCreate.vue'
 import MeetingRoom from '@/components/meeting/MeetingRoom.vue'
 import FindPassword from '@/member/components/FindPassword.vue'
 import CalendarView from '@/components/calendar/CalendarView.vue'
+import MemberDetail from '@/member/components/MemberDetail.vue'
+import TeamSetting from '@/member/components/TeamSetting.vue'
 
 
 const routes = [
@@ -26,6 +28,8 @@ const routes = [
   { path: '/meeting-room/:roomCode', name: 'MeetingRoom', component: MeetingRoom},
   {path: '/findPassword', name: 'find', component : FindPassword},
   { path: '/calendar', name: 'Calendar', component: CalendarView },
+  {path : '/memberDetail', name: 'detail', component:MemberDetail},
+  {path : '/setting/:teamNo', name: 'setting', component:TeamSetting},
 ]
 
 export default createRouter({
