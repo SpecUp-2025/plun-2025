@@ -1,9 +1,8 @@
 <template>
     <div>
-        <h2>성공입니당</h2>
-        <h3>{{ email }}</h3>
         <h3>{{ name }} 환영합니다.</h3>
-        <h3>{{ userNo }}</h3>
+        <h3 >{{ email }}</h3> 
+        <button @click="router.push({name : 'detail'})">계정 설정</button>
         
         <h1>팀 리스트</h1>
 
@@ -16,7 +15,8 @@
             {{ item.teamNo }}
             {{ item.teamName }}
             {{ item.createDate }}
-            <button @click = "join(item.teamNo)">입장하기</button>
+            <button @click = "router.push({name : 'teamMain', params:{ teamNo: item.teamNo }})">입장하기</button>
+            <button @click = "router.push({name:'setting',params:{teamNo:item.teamNo}})">설정하기</button>
           </li>
         </ul>
         <button @click="router.push({name:'teamCreate'})">팀 추가하기</button>
@@ -85,10 +85,6 @@ const logout = async () => {
   
 }
 
-const join = (teamNo) =>{
-  if(!teamNo) return;
-  router.push({name : 'teamMain', params:{ teamNo: teamNo }})
-}
 </script>
 
 <style lang="scss" scoped>
