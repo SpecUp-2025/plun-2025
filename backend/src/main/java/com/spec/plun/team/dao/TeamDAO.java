@@ -26,7 +26,7 @@ public interface TeamDAO {
 
 	void createTeam(TeamCreateRequest teamCreateRequest);
 
-	Long isTeam(Integer userNo);
+	Integer isTeam(Integer userNo);
 
 	int teamsDelete(Integer userNo);
 

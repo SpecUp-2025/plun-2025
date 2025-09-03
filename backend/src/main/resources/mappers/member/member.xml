@@ -19,7 +19,7 @@
 <select id="findEmail">
 	SELECT COUNT(1) 
 	FROM tb_member 
-	WHERE email=#{email} AND delete_yn='N';
+	WHERE email=#{email} AND delete_yn='N'
 </select>
 
 
