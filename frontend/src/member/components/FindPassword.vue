@@ -147,7 +147,7 @@ async function reset() {
     if (!verified.value) { alert('이메일 인증을 완료해주세요.'); return; }
 
     try {
-    const { status } = await instance.post('/auth/resetPassword', {
+    const { status } = await instance.put('/auth/resetPassword', {
       email: form.email,
       password: form.password,
     });
