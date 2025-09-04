@@ -63,5 +63,35 @@
 	FROM TB_TEAM
 	WHERE team_no = #{teamNo}
 	</select>
+	
+	
+	<select id="invitation" parameterType="com.spec.plun.team.dto.TeamsInvitationDTO">
+	SELECT tt.team_name, ti.invited_email,ti.create_date, ti.team_no, ti.invited_id
+	FROM TB_INVITED ti
+	LEFT OUTER JOIN TB_TEAM tt
+	ON ti.team_no  = tt.team_no
+	WHERE ti.user_no = #{userNo}
+	AND ti.group_no = 'F001'
+	</select>
+	
+	
+	<insert id ="accept">
+	INSERT INTO TB_TEAM_MEMBER(team_no,user_no,role_no) VALUES(#{teamNo},#{userNo},'B002')
+	</insert>
+	
+	
+	<update id="acceptupdate">
+		UPDATE TB_INVITED
+		SET group_no = 'F002'
+		WHERE invited_id = #{invitedId}
+	</update>
+	
+
+	<update id="cancel">
+		UPDATE TB_INVITED
+		SET group_no = 'F003'
+		WHERE invited_id = #{invitedId}
+	</update>
+	
 
 </mapper>
