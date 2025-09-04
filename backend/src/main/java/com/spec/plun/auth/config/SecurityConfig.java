@@ -26,7 +26,6 @@ import lombok.RequiredArgsConstructor;
 @RequiredArgsConstructor
 public class SecurityConfig {
 	
-	private static final String[] PUBLICE_URL = {"/auth/**","/swagger-ui/**","/v3/api-docs/**","/ws-chat/**","/error","/attachments/**"};
 	private final ObjectMapper objectMapper;
 	private final JwtAuthenticationFilter jwtAuthenticationFilter;
 	
@@ -37,7 +36,7 @@ public class SecurityConfig {
 			      .csrf(csrf -> csrf.disable())
 			      .sessionManagement(sm -> sm.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
 			      .authorizeHttpRequests(auth -> 
-			      		auth.requestMatchers(PUBLICE_URL).permitAll()
+			      		auth.requestMatchers(PermitAllConfig.permit_URL).permitAll()
 			      		.anyRequest().authenticated())
 			      .exceptionHandling(e -> e.
 			    		  authenticationEntryPoint(unauthorized401())
