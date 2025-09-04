@@ -6,9 +6,11 @@ import java.util.Map;
 import org.apache.ibatis.annotations.Mapper;
 import org.apache.ibatis.annotations.Param;
 
+import com.spec.plun.team.dto.TeamAcceptRequest;
 import com.spec.plun.team.dto.TeamCreateRequest;
 import com.spec.plun.team.dto.TeamDeleteRequest;
 import com.spec.plun.team.dto.TeamMemberDTO;
+import com.spec.plun.team.dto.TeamsInvitationDTO;
 
 
 
@@ -33,6 +35,14 @@ public interface TeamDAO {
 	Map<String, Object> teamDetail(Integer teamNo);
 
 	int teamDelete(TeamDeleteRequest teamDeleteRequest);
+
+	List<TeamsInvitationDTO> invitation(Integer userNo);
+
+	int accept(@Param("teamNo")Integer teamNo,  @Param("userNo")Integer userNo);
+
+	int acceptupdate(Integer invitedId);
+
+	int cancel(Integer invitedId);
 	
 	
 }

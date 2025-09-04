@@ -13,6 +13,7 @@ import FindPassword from '@/member/components/FindPassword.vue'
 import CalendarView from '@/components/calendar/CalendarView.vue'
 import MemberDetail from '@/member/components/MemberDetail.vue'
 import TeamSetting from '@/member/components/TeamSetting.vue'
+import TeamsInvitation from '@/member/components/TeamsInvitation.vue'
 
 
 const routes = [
@@ -21,7 +22,9 @@ const routes = [
   { path: '/room/:roomNo', name: 'ChatRoom', component: ChatRoom },
   { path: '/', name: 'login', component: LoginForm },
   { path: '/teamList', name: 'teamList', component: TeamList,
-    children : [{ path: '/teamCreate', name: 'teamCreate', component: TeamCreate }]
+    children : [{ path: '/teamCreate', name: 'teamCreate', component: TeamCreate },
+                {path:'/invitation' ,name : 'invitation', component:TeamsInvitation}
+    ]
   },
   { path: '/register', name: 'register', component: Register},
   { path: '/teamMain/:teamNo', name: 'teamMain', component: TeamMain},

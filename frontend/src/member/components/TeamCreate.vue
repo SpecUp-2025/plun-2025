@@ -46,10 +46,6 @@ const create = async () => {
         alert("팀 이름을 입력해주세요")
         return;
     }
-    if (form.invite.length === 0) {          
-        alert("초대할 이메일을 입력해주세요")
-        return;
-    }
     const email  = (userEmail.value ?? '').trim().toLowerCase()
     try {
         const {status,data} = await instance.post(`teams/createTeam`,{

@@ -3,17 +3,21 @@ package com.spec.plun.team.service;
 import java.util.List;
 import java.util.Map;
 
+import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.transaction.support.TransactionSynchronization;
 import org.springframework.transaction.support.TransactionSynchronizationManager;
+import org.springframework.web.server.ResponseStatusException;
 
 import com.spec.plun.email.service.EmailSendInviteService;
 import com.spec.plun.team.dao.TeamDAO;
+import com.spec.plun.team.dto.TeamAcceptRequest;
 import com.spec.plun.team.dto.TeamCreateRequest;
 import com.spec.plun.team.dto.TeamCreateResponse;
 import com.spec.plun.team.dto.TeamDeleteRequest;
 import com.spec.plun.team.dto.TeamMemberDTO;
+import com.spec.plun.team.dto.TeamsInvitationDTO;
 
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -71,5 +75,22 @@ public class TeamService {
 
 	public Object teamDelete(TeamDeleteRequest teamDeleteRequest) {
 		return teamDAO.teamDelete(teamDeleteRequest);
+	}
+
+	public List<TeamsInvitationDTO> invitation(Integer userNo) {
+		return teamDAO.invitation(userNo);
+	}
+
+	@Transactional
+	public void accept(TeamAcceptRequest accept) {
+		int u = teamDAO.acceptupdate(accept.getInvitedId());
+		if (u != 1) throw new ResponseStatusException(HttpStatus.NOT_FOUND, "상태 업데이트 실패");
+		int i = teamDAO.accept(accept.getTeamNo(),accept.getUserNo());
+		if (i != 1) throw new IllegalStateException("팀원 추가 실패");
+	}
+
+	public void cancel(Integer invitedId) {
+		int u = teamDAO.cancel(invitedId);
+		if (u != 1) throw new ResponseStatusException(HttpStatus.NOT_FOUND, "상태 업데이트 실패");
 	}
 }
