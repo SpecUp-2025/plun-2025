@@ -3,7 +3,7 @@
         <h3>{{ name }} 환영합니다.</h3>
         <h3 >{{ email }}</h3> 
         <button @click="router.push({name : 'detail'})">계정 설정</button>
-        
+        <button @click="router.push({name:'invitation'})">초대보관함</button>
         <h1>팀 리스트</h1>
 
         <div v-if="!team.list.length">
