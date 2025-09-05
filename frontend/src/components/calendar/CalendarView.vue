@@ -1,22 +1,22 @@
 <template>
-  <FullCalendar v-bind="calendarOptions" />
+  <FullCalendar :options="calendarOptions" />
 </template>
-
 <script>
 import FullCalendar from '@fullcalendar/vue3'
 import dayGridPlugin from '@fullcalendar/daygrid'
+import interactionPlugin from '@fullcalendar/interaction'
 
 export default {
   components: {
-    FullCalendar,
+    FullCalendar // make the <FullCalendar> tag available
   },
   data() {
     return {
       calendarOptions: {
-        plugins: [dayGridPlugin],
-        initialView: 'dayGridMonth',
+        plugins: [ dayGridPlugin, interactionPlugin ],
+        initialView: 'dayGridMonth'
       }
     }
-  },
+  }
 }
 </script>
