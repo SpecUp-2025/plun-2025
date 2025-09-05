@@ -10,6 +10,7 @@ import org.springframework.stereotype.Component;
 import org.springframework.util.AntPathMatcher;
 import org.springframework.web.filter.OncePerRequestFilter;
 
+import com.spec.plun.auth.config.PermitAllConfig;
 import com.spec.plun.auth.service.AccessTokenService;
 
 import io.jsonwebtoken.Claims;
@@ -26,7 +27,7 @@ import lombok.RequiredArgsConstructor;
 public class JwtAuthenticationFilter extends OncePerRequestFilter{
 
 	private final AccessTokenService accessTokenService;
-	private static final String[] PUBLICE_URL = {"/auth/**","/swagger-ui/**","/v3/api-docs/**","/ws-chat/**","/error","/attachments/**"};
+	
 	private final AntPathMatcher matcher = new AntPathMatcher();
 
 	
@@ -34,7 +35,7 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter{
 	protected boolean shouldNotFilter(HttpServletRequest request) {
 		String path = request.getServletPath();
 		if("OPTIONS".equalsIgnoreCase(request.getMethod())) return true;
-	    return Arrays.stream(PUBLICE_URL)
+	    return Arrays.stream(PermitAllConfig.permit_URL)
 	                 .anyMatch(p -> matcher.match(p, path));
 	}
 	
