@@ -36,8 +36,7 @@
     <div v-show="unvaild.name" v-text="unvaild.name"></div>
 
     <button type="submit" >회원가입</button> 
-    <RouterLink :to="{ name: 'login' }">취소</RouterLink>
-
+    <button type="button" @click="router.back()">취소</button>
     </form>
 </template>
 
@@ -48,7 +47,7 @@ import { useRouter } from 'vue-router';
 import { REGEX_PATTERN } from '../util/Regex';
 
 const router = useRouter();
-
+const loginType =ref(0);
 const form = reactive({
     email:'',
     password:'',
@@ -80,8 +79,9 @@ const sendCode = async () => {
     const email = form.email?.trim().toLowerCase();
     if (!email) return alert('이메일을 입력하세요.')
     try {
-        const {status} = await instance.post(`/auth/email-code`,{email})
+        const {status,data} = await instance.post(`/auth/email-code`,{email})
         if(status===200){
+            loginType.value = data.type
             showCode.value = true
             clickVer.value = true
             unvaild.email = '';
@@ -133,15 +133,29 @@ async function register() {
     if (!verified.value) { alert('이메일 인증을 완료해주세요.'); return; }
 
     try {
-    const { status } = await instance.post('/auth/register', {
-      email: form.email,
-      password: form.password,
-      name: form.name
-    });
-    if (status === 201) {
-      alert('회원가입에 성공했습니다.');
-      router.push({ name: 'login' });
-    }
+      console.log(loginType.value)
+      if(loginType.value ===2){
+        const { status } = await instance.put('/auth/socialRegister', {
+        email: form.email,
+        password: form.password,
+        name: form.name
+      });
+        if (status === 201) {
+          alert('회원가입에 성공했습니다.');
+          router.push({ name: 'detail' });
+        }
+      }
+      else{
+        const { status } = await instance.post('/auth/register', {
+        email: form.email,
+        password: form.password,
+        name: form.name
+      });
+        if (status === 201) {
+          alert('회원가입에 성공했습니다.');
+          router.push({ name: 'login' });
+        }
+      }
   } catch (e) {
     console.error('회원가입 실패', e);
     alert('회원가입에 실패했습니다.');
