@@ -26,7 +26,7 @@ public class MemberService {
 	}
 
 	public boolean findEmail(String email) {
-		return memberDAO.findEmail(email)>0;
+		return memberDAO.findEmail(email)== 1;
 	}
 
 	public boolean register(MemberDTO memberDTO) {
@@ -62,6 +62,24 @@ public class MemberService {
 		int count = memberDAO.userDelete(userNo);
 		
 		return count+cnt >= 1;
+	}
+
+	public int countByEmail(String email) {
+		return memberDAO.countByEmail(email);
+	}
+
+	public void insertSocialEmail(String email, String name) {
+		memberDAO.insertSocialEmail(email,name);
+		
+	}
+
+	public int socialRegister(MemberDTO memberDTO) {
+		return memberDAO.socialRegister(memberDTO);
+		
+	}
+
+	public Integer findtype(String email) {
+		return memberDAO.findtype(email);
 	}
 
 }
