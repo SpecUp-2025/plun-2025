@@ -14,6 +14,7 @@ import CalendarView from '@/components/calendar/CalendarView.vue'
 import MemberDetail from '@/member/components/MemberDetail.vue'
 import TeamSetting from '@/member/components/TeamSetting.vue'
 import TeamsInvitation from '@/member/components/TeamsInvitation.vue'
+import SocailCallBack from '@/auth/components/SocialCallBack.vue'
 
 
 const routes = [
@@ -21,6 +22,7 @@ const routes = [
   { path: '/room/new', name: 'ChatRoomForm', component: ChatRoomForm },
   { path: '/room/:roomNo', name: 'ChatRoom', component: ChatRoom },
   { path: '/', name: 'login', component: LoginForm },
+  { path: '/oauth/callback', component: SocailCallBack },
   { path: '/teamList', name: 'teamList', component: TeamList,
     children : [{ path: '/teamCreate', name: 'teamCreate', component: TeamCreate },
                 {path:'/invitation' ,name : 'invitation', component:TeamsInvitation}
