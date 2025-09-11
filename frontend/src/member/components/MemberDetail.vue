@@ -10,21 +10,26 @@
           <dd>{{ email }}</dd>
         </div>
       </dl>
-  
+      
       <details ref="pwdDetail">
         <summary class="s">
           <span>비밀번호 변경</span>
           <span>최근 변경 이력 : {{ form.date.updateDate }}</span>
         </summary>
-  
+        <div v-if="form.date.loginTypeNo == 2">
+          소셜로그인 계정입니다 비밀번호 변경시에는 회원가입을 해주세요
+          <button @click="router.push({ name: 'register' })">회원가입하러가기</button>
+        </div>
+        <div v-else>
         <input v-model="form.currentPassword" type="password" placeholder="현재 비밀번호" />
         <input v-model="form.password" type="password" placeholder="새 비밀번호" @input="checkPassword" />
         <div v-show="unvaild.password" v-text="unvaild.password"></div>
   
         <input v-model="passwordCheck" type="password" placeholder="비밀번호 확인" @input="checkPasswordCheck" />
         <div v-show="unvaild.passwordCheck" v-text="unvaild.passwordCheck"></div>
-
         <button @click="sendPassword">확인</button>
+        </div>
+        
         <button type="button" @click="onCancelPwd">취소</button>
       </details>
   
@@ -46,10 +51,10 @@ import { REGEX_PATTERN } from '../util/Regex';
 import { useRouter } from 'vue-router';
 
 const router = useRouter();
-const useStore = useUserStore();
-const email = computed(() => useStore.user.email ?? '');
-const name = computed(() => useStore.user.name ?? '');
-const userNo = computed(() => useStore.user.userNo ?? '');
+const userStore = useUserStore();
+const email = computed(() => userStore.user.email ?? '');
+const name = computed(() => userStore.user.name ?? '');
+const userNo = computed(() => userStore.user.userNo ?? '');
 
 const form = reactive({
   date: {},
@@ -176,6 +181,23 @@ function checkPasswordCheck() {
 
   unvaild.passwordCheck = '';
 }
+
+// const goRegister = async() =>{
+//   router.push({ name: 'register' })
+//   try {
+//     const {status} = await instance.post('/auth/logout',{
+//         refreshToken : localStorage.getItem('refreshToken')
+//     })
+//     if(status==200){
+//       localStorage.removeItem('accessToken')
+//       localStorage.removeItem('refreshToken')
+//       userStore.removeUser()
+//       router.push({ name: 'register' })
+//     }
+//   } catch (error) {
+//     console.error("로그아웃 실패",error)
+//   }
+// }
 </script>
 
 <style lang="scss" scoped>
