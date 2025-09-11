@@ -7,7 +7,8 @@ public class PermitAllConfig {
 			"/swagger-ui/**",
 			"/v3/api-docs/**",
 			"/ws-chat/**","/error",
-			"/attachments/**"
+			"/attachments/**",
+			"/oauth/**"
 	};
 
 }
