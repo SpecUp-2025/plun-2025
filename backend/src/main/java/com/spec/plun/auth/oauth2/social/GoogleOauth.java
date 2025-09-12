@@ -8,10 +8,11 @@ import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.HttpEntity;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpMethod;
-import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Component;
+import org.springframework.util.LinkedMultiValueMap;
+import org.springframework.util.MultiValueMap;
 import org.springframework.web.client.RestTemplate;
 
 import com.spec.plun.auth.oauth2.DTO.UserInfo;
@@ -55,21 +56,25 @@ public class GoogleOauth implements SocialOauth{
     public String requestAccessToken(String code) {
         RestTemplate restTemplate = new RestTemplate();
 
-        Map<String, Object> params = new HashMap<>();
-        params.put("code", code);
-        params.put("client_id", GOOGLE_SNS_CLIENT_ID);
-        params.put("client_secret", GOOGLE_SNS_CLIENT_SECRET);
-        params.put("redirect_uri", GOOGLE_SNS_CALLBACK_URL);
-        params.put("grant_type", "authorization_code");
+        HttpHeaders headers = new HttpHeaders();
+        headers.setContentType(MediaType.parseMediaType("application/x-www-form-urlencoded;charset=UTF-8"));
 
-        ResponseEntity<String> responseEntity = restTemplate.postForEntity(GOOGLE_SNS_TOKEN_BASE_URL, params, String.class);
+        MultiValueMap<String, String> form = new LinkedMultiValueMap<>();
+        form.add("grant_type", "authorization_code");
+        form.add("code", code);
+        form.add("client_id", GOOGLE_SNS_CLIENT_ID);
+        form.add("client_secret", GOOGLE_SNS_CLIENT_SECRET);
+        form.add("redirect_uri", GOOGLE_SNS_CALLBACK_URL);
 
-        if (responseEntity.getStatusCode() == HttpStatus.OK) {
-            return responseEntity.getBody();
+        HttpEntity<MultiValueMap<String, String>> req = new HttpEntity<>(form, headers);
+        ResponseEntity<String> res = restTemplate.exchange(
+                GOOGLE_SNS_TOKEN_BASE_URL, HttpMethod.POST, req, String.class);
+
+        if (!res.getStatusCode().is2xxSuccessful()) {
+            throw new IllegalStateException("구글 토큰 발급 실패: " + res.getStatusCode() + " / " + res.getBody());
         }
-        return "구글 로그인 요청 처리 실패";
-    }
-    
+        return res.getBody();
+    }    
     @Override
     public UserInfo getUserInfo(String accessToken) {
 		final String url = "https://www.googleapis.com/oauth2/v2/userinfo";
