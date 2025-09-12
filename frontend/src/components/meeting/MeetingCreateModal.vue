@@ -1,71 +1,102 @@
 <template>
-  <div v-if="open" style="position:fixed; inset:0; background:rgba(0,0,0,.3);">
-    <div style="background:#fff; padding:12px; margin:40px auto; max-width:420px;">
-      <h3>회의 생성</h3>
+  <!-- 모달은 body 루트로 텔레포트(레이아웃 간섭 방지). 스크립트는 그대로 사용 -->
+  <Teleport to="body">
+    <div v-if="open" class="modal-backdrop" @click.self="close">
+      <div class="modal">
+        <div class="modal__header">
+          <h3 class="modal__title">회의 생성</h3>
+          <button type="button" class="modal__close" @click="close" aria-label="닫기">✕</button>
+        </div>
 
-      <div style="margin-bottom:8px;">팀번호: {{ teamNo }}</div>
+        <div class="modal__body">
+          <form class="form" @submit.prevent="submit" novalidate>
+            <!-- (A) 회의명 -->
+            <section class="section">
+              <label class="field__label field__label--lg" for="title">회의명</label>
+              <div class="field__control">
+                <input id="title" v-model="form.title" type="text" placeholder="예: 주간 회의" />
+              </div>
+            </section>
 
-      <div style="margin-bottom:6px;">
-        <label>제목:
-          <input v-model="form.title" placeholder="예: 주간 회의" />
-        </label>
-      </div>
+            <!-- (B) 회의 예정 시간 -->
+            <section class="section">
+              <h4 class="section__title">회의 예정 시간</h4>
+              <div class="grid-2">
+                <div class="field">
+                  <label class="field__label" for="start">시작 예정 시간</label>
+                  <div class="field__control">
+                    <input
+                      id="start"
+                      type="datetime-local"
+                      v-model="form.startLocal"
+                      :min="minStartLocal"
+                      step="60"
+                    />
+                  </div>
+                </div>
+                <div class="field">
+                  <label class="field__label" for="end">종료 예정 시간</label>
+                  <div class="field__control">
+                    <input
+                      id="end"
+                      type="datetime-local"
+                      v-model="form.endLocal"
+                      :min="form.startLocal || minStartLocal"
+                      step="60"
+                      required
+                    />
+                  </div>
+                </div>
+              </div>
+            </section>
 
-      <div style="margin-bottom:6px;">
-        <label>참여자 선택:</label>
-        <div v-if="mLoading">팀원 목록 불러오는 중…</div>
-        <div v-else>
-          <div v-for="m in members" :key="m.userNo">
-            <label>
-              <input
-                type="checkbox"
-                :value="m.userNo"
-                v-model="form.participantIds"
-                :disabled="m.userNo === myUserNo"
-              />
-              {{ m.name }} <span v-if="m.userNo === myUserNo"> (나)</span>
-            </label>
-          </div>
-          <div v-if="mError" style="color:#d33; white-space:pre-line">{{ mError }}</div>
-          <div v-if="!members.length && !mLoading">팀원 없음</div>
+            <!-- (C) 참여자 선택 -->
+            <section class="section">
+              <h4 class="section__title" id="participants-label">참여자 선택</h4>
+              <div class="field__hint">본인은 자동 포함됩니다.</div>
+
+              <div class="participants" role="group" aria-labelledby="participants-label">
+                <div v-if="mLoading">팀원 목록 불러오는 중…</div>
+                <template v-else>
+                  <div class="participants-grid">
+                    <!-- 스크립트 의존: form.participantIds 그대로 유지 -->
+                    <label
+                      v-for="m in members"
+                      :key="m.userNo"
+                      class="p-tile"
+                      :class="{ 'is-me': m.userNo === myUserNo }"
+                    >
+                      <input
+                        type="checkbox"
+                        :value="m.userNo"
+                        v-model="form.participantIds"
+                        :disabled="m.userNo === myUserNo"
+                      />
+                      <span class="p-name">{{ m.name }}</span>
+                      <span v-if="m.userNo === myUserNo" class="p-tag">나</span>
+                    </label>
+                  </div>
+
+                  <div v-if="mError" class="field__error" style="white-space:pre-line">{{ mError }}</div>
+                  <div v-if="!members.length && !mLoading" class="field__hint">팀원 없음</div>
+                </template>
+              </div>
+            </section>
+          </form>
+
+          <!-- 서버 전체 오류(스크립트 그대로 활용) -->
+          <p v-if="err" class="field__error" style="margin-top:8px; white-space:pre-line">{{ err }}</p>
+        </div>
+
+        <div class="modal__footer btn-group">
+          <button class="btn" type="button" @click="close" :disabled="creating">취소</button>
+          <button class="btn btn--primary" type="button" @click="submit" :disabled="creating || !canSubmit">
+            {{ creating ? '생성 중…' : '생성' }}
+          </button>
         </div>
       </div>
-
-      <div style="margin-bottom:6px;">회의 시간</div>
-
-      <div style="margin-bottom:6px;">
-        <label>시작 예정시간:
-          <input
-            type="datetime-local"
-            v-model="form.startLocal"
-            :min="minStartLocal"
-            step="60"
-          />
-        </label>
-      </div>
-
-      <div style="margin-bottom:6px;">
-        <label>종료 예정시간:
-          <input
-            type="datetime-local"
-            v-model="form.endLocal"
-            :min="form.startLocal || minStartLocal"
-            step="60"
-            required
-          />
-        </label>
-      </div>
-
-      <div style="margin-top:8px; display:flex; gap:8px;">
-        <button @click="submit" :disabled="creating || !canSubmit">
-          {{ creating ? '생성 중…' : '생성' }}
-        </button>
-        <button @click="close" :disabled="creating">취소</button>
-      </div>
-
-      <div v-if="err" style="color:#d33; white-space:pre-line; margin-top:6px;">{{ err }}</div>
     </div>
-  </div>
+  </Teleport>
 </template>
 
 <script setup>

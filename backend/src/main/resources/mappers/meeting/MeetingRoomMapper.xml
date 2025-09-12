@@ -4,29 +4,37 @@
   "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
 <mapper namespace="com.spec.plun.meeting.room.MeetingRoomDAO">
 
-  <!-- =======================
-       회의방 INSERT / 조회
-       ======================= -->
-  <!-- 비공개/비밀번호 컬럼 제거 -->
+  <!-- ========== 생성 ==========
+       비공개/비밀번호 컬럼 제거 버전 -->
   <insert id="insert"
           parameterType="com.spec.plun.meeting.room.MeetingRoom"
           useGeneratedKeys="true" keyProperty="roomNo">
     INSERT INTO tb_meeting_room
-      (team_no, title, scheduled_time, scheduled_end_time, room_code)
+      (team_no, title, scheduled_time, scheduled_end_time, room_code, cal_detail_no)
     VALUES
       (#{teamNo},
        #{title},
        #{scheduledTime},
        #{scheduledEndTime},
-       #{roomCode})
+       #{roomCode},
+       #{calDetailNo})
   </insert>
 
-  <!-- room_code 중복 체크용 -->
+  <!-- room_code 중복 체크 -->
   <select id="findByCode"
           resultType="com.spec.plun.meeting.room.MeetingRoom">
     SELECT *
     FROM tb_meeting_room
     WHERE room_code = #{roomCode}
+    LIMIT 1
+  </select>
+
+  <!-- room_no 조회 (수정/삭제용) -->
+  <select id="findByRoomNo"
+          resultType="com.spec.plun.meeting.room.MeetingRoom">
+    SELECT *
+    FROM tb_meeting_room
+    WHERE room_no = #{roomNo}
     LIMIT 1
   </select>
 
@@ -52,6 +60,7 @@
       mr.room_no ASC
   </select>
 
+  <!-- 사용자 역할 -->
   <select id="findRole" parameterType="map" resultType="string">
     SELECT role_no
     FROM tb_meeting_participant
@@ -60,6 +69,7 @@
     LIMIT 1
   </select>
 
+  <!-- 입/퇴장 로그 -->
   <update id="updateJoinTime">
     UPDATE tb_meeting_participant
        SET join_time = COALESCE(join_time, COALESCE(#{joinedAt}, NOW())),
@@ -75,7 +85,8 @@
        AND user_no = #{userNo}
   </update>
 
-  <!-- 회의 참여자 벌크 INSERT -->
+  <!-- 회의 참여자 벌크 INSERT
+       * 중복 방지 필요하면 INSERT IGNORE 로 변경 가능 -->
   <insert id="insertParticipants">
     INSERT INTO tb_meeting_participant
       (room_no, role_no, user_no, join_time, out_time)
@@ -92,12 +103,7 @@
      WHERE room_no = #{roomNo}
   </update>
 
-
-  <!-- =======================
-       팀 달력 / 달력상세
-       ======================= -->
-
-  <!-- 팀 달력 찾기 -->
+  <!-- 팀 달력 get-or-create -->
   <select id="findCalNoByTeamNo" resultType="int">
     SELECT cal_no
     FROM tb_calendar
@@ -105,7 +111,7 @@
     LIMIT 1
   </select>
 
-  <!-- 팀 달력 만들기 (생성자 user_no 기록) -->
+  <!-- 팀 달력 생성 (user_no 컬럼 사용) -->
   <insert id="insertTeamCalendar">
     INSERT INTO tb_calendar (team_no, user_no)
     VALUES (#{teamNo}, #{userNo})
@@ -128,12 +134,7 @@
        'N', NOW(), #{regUserNo}, #{title})
   </insert>
 
-
-  <!-- =======================
-       달력상세 참여자
-       ======================= -->
-
-  <!-- 생성자 제외 초대 인원만 INSERT (중복 무시) -->
+  <!-- 달력상세 참여자(생성자 제외) INSERT (중복 무시) -->
   <insert id="insertCalendarDetailParticipants">
     INSERT IGNORE INTO tb_calendar_detail_participant (cal_detail_no, user_no)
     VALUES
@@ -141,5 +142,101 @@
       (#{calDetailNo}, #{uid})
     </foreach>
   </insert>
+
+  <!-- 생성자 user_no -->
+  <select id="selectCreatorUserNo" resultType="int">
+    SELECT user_no
+    FROM tb_meeting_participant
+    WHERE room_no = #{roomNo}
+      AND role_no = 'C001'
+    LIMIT 1
+  </select>
+
+  <!-- 참가자 + 이름 -->
+  <select id="selectParticipantsWithNames"
+          resultType="com.spec.plun.meeting.dto.ParticipantDto">
+    SELECT
+      mp.user_no                                  AS userNo,
+      COALESCE(m.name, CONCAT('사용자 #', mp.user_no)) AS name
+    FROM tb_meeting_participant mp
+    LEFT JOIN tb_member m ON m.user_no = mp.user_no
+    WHERE mp.room_no = #{roomNo}
+    ORDER BY
+      CASE WHEN mp.role_no = 'C001' THEN 0 ELSE 1 END,
+      mp.user_no
+  </select>
+
+  <!-- ========== ⬇ 수정/삭제용 추가 쿼리들 ========== -->
+
+  <!-- 회의방 제목/시간 업데이트 -->
+  <update id="updateMeetingRoom">
+    UPDATE tb_meeting_room
+       SET title = #{title},
+           scheduled_time = #{start},
+           scheduled_end_time = #{end}
+     WHERE room_no = #{roomNo}
+  </update>
+
+  <!-- 달력상세 제목/시간 동기화 (분리 컬럼) -->
+  <update id="updateCalendarDetail">
+    UPDATE tb_calendardetail
+       SET title = #{title},
+           start_date = #{startDate},
+           start_time = #{startTime},
+           end_date = #{endDate},
+           end_time = #{endTime}
+     WHERE cal_detail_no = #{calDetailNo}
+  </update>
+
+  <!-- 회의 참가자 전체/부분 조회·삭제 -->
+  <select id="selectParticipantUserNos" resultType="int">
+    SELECT user_no
+    FROM tb_meeting_participant
+    WHERE room_no = #{roomNo}
+    ORDER BY user_no
+  </select>
+
+  <delete id="deleteParticipants">
+    DELETE FROM tb_meeting_participant
+    WHERE room_no = #{roomNo}
+      AND user_no IN
+      <foreach collection="userNos" item="u" open="(" separator="," close=")">#{u}</foreach>
+  </delete>
+
+  <delete id="deleteParticipantsAll">
+    DELETE FROM tb_meeting_participant
+    WHERE room_no = #{roomNo}
+  </delete>
+
+  <!-- 달력상세 참가자 조회·삭제 -->
+  <select id="selectCalendarDetailParticipantUserNos" resultType="int">
+    SELECT user_no
+    FROM tb_calendar_detail_participant
+    WHERE cal_detail_no = #{calDetailNo}
+    ORDER BY user_no
+  </select>
+
+  <delete id="deleteCalendarDetailParticipants">
+    DELETE FROM tb_calendar_detail_participant
+    WHERE cal_detail_no = #{calDetailNo}
+      AND user_no IN
+      <foreach collection="userNos" item="u" open="(" separator="," close=")">#{u}</foreach>
+  </delete>
+
+  <delete id="deleteCalendarDetailParticipantsAll">
+    DELETE FROM tb_calendar_detail_participant
+    WHERE cal_detail_no = #{calDetailNo}
+  </delete>
+
+  <!-- 달력상세/회의방 삭제 (하드 삭제) -->
+  <delete id="deleteCalendarDetail">
+    DELETE FROM tb_calendardetail
+    WHERE cal_detail_no = #{calDetailNo}
+  </delete>
+
+  <delete id="deleteMeetingRoom">
+    DELETE FROM tb_meeting_room
+    WHERE room_no = #{roomNo}
+  </delete>
 
 </mapper>

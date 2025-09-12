@@ -1,0 +1,72 @@
+/* src/styles/tokens.css
+   앱 전역에서 재사용할 디자인 토큰(변수) 정의
+   - 기본: Light
+   - 다크: .theme-dark 래퍼로 덮어씀
+*/
+
+:root {
+  /* Colors — Light */
+  --color-bg:        #f7f8fb;
+  --color-surface:   #ffffff;
+  --color-surface-2: #f2f4f8;
+  --color-text:      #0f172a;
+  --color-muted:     #64748b;
+  --color-border:    #e5e7eb;
+  --color-backdrop:  rgba(2, 6, 23, .45);
+
+  /* Brand / Semantic */
+  --brand-500: #4b4dca; /* primary */
+  --brand-600: #4f46e5;
+  --danger-500: #db5252;
+
+  /* On-color (텍스트 대비) */
+  --on-surface: #0f172a;
+  --on-primary: #ffffff;
+  --on-danger:  #ffffff;
+
+  /* Radius */
+  --radius-sm: 8px;
+  --radius-md: 12px;
+  --radius-lg: 16px;
+  --radius-xl: 20px;
+
+  /* Spacing scale */
+  --space-1: 4px;
+  --space-2: 8px;
+  --space-3: 12px;
+  --space-4: 16px;
+  --space-5: 20px;
+  --space-6: 24px;
+
+  /* Typography scale */
+  --font-size-xs: 12px;
+  --font-size-sm: 13px;
+  --font-size-base: 14px;
+  --font-size-lg: 16px;
+  --font-size-xl: 18px;
+
+  /* Shadow (Light) */
+  --elev-1: 0 6px 18px rgba(2, 6, 23, .06);
+  --elev-2: 0 12px 36px rgba(2, 6, 23, .10);
+  --elev-3: 0 18px 54px rgba(2, 6, 23, .16);
+
+  /* Motion */
+  --transition-fast:  150ms ease;
+  --transition-base:  220ms ease;
+  --transition-slow:  320ms ease;
+}
+
+/* Dark Theme Override — 필요 위치에 .theme-dark로 감싸서 사용 */
+.theme-dark {
+  --color-bg:        #0b1220;
+  --color-surface:   #111827;
+  --color-surface-2: #0e1628;
+  --color-text:      #e5e7eb;
+  --color-muted:     #94a3b8;
+  --color-border:    #1f2937;
+  --color-backdrop:  rgba(2, 6, 23, .55);
+
+  --elev-1: 0 10px 24px rgba(2, 6, 23, .35);
+  --elev-2: 0 18px 48px rgba(2, 6, 23, .45);
+  --elev-3: 0 24px 68px rgba(2, 6, 23, .50);
+}
