@@ -30,9 +30,9 @@ const routes = [
   { path: '/teamMain/:teamNo', name: 'teamMain', component: TeamMain},
   { path: '/meeting-room/:roomCode', name: 'MeetingRoom', component: MeetingRoom},
   {path: '/findPassword', name: 'find', component : FindPassword},
-  { path: '/calendar', name: 'Calendar', component: CalendarView },
   {path : '/memberDetail', name: 'detail', component:MemberDetail},
   {path : '/setting/:teamNo', name: 'setting', component:TeamSetting},
+  { path: '/calendar/:teamNo', name: 'Calendar', component: CalendarView}
 ]
 
 export default createRouter({

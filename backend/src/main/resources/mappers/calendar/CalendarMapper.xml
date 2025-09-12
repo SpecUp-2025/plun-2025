@@ -4,14 +4,54 @@
   "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
 
 <mapper namespace="com.spec.plun.calendar.dao.CalendarDAO">
+	
+  <select id="getParticipantsByCalDetailNo" resultType="int">
+	SELECT user_no FROM tb_calendar_detail_participant WHERE cal_detail_no = #{calDetailNo}
+  </select>
+  
+  <insert id="insertParticipant">
+	INSERT INTO tb_calendar_detail_participant (cal_detail_no, user_no)
+	VALUES (#{calDetailNo}, #{userNo})
+  </insert>
 
+  <select id="getCalNoByTeamAndUser" resultType="Integer">
+	SELECT cal_no
+	FROM TB_CALENDAR
+	WHERE team_no = #{teamNo}
+	  AND user_no = #{userNo}
+  </select>
+  
+  <insert id="insertCalendar" parameterType="com.spec.plun.calendar.entity.Calendar" useGeneratedKeys="true" keyProperty="calNo">
+	INSERT INTO TB_CALENDAR (team_no, user_no)
+	VALUES (#{teamNo}, #{userNo})
+  </insert>
+  
+  <!-- 일정 공유 멤버 등록 -->
+  <select id="getCalNoByUserNo" resultType="int" parameterType="Integer">
+    SELECT cal_no FROM TB_CALENDAR WHERE user_no = #{userNo}
+  </select>
+  
   <!-- 일정 조회 -->
-  <select id="getEventsBetween" resultType="com.spec.plun.calendar.entity.CalendarDetail">
-	SELECT *
-	FROM TB_CALENDARDETAIL
-	WHERE start_date &lt;= #{end}
-	  AND end_date &gt;= #{start}
-	  AND delete_yn = 'N'
+  <select id="getEventsBetween" resultType="com.spec.plun.calendar.entity.CalendarDetail" parameterType="map">
+	SELECT cd.*
+	FROM TB_CALENDAR c
+	JOIN TB_CALENDARDETAIL cd ON c.cal_no = cd.cal_no
+	WHERE c.user_no = #{userNo}
+	  AND cd.start_date &lt;= #{end}
+	  AND cd.end_date &gt;= #{start}
+	  AND cd.delete_yn = 'N'
+	</select>
+	
+  <select id="getEventsBetweenShared" 
+        resultType="com.spec.plun.calendar.entity.CalendarDetail" 
+        parameterType="map">
+	SELECT cd.*
+	FROM TB_CALENDAR c
+	JOIN TB_CALENDARDETAIL cd ON c.cal_no = cd.cal_no
+	WHERE c.user_no = #{userNo}                 -- 📌 나에게 공유된 일정들
+	  AND cd.start_date &lt;= #{end}
+	  AND cd.end_date &gt;= #{start}
+	  AND cd.delete_yn = 'N'
   </select>
   <!-- 일정 등록 -->
   <insert id="insertEvent" parameterType="com.spec.plun.calendar.entity.CalendarDetail" useGeneratedKeys="true" keyProperty="calDetailNo">
@@ -38,7 +78,12 @@
 	  update_user_no = #{updateUserNo}
 	WHERE cal_detail_no = #{calDetailNo}
   </update>
-  
+  <!-- 일정 삭제 -->
+  <update id="deleteEvent">
+	UPDATE tb_calendardetail
+	SET delete_yn = 'Y', update_dt = NOW()
+	WHERE cal_detail_no = #{calDetailNo}
+  </update>
 
 </mapper>
   
