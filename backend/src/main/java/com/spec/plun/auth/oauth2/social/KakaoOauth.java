@@ -59,7 +59,7 @@ public class KakaoOauth implements SocialOauth{
     
     @Override
     public String requestAccessToken(String code) {
-        RestTemplate rt = new RestTemplate();
+        RestTemplate restTemplate = new RestTemplate();
 
         HttpHeaders headers = new HttpHeaders();
         headers.setContentType(
@@ -78,7 +78,7 @@ public class KakaoOauth implements SocialOauth{
         HttpEntity<MultiValueMap<String, String>> req = new HttpEntity<>(form, headers);
 
         ResponseEntity<String> res =
-            rt.exchange(KAKAO_SNS_TOKEN_BASE_URL, HttpMethod.POST, req, String.class);
+        		restTemplate.exchange(KAKAO_SNS_TOKEN_BASE_URL, HttpMethod.POST, req, String.class);
 
         if (!res.getStatusCode().is2xxSuccessful()) {
             throw new IllegalStateException("카카오 토큰 발급 실패: " + res.getStatusCode() + " / " + res.getBody());
