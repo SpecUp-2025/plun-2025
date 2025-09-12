@@ -24,5 +24,5 @@ def get_model():
 def transcribe_ko(wav_path: Path) -> Tuple[str, float]:
     m = get_model()
     t0 = time.time()
-    r = m.transcribe(str(wav_path), language="ko", fp16=False)
+    r = m.transcribe(str(wav_path), fp16=False)
     return (r.get("text") or "").strip(), time.time() - t0
