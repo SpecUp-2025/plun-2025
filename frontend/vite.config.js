@@ -29,6 +29,7 @@ export default defineConfig({
       '/api': { target: 'http://127.0.0.1:8080', changeOrigin: true, rewrite: p => p.replace(/^\/api/, '') },
       '/ws-chat': { target: 'http://127.0.0.1:8080', changeOrigin: true, ws: true},
       '/sfu': { target: 'http://127.0.0.1:4000', changeOrigin: true, ws: true },
+      '/stt': { target: 'http://127.0.0.1:8000', changeOrigin: true },
     }
   },
   define: { global: 'globalThis' }

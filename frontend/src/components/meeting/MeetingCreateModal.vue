@@ -56,19 +56,6 @@
         </label>
       </div>
 
-      <div style="margin-bottom:6px;">
-        <label>
-          <input type="checkbox" v-model="form.privateRoom" />
-          비공개 방
-        </label>
-      </div>
-
-      <div v-if="form.privateRoom" style="margin-bottom:6px;">
-        <label>비밀번호:
-          <input type="password" v-model="form.roomPassword" />
-        </label>
-      </div>
-
       <div style="margin-top:8px; display:flex; gap:8px;">
         <button @click="submit" :disabled="creating || !canSubmit">
           {{ creating ? '생성 중…' : '생성' }}
@@ -105,8 +92,6 @@ const form = ref({
   title: '',
   startLocal: '',
   endLocal: '',
-  privateRoom: false,
-  roomPassword: '',
   participantIds: [] // number[]
 })
 
@@ -131,11 +116,6 @@ watch(() => form.value.startLocal, (v) => {
   }
 })
 
-// 비공개 해제 시 비밀번호 초기화
-watch(() => form.value.privateRoom, (isPrivate) => {
-  if (!isPrivate) form.value.roomPassword = ''
-})
-
 function initDefaults () {
   err.value = ''
   const now = floorToMinute(new Date())
@@ -144,8 +124,6 @@ function initDefaults () {
     title: '',
     startLocal: toLocalDT(now),
     endLocal: toLocalDT(end),
-    privateRoom: false,
-    roomPassword: '',
     participantIds: myUserNo.value ? [myUserNo.value] : []
   }
 }
@@ -196,7 +174,6 @@ const canSubmit = computed(() => {
     const e = new Date(form.value.endLocal).getTime()
     if (Number.isFinite(s) && Number.isFinite(e) && e < s) return false
   }
-  if (form.value.privateRoom && !form.value.roomPassword) return false
   return true
 })
 
@@ -215,8 +192,6 @@ async function submit () {
     title: form.value.title.trim(),
     scheduledTime: form.value.startLocal ? toISO(form.value.startLocal) : null,
     scheduledEndTime: toISO(form.value.endLocal),
-    privateRoom: !!form.value.privateRoom,
-    roomPassword: form.value.privateRoom ? form.value.roomPassword : null,
     participantIds,
     creatorUserNo: myUserNo.value
   }

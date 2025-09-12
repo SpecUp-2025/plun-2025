@@ -31,7 +31,7 @@ RTC_MIN/RTC_MAX: 단일 포트를 안 쓸 때, WebRTC 미디어용 UDP 포트 �
 const PORT = Number(process.env.PORT || 4000);
 const CLIENT_ORIGIN = process.env.CLIENT_ORIGIN || "http://localhost:5173";
 const IO_PATH = process.env.IO_PATH || "/sfu";
-const LISTEN_IP = process.env.LISTEN_IP || "0.0.0.0";
+const LISTEN_IP = process.env.LISTEN_IP || "127.0.0.1";
 const ANNOUNCED_IP = process.env.ANNOUNCED_IP || "127.0.0.1";
 const WEBRTC_PORT = process.env.WEBRTC_PORT ? Number(process.env.WEBRTC_PORT) : 0;
 const RTC_MIN = Number(process.env.RTC_MIN || 40000);

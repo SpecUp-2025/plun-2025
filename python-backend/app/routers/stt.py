@@ -7,6 +7,7 @@ from app.config import CHUNK_ROOT, MODEL_NAME
 from app.services.audio_service import preconvert_webm_to_wav, merge_wavs_in_order
 from app.services.io_service import append_index, read_index_unique
 from app.services.stt_service import transcribe_ko
+from app.services.db_service import append_merged_transcript
 
 router = APIRouter()
 
@@ -69,26 +70,34 @@ def stt_finalize_room(room_no: int):
     t_all = time.time()
     room_dir = CHUNK_ROOT / str(room_no)
     merged = room_dir / f"room_{room_no}.wav"
+
     t_merge = 0.0
     if not merged.exists() or merged.stat().st_size == 0:
         _ = stt_merge_room(room_no)
         if not merged.exists() or merged.stat().st_size == 0:
             raise HTTPException(400, "merge failed or no merged file")
+
     text, t_stt = transcribe_ko(merged)
     out_txt = room_dir / f"room_{room_no}.txt"
     out_txt.write_text(text, encoding="utf-8")
+
+    # 🔹 DB에 누적 저장 (없으면 insert, 있으면 뒤에 append)
+    append_merged_transcript(room_no, text)
+
     t_total = time.time() - t_all
     head = text[:400].replace("\n", " ")
-    return ("✅ 전사 완료 (openai-whisper, single-pass)\n"
-            f"- model: {MODEL_NAME}\n"
-            f"- room_no: {room_no}\n"
-            f"- 병합 파일: {merged}\n"
-            f"- 텍스트 저장: {out_txt}\n"
-            "\n"
-            f"⏱ 소요 시간\n"
-            f"- 전사: {t_stt:.2f}s\n"
-            f"- 총합: {t_total:.2f}s\n"
-            "\n미리보기(400자):\n" + head + "\n")
+    return (
+        "✅ 전사 완료 (openai-whisper, single-pass)\n"
+        f"- model: {MODEL_NAME}\n"
+        f"- room_no: {room_no}\n"
+        f"- 병합 파일: {merged}\n"
+        f"- 텍스트 저장: {out_txt}\n"
+        "\n"
+        f"⏱ 소요 시간\n"
+        f"- 전사: {t_stt:.2f}s\n"
+        f"- 총합: {t_total:.2f}s\n"
+        "\n미리보기(400자):\n" + head + "\n"
+    )
 
 @router.delete("/stt/reset_room", response_class=PlainTextResponse)
 def stt_reset_room(room_no: int):
