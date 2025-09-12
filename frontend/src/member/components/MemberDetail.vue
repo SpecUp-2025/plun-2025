@@ -181,23 +181,6 @@ function checkPasswordCheck() {
 
   unvaild.passwordCheck = '';
 }
-
-// const goRegister = async() =>{
-//   router.push({ name: 'register' })
-//   try {
-//     const {status} = await instance.post('/auth/logout',{
-//         refreshToken : localStorage.getItem('refreshToken')
-//     })
-//     if(status==200){
-//       localStorage.removeItem('accessToken')
-//       localStorage.removeItem('refreshToken')
-//       userStore.removeUser()
-//       router.push({ name: 'register' })
-//     }
-//   } catch (error) {
-//     console.error("로그아웃 실패",error)
-//   }
-// }
 </script>
 
 <style lang="scss" scoped>
