@@ -20,7 +20,6 @@
           </li>
         </ul>
         <button @click="router.push({name:'teamCreate'})">팀 추가하기</button>
-        <button @click="check" >토큰 전송 확인</button>
         <button @click ="logout">로그아웃</button>
 
         <RouterView/>
@@ -56,17 +55,6 @@ const teamList = async ()=>{
   } catch (error) {
     console.error("리스트를 불러오는데 실패했습니다.",error)
   }
-}
-
-const check = async () => {
-    try {
-        const res = await instance.get('/secure/ping')
-        alert("요청성공 "  +res.status)
-        console.log('[OK]', res.status)
-    } catch (e) {
-        alert('에러: ' + (e.response?.status ?? e.message)) // 401 나오면 토큰 문제
-        console.log('[ERR]', e.response?.status, e.response?.data ?? e.message)
-    }
 }
 const logout = async () => {
   try {

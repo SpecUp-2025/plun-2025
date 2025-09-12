@@ -23,10 +23,12 @@ import com.spec.plun.member.service.MemberService;
 import jakarta.mail.MessagingException;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 
 @RestController
 @RequestMapping("/auth")
 @RequiredArgsConstructor
+@Slf4j
 public class AuthController {
 	
 	private final AuthService authService;
@@ -50,16 +52,20 @@ public class AuthController {
 	@PostMapping("/email-code")
 	public ResponseEntity<Object> emailCode(@RequestBody @Valid EmailRequest EmailRequest)throws MessagingException{
 		String email = EmailRequest.getEmail();
-		boolean isEmail = memberService.findEmail(email);
-		if(isEmail) {
+		Integer type = memberService.findtype(email);
+		log.info("type = {}",type);
+		if (Integer.valueOf(1).equals(type)) {
 			return ResponseEntity.status(HttpStatus.CONFLICT).body("이미 가입된 메일입니다.");
-		}
-		boolean isSend = emailService.sendSimpleMessage(email);
+			}
 		
-		return isSend ? ResponseEntity.ok("인증 코드가 전송되었습니다.") :
-            ResponseEntity.status(HttpStatus.BAD_REQUEST).body("인증 코드 발급에 실패하였습니다.");	
+		boolean isSend = emailService.sendSimpleMessage(email);
+		if (!isSend) {
+	        return ResponseEntity.status(HttpStatus.BAD_REQUEST).body("인증 코드 발급에 실패하였습니다.");
+	    }
+		
+		return ResponseEntity.ok(Map.of("type", type==null ? 0 : type));
+            	
 	}
-	
 	@PostMapping("/verifyCode")
 	public ResponseEntity<Object> verifyCode(@RequestBody VerifyCodeRequest verifyCodeRequest)throws MessagingException{
 		boolean isSend = emailService.verifyCode(verifyCodeRequest.email(),verifyCodeRequest.code());
@@ -73,6 +79,12 @@ public class AuthController {
 	@PostMapping("/register")
 	public ResponseEntity<Object> register(@RequestBody @Valid RegisterRequest registerRequest){
 		authService.register(registerRequest);
+		return ResponseEntity.status(HttpStatus.CREATED).body(Map.of("msg","회원가입 성공"));		
+	}
+	
+	@PutMapping("/socialRegister")
+	public ResponseEntity<Object> socialRegister(@RequestBody @Valid RegisterRequest registerRequest){
+		authService.socialRegister(registerRequest);
 		return ResponseEntity.status(HttpStatus.CREATED).body(Map.of("msg","회원가입 성공"));		
 	}
 	

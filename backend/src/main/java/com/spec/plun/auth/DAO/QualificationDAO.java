@@ -8,5 +8,4 @@ import com.spec.plun.auth.DTO.QualificationCheckDTO;
 public interface QualificationDAO {
 
 	public QualificationCheckDTO getByEmail(String email);
-
 }

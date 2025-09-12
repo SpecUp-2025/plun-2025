@@ -9,6 +9,7 @@ import com.spec.plun.auth.DTO.LoginDTO;
 import com.spec.plun.auth.DTO.QualificationCheckDTO;
 import com.spec.plun.auth.DTO.RefreshTokenRequest;
 import com.spec.plun.auth.DTO.TokenResponse;
+import com.spec.plun.auth.oauth2.DTO.UserInfo;
 import com.spec.plun.member.DTO.MemberDTO;
 import com.spec.plun.member.DTO.RegisterRequest;
 import com.spec.plun.member.DTO.ResetPasswordRequest;
@@ -39,6 +40,23 @@ public class AuthService {
 	    		refreshTokenService.generateToken(qualification.getEmail())
 	    		);
 	}
+	
+	public TokenResponse socialLogin(UserInfo member) {
+	    int exists = memberService.countByEmail(member.getEmail());
+	    if (exists > 0) {
+	    	return new TokenResponse(
+		    		accessTokenService.generateToken(member.getEmail()),
+		    		refreshTokenService.generateToken(member.getEmail())
+		    		);
+	    }
+	    memberService.insertSocialEmail(member.getEmail(),member.getName());
+		
+	    return new TokenResponse(
+	    		accessTokenService.generateToken(member.getEmail()),
+	    		refreshTokenService.generateToken(member.getEmail())
+	    		);
+	}
+	
 
 	public TokenResponse newAcessToken(RefreshTokenRequest refreshTokenRequest) {
 		Claims claims = refreshTokenService.validToken(refreshTokenRequest.getRefreshToken());
@@ -74,6 +92,16 @@ public class AuthService {
 		memberDTO.setEmail(resetPasswordRequest.getEmail());
 		memberDTO.setPassword(hashed);
 		memberService.resetPassword(memberDTO);
+		
+	}
+
+	public void socialRegister(@Valid RegisterRequest registerRequest) {
+		String hashed = passwordEncoder.encode(registerRequest.getPassword());
+		MemberDTO memberDTO = new MemberDTO();
+		memberDTO.setEmail(registerRequest.getEmail());
+		memberDTO.setPassword(hashed);
+		memberDTO.setName(registerRequest.getName());
+		memberService.socialRegister(memberDTO);
 		
 	}
 

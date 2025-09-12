@@ -9,23 +9,53 @@
 		user_no,
 		email,
 		name,
-		update_date
+		update_date,
+		login_type_no
 	FROM TB_MEMBER
 	WHERE email = #{email} AND delete_yn='N'
 
 </select>
 
+<select id="countByEmail" parameterType="string" resultType="int">
+  SELECT COUNT(1)
+  FROM TB_MEMBER
+  WHERE email = #{email}
+    AND delete_yn = 'N'
+   	AND (login_type_no = 1 OR login_type_no = 2) 
+</select>
+
+<insert id="insertSocialEmail">
+  INSERT INTO TB_MEMBER (email, name,role,login_type_no)
+  VALUES (#{email}, #{name},'A002',2)
+</insert>
 
 <select id="findEmail">
 	SELECT COUNT(1) 
 	FROM tb_member 
-	WHERE email=#{email} AND delete_yn='N'
+	WHERE email=#{email} AND delete_yn='N' AND login_type_no = 1;
 </select>
 
 
+<select id="findtype">
+	SELECT login_type_no
+  	FROM TB_MEMBER
+  	WHERE email = #{email}
+    AND delete_yn = 'N'
+</select>
+
+
+<update id="socialRegister" parameterType="com.spec.plun.member.DTO.MemberDTO" >
+	UPDATE TB_MEMBER
+	SET password = #{password},
+		name = #{name},
+		login_type_no=1
+	WHERE email = #{email}
+</update>
+
+
 <insert id="register" parameterType="com.spec.plun.member.DTO.MemberDTO" >
-	INSERT INTO TB_MEMBER (email, password, name,role)
-    VALUES (#{email}, #{password}, #{name},'A002')
+	INSERT INTO TB_MEMBER (email, password, name,role,login_type_no)
+    VALUES (#{email}, #{password}, #{name},'A002',1)
 </insert>
 
 <update id="resetPassword" parameterType="com.spec.plun.member.DTO.MemberDTO" >
@@ -39,7 +69,7 @@
 <select id = "getPassword" parameterType="com.spec.plun.member.DTO.SetPasswordRequest" >
 	SELECT password
 	FROM TB_MEMBER
-	WHERE email =#{email}
+	WHERE email = #{email}
 </select>
 
 <update id="userDelete">

@@ -18,5 +18,4 @@ public class QualificationService {
 	public QualificationCheckDTO getByEmail(LoginDTO member) {
 		return qualificationDAO.getByEmail(member.getEmail());
 	}
-
 }

@@ -11,5 +11,6 @@ public class MemberDTO {
 	private String email;
 	private String name;
 	private LocalDateTime updateDate;
+	private Integer loginTypeNo;
 
 }

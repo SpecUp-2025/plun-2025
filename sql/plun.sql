@@ -15,16 +15,24 @@ CREATE TABLE `TB_MEMBER` (
   `user_no` int(11) NOT NULL AUTO_INCREMENT,
   `role` varchar(4) NOT NULL,
   `email` varchar(40) NOT NULL,
-  `password` varchar(100) NOT NULL,
+  `password` varchar(100) DEFAULT NULL,
   `name` varchar(20) NOT NULL,
   `delete_yn` char(1) NOT NULL DEFAULT 'N',
   `delete_date` datetime DEFAULT NULL,
   `create_date` datetime NOT NULL DEFAULT current_timestamp(),
   `update_date` datetime DEFAULT NULL,
+  `login_type_no` int(11) NOT NULL,
   PRIMARY KEY (`user_no`),
   KEY `TB_MEMBER_TB_ROLE_CODE_FK` (`role`),
+  KEY `TB_MEMBER_TB_MEMBER_LOGIN_FK` (`login_type_no`),
+  CONSTRAINT `TB_MEMBER_TB_MEMBER_LOGIN_FK` FOREIGN KEY (`login_type_no`) REFERENCES `TB_MEMBER_LOGIN` (`login_type_no`),
   CONSTRAINT `TB_MEMBER_TB_ROLE_CODE_FK` FOREIGN KEY (`role`) REFERENCES `TB_ROLE_CODE` (`group_no`)
-);
+)
+CREATE TABLE `TB_MEMBER_LOGIN` (
+  `login_type_no` int(11) NOT NULL AUTO_INCREMENT,
+  `login_type_name` varchar(100) NOT NULL,
+  PRIMARY KEY (`login_type_no`)
+)
 
 CREATE TABLE `TB_TEAM_MEMBER` (
   `team_no` int(11) NOT NULL,

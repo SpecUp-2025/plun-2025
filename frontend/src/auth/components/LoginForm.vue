@@ -9,6 +9,9 @@
              autocomplete="current-password" placeholder="비밀번호를 입력해주세요" />
       <button type="submit" >로그인</button>
     </form>
+    <button @click="socialLogin('google')">구글로 로그인</button>
+    <button @click="socialLogin('naver')">네이버로 로그인</button>
+    <button @click="socialLogin('kakao')">카카오톡으로 로그인</button>
     <RouterLink :to="{name : 'register'}" >회원가입</RouterLink>
     <RouterLink :to="{name : 'find'}" >비밀번호 찾기</RouterLink>
   </template>
@@ -58,5 +61,10 @@ function checkEmail() {
     return;
   }
   unvaild.email = "";
+}
+
+function socialLogin(name) {
+  window.location.href = `/api/oauth/${name}/login`
+
 }
 </script>
