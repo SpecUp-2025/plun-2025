@@ -2,7 +2,9 @@ package com.spec.plun.calendar.service;
 
 import java.util.List;
 
+import org.springframework.messaging.simp.SimpMessagingTemplate;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import com.spec.plun.calendar.dao.CalendarDAO;
 import com.spec.plun.calendar.dto.EventRequestDTO;
@@ -16,6 +18,8 @@ import lombok.RequiredArgsConstructor;
 public class CalendarService {
 	
 	private final CalendarDAO calendarDAO;
+	private final SimpMessagingTemplate messagingTemplate;
+
 	
 	public Integer getCalNoByTeamAndUser(Integer teamNo, Integer userNo) {
 	    return calendarDAO.getCalNoByTeamAndUser(teamNo, userNo);
@@ -50,32 +54,14 @@ public class CalendarService {
 	            Integer userNo = Integer.valueOf(userNoStr);
 
 	            calendarDAO.insertParticipant(calDetailNo, userNo);
+	            
+	            // 실시간 메시지 전송 (캘린더 새로고침 신호)
+	            messagingTemplate.convertAndSend(
+	                "/topic/calendar/refresh/" + userNo,
+	                "newEventCreated"
+	            );
 	        }
 	    }
-
-	    // 3️⃣ 공유 대상에게도 동일한 일정 복사 (그들의 캘린더에 추가)
-	    if (dto.getParticipantUserNos() != null) {
-	        for (Integer userNoStr : dto.getParticipantUserNos()) {
-	            Integer userNo = Integer.valueOf(userNoStr);
-	            Integer targetCalNo = calendarDAO.getCalNoByUserNo(userNo);
-
-	            if (targetCalNo != null) {
-	                CalendarDetail copied = new CalendarDetail();
-	                
-	                copied.setCalNo(targetCalNo);
-	                copied.setTitle(detail.getTitle());
-	                copied.setContents(detail.getContents());
-	                copied.setStartDate(detail.getStartDate());
-	                copied.setStartTime(detail.getStartTime());
-	                copied.setEndDate(detail.getEndDate());
-	                copied.setEndTime(detail.getEndTime());
-	                copied.setRegUserNo(detail.getRegUserNo()); // 등록자는 나
-
-	                calendarDAO.insertEvent(copied);
-	            }
-	        }
-	    }
-
 	    return inserted;
 	}
 	// 일정 수정
@@ -83,9 +69,25 @@ public class CalendarService {
         calendarDAO.updateEvent(calendarDetail);
     }
     // 일정 삭제
+    @Transactional
     public int deleteEvent(Integer calDetailNo) {
-        return calendarDAO.deleteEvent(calDetailNo);
+    	
+        // 🔍 참가자 정보는 삭제 전에 가져와야 함!
+        List<Integer> participants = calendarDAO.getParticipantsByCalDetailNo(calDetailNo);
+        
+        int result1 = calendarDAO.deleteEvent(calDetailNo); // 일정 삭제
+        int result2 = calendarDAO.deleteParticipantsByCalDetailNo(calDetailNo); // 참가자 삭제
+        
+        if (result1 > 0 && result2 >= 0) {
+
+            for (Integer userNo : participants) {
+                messagingTemplate.convertAndSend(
+                    "/topic/calendar/refresh/" + userNo,
+                    "eventDeleted:" + calDetailNo
+                );
+            }
+            return 1;
+        }
+        return 0;
     }
-
-
 }
