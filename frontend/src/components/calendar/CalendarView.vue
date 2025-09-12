@@ -16,12 +16,14 @@
       <!-- 팀원 목록은 필요할 때만 보여줌 -->
       <div v-if="showTeamMemberSelector" style="margin-top: 8px;">
         <div v-for="member in teamMembers" :key="member.userNo">
-          <input
-            type="checkbox"
-            :value="Number(member.userNo)"
-            v-model="formData.participantUserNos"
+        <input
+          type="checkbox"
+          :value="Number(member.userNo)"
+          v-model="formData.participantUserNos"
+          :disabled="formData.regUserNo === member.userNo || member.isSelf"
           />
           {{ member.name }}
+        <span v-if="formData.regUserNo === member.userNo">(일정만든이)</span>
         </div>
       </div>
 
@@ -40,7 +42,7 @@
       <br />
       <button @click="saveEvent">저장</button>
       <button @click="showModal = false">취소</button>
-      <button v-if="formData.calDetailNo" @click="deleteEvent">삭제</button>
+      <button v-if="formData.calDetailNo && formData.regUserNo === userStore.user?.userNo" @click="deleteEvent">삭제</button>
     </div>
   </div>
 </template>
@@ -52,11 +54,14 @@ import timeGridPlugin from '@fullcalendar/timegrid';
 import interactionPlugin from '@fullcalendar/interaction';
 import instance from '@/util/interceptors';
 import { useUserStore } from '@/store/userStore';
+import SockJS from 'sockjs-client';
+import Stomp from 'stompjs';
 
 export default {
   components: { FullCalendar },
   data() {
     return {
+      stompClient: null,
       userStore: useUserStore(),
       teamNo: this.$route.params.teamNo,
       teamMembers: [],
@@ -89,7 +94,7 @@ export default {
         eventClick: this.handleEventClick,
         eventDrop: this.handleEventDrop,
         datesSet: this.handleDatesSet,
-        // ✅ 올바른 콜백 함수 형식
+        height: 500,
         events: (fetchInfo, successCallback, failureCallback) => {
         successCallback(this.calendarEvents);
       },
@@ -110,6 +115,52 @@ export default {
     };
   },
   methods: {
+
+    connectWebSocket() {
+      const socket = new SockJS('/ws-chat'); // 실제 서버 엔드포인트로 변경
+      this.stompClient = Stomp.over(socket);
+      
+      this.stompClient.connect({}, () => {
+        const userNo = this.userStore.user?.userNo;
+        if (userNo) {
+          // 사용자별 캘린더 갱신 구독
+        this.stompClient.subscribe(`/topic/calendar/refresh/${userNo}`, (message) => {
+          console.log('📨 [WebSocket] 메시지 수신:', message.body); // 여기를 추가해줘!
+
+          if (message.body.startsWith('eventDeleted:')) {
+            const deletedId = message.body.split(':')[1];
+            console.log('🗑️ 삭제 이벤트 감지, 삭제할 ID:', deletedId); // 이것도 추가
+            this.handleEventDeleted(deletedId);
+          } else {
+            console.log('📅 일반 이벤트 수신 - fetchUserEvents 호출');
+            this.fetchUserEvents();
+          }
+        });
+      }
+      }, (error) => {
+        console.error('WebSocket 연결 실패:', error);
+      });
+    },
+    handleEventDeleted(calDetailNo) {
+      console.log('🔧 handleEventDeleted 호출됨, 삭제할 ID:', calDetailNo);
+
+      // 현재 이벤트 목록 출력
+      console.log('🔎 현재 calendarEvents:', this.calendarEvents);
+
+      // 삭제 필터링 전후 비교
+      const beforeLength = this.calendarEvents.length;
+      this.calendarEvents = this.calendarEvents.filter(
+        (event) => String(event.id) !== String(calDetailNo)
+      );
+      const afterLength = this.calendarEvents.length;
+
+      console.log(`🧹 삭제 전 이벤트 수: ${beforeLength}, 삭제 후: ${afterLength}`);
+
+      // FullCalendar 리렌더링
+      this.$nextTick(() => {
+        this.$refs.fullCalendar?.getApi().refetchEvents();
+      });
+    },
 
     // ✅ 캘린더 존재하지 않으면 생성
     async checkOrCreateCalendar() {
@@ -145,13 +196,11 @@ export default {
       try {
         const { data } = await instance.get(`/teams/${teamNo}/members`);
         // 본인(userNo)을 제외한 팀원 목록만 저장
-          this.teamMembers = data
-            .filter(member => member.userNo !== userNo)
-            .map(member => ({
-              ...member,
-              userNo: Number(member.userNo)
-            }));
-            
+        this.teamMembers = data.map(member => ({
+          ...member,
+          userNo: Number(member.userNo),
+          isSelf: member.userNo === userNo  // 본인 여부 표시
+        }));
           console.log('📋 팀원 목록:', this.teamMembers);
         } catch (error) {
         console.error('❌ 팀원 목록 조회 실패:', error);
@@ -284,8 +333,7 @@ export default {
         startTime: '00:00',
         endDate: selectedDate,
         endTime: '00:00',
-        participantUserNos: []  // 초대된 팀원 user_no 리스트
-        
+        participantUserNos: [this.userStore.user?.userNo]  // 초대된 팀원 user_no 리스트
       };
       this.showModal = true;
     },
@@ -300,7 +348,7 @@ export default {
       this.formData = {
         calDetailNo: info.event.id,
         calNo: this.calendarNo,
-        regUserNo: this.userStore.user?.userNo,
+        regUserNo: props.regUserNo,
         title: info.event.title,
         contents: props.contents,
         startDate: start.split('T')[0],
@@ -327,6 +375,13 @@ export default {
         if (timeStr.includes('+')) return timeStr.split('+')[0]; // ✅ 타임존 제거
         return timeStr;
       };
+          // 강제로 일정만든이, 나를 participantUserNos에 추가
+          const participantSet = new Set(this.formData.participantUserNos || []);
+          const creatorNo = this.formData.regUserNo;
+          const myUserNo = this.userStore.user?.userNo;
+
+          if (creatorNo) participantSet.add(Number(creatorNo));
+          if (myUserNo) participantSet.add(Number(myUserNo));
       const payload = {
               detail: {
                 ...this.formData,
@@ -335,7 +390,8 @@ export default {
                 startTime: formatTime(this.formData.startTime),
                 endTime: formatTime(this.formData.endTime),
               },
-              participantUserNos: this.formData.participantUserNos,
+              participantUserNos: [...participantSet],  // 여기 반영
+              //participantUserNos: this.formData.participantUserNos,
             };
             console.log('팀원 리스트:', this.formData.participantUserNos);
 
@@ -386,6 +442,7 @@ export default {
         this.checkOrCreateCalendar();
         this.fetchUserEvents();
         this.fetchTeamMembers();
+        this.connectWebSocket(); // 여기서 소켓 연결 및 구독 시작
       },
     };
 </script>
@@ -408,5 +465,9 @@ export default {
   margin-top: 8px;
   max-height: 150px;
   overflow-y: auto;
+}
+.calendar-wrapper {
+  max-width: 700px;  /* 원하는 최대 너비 */
+  margin: 0 auto;    /* 가운데 정렬 */
 }
 </style>
