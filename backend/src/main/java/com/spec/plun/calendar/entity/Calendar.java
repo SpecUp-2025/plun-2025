@@ -5,8 +5,8 @@ import lombok.Data;
 @Data
 public class Calendar {
 	
-	private int calNo;
-	private int teamNo;
+	private Integer calNo;
+	private Integer teamNo;
 	private String userNo;
 
 }
