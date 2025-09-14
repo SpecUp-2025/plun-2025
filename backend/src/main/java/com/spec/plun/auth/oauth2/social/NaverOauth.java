@@ -97,7 +97,7 @@ public class NaverOauth implements SocialOauth{
 	            rt.exchange(url, HttpMethod.GET, entity, String.class);
 
 	    if (!res.getStatusCode().is2xxSuccessful() || res.getBody() == null) {
-	        throw new IllegalStateException("카카오 사용자 정보 조회 실패: " + res.getStatusCode());
+	        throw new IllegalStateException("네이버 사용자 정보 조회 실패: " + res.getStatusCode());
 	    }
 	    try {
 	        ObjectMapper om = new ObjectMapper();
@@ -110,12 +110,12 @@ public class NaverOauth implements SocialOauth{
 	        if (email == null || email.isBlank()) {
 	          throw new ResponseStatusException(
 	            HttpStatus.BAD_REQUEST,
-	            "카카오 이메일을 가져오지 못했습니다. 동의 항목(이메일 제공)을 확인해주세요."
+	            "네이버 이메일을 가져오지 못했습니다. 동의 항목(이메일 제공)을 확인해주세요."
 	          );
 	        }
 	        return new UserInfo(email, name);
 	      } catch (Exception e) {
-	        throw new IllegalStateException("카카오 사용자 정보 파싱 실패", e);
+	        throw new IllegalStateException("네이버 사용자 정보 파싱 실패", e);
 	      }	
 	}
 
