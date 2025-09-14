@@ -1,5 +1,5 @@
 <template>
-  <div class="chat-message">
+  <div :class="['chat-message', { 'mention-message': hasMentions }]">
     <strong>{{ senderName }}</strong>
     <small>{{ formattedTime }}</small>
 
@@ -29,10 +29,8 @@
         </div>
     </div>
 
-    <!-- 일반 메시지 -->
-    <div v-if="message.content">
-      {{ message.content }}
-    </div>
+    <!-- 멘션 텍스트를 하이라이트 처리한 메시지 -->
+    <div v-if="message.content" v-html="highlightMentions(message.content)"></div>
   </div>
 </template>
 
@@ -62,12 +60,52 @@ export default {
         },
         senderName() {
         return this.message.name || '탈퇴한 사용자';
+        },
+        hasMentions() {
+          // message.mentions 배열이 있다고 가정
+          return this.message.mentions && this.message.mentions.length > 0;
         }
     },
     methods: {
+
         isImage(contentType) {
         return contentType.startsWith('image/');
         },
+
+        highlightMentions(text) {
+        // 멘션 패턴 예: @아이디 또는 @이름
+        // 멘션 부분만 <span class="mention"> 태그로 감싸기
+        if (!this.hasMentions) return this.escapeHtml(text);
+
+        // 멘션 목록을 이용해 텍스트 내 멘션을 하이라이트 처리
+        let highlighted = this.escapeHtml(text);
+
+        this.message.mentions.forEach(mention => {
+          // mention: { userId: '관리자1', userName: '관리자1' } 형태 가정
+          const mentionText = `@${mention.userName}`;
+          const mentionRegex = new RegExp(`(${mentionText})`, 'g');
+          highlighted = highlighted.replace(
+            mentionRegex,
+            `<span class="mention">$1</span>`
+          );
+        });
+
+        return highlighted;
+      },
+
+      escapeHtml(text) {
+        // XSS 방지용 간단한 escape
+        return text.replace(/[&<>"']/g, function(match) {
+          const escape = {
+            '&': '&amp;',
+            '<': '&lt;',
+            '>': '&gt;',
+            '"': '&quot;',
+            "'": '&#39;'
+          };
+          return escape[match];
+        });
+      },
 
     async deleteAttachment(attachmentNo) {
       if (!confirm('정말 이 파일을 삭제하시겠습니까?')) return;
@@ -75,7 +113,7 @@ export default {
       try {
        await instance.delete(`/attachments/delete/${attachmentNo}`, {
         withCredentials: true
-        }); // ✅ 백엔드 API로 삭제 요청
+        }); //  백엔드 API로 삭제 요청
 
         // 삭제 성공 시 프론트에서 해당 파일 제거
         this.message.attachments = this.message.attachments.filter(
@@ -109,5 +147,19 @@ small {
   color: gray;
   margin-left: 10px;
   font-size: 0.75em;
+}
+/* 멘션 메시지 배경색 */
+.mention-message {
+  background-color: #fff7e6;
+  border-left: 3px solid #ffa500;
+  padding-left: 5px;
+}
+/* 멘션 텍스트 스타일 */
+.mention {
+  font-weight: bold;
+  color: #d46b08;
+  background-color: #fff1b8;
+  border-radius: 3px;
+  padding: 0 3px;
 }
 </style>

@@ -22,6 +22,7 @@ import org.springframework.web.multipart.MultipartFile;
 
 import com.spec.plun.alarm.service.AlarmService;
 import com.spec.plun.chat.dto.ChatMessageRequestDTO;
+import com.spec.plun.chat.dto.CreateChatRoomRequestDTO;
 import com.spec.plun.chat.entity.ChatMember;
 import com.spec.plun.chat.entity.ChatMessage;
 import com.spec.plun.chat.entity.ChatRoom;
@@ -40,7 +41,7 @@ public class ChatController {
 	@PostMapping("/send")
 	public ResponseEntity<?> sendMessageWithOptionalAttachment(
 	        @RequestPart("message") ChatMessageRequestDTO messageDTO,
-	        @RequestPart(value = "file", required = false) MultipartFile file
+	        @RequestPart(value = "file", required = false) List<MultipartFile> file
 	) {
 	    try {
 	        ChatMessage savedMessage = chatService.sendMessageWithOptionalAttachment(messageDTO, file);
@@ -91,10 +92,14 @@ public class ChatController {
 	}
 	// 채팅방 생성
 	@PostMapping("/room")
-	public ChatRoom createChatRoom(@RequestBody Map<String, String> roomName) {
+	public ResponseEntity<ChatRoom> createChatRoom(@RequestBody CreateChatRoomRequestDTO request) {
 		
-		String name = roomName.get("roomName");
-		return chatService.createChatRoom(name);
+	    String roomName = request.getRoomName();
+	    List<Integer> memberUserNos = request.getMemberUserNos();
+	    int creatorUserNo = request.getCreatorUserNo();
+	    
+	    ChatRoom createdRoom = chatService.createChatRoomWithMembers(roomName, memberUserNos, creatorUserNo);
+	    return ResponseEntity.ok(createdRoom);
 	}
 	// 채팅방 목록
 	@GetMapping("/rooms")
