@@ -1,5 +1,17 @@
 <template>
   <div>
+
+    <!-- 알림 메시지 표시 UI 추가 -->
+    <div class="notification-area" v-if="notifications.length">
+      <div
+        v-for="(n, index) in notifications"
+        :key="index"
+        :class="['notification', n.type]"
+      >
+        {{ n.message }}
+      </div>
+    </div>
+
     <FullCalendar ref="fullCalendar" :options="calendarOptions" />
 
     <!-- 일정 등록 모달 -->
@@ -61,7 +73,9 @@ export default {
   components: { FullCalendar },
   data() {
     return {
+      notifications: [],  // 알림 메시지를 저장할 배열
       stompClient: null,
+      isConnected: false,  // 연결 여부 추적
       userStore: useUserStore(),
       teamNo: this.$route.params.teamNo,
       teamMembers: [],
@@ -110,33 +124,66 @@ export default {
         endDate: '',
         endTime: '',
         teamMembers: [],
-        participantUserNos: []  // 초대된 팀원 user_no 리스트
+        participantUserNos: []
       },
     };
   },
   methods: {
 
+    sendWebSocketMessage(message) {
+      if (this.stompClient && this.stompClient.connected) {
+        this.stompClient.send('/app/calendar/refresh', {}, message);
+        console.log('📤 WebSocket 메시지 전송됨:', message);
+      } else {
+        console.warn('⚠️ WebSocket이 연결되어 있지 않음');
+      }
+    },
     connectWebSocket() {
+
+      // 중복 방지: 이미 연결되어 있으면 return
+      if (this.stompClient && this.isConnected) {
+        console.log('⚠️ 이미 WebSocket 연결됨 - 중복 방지');
+        return;
+      }
+
       const socket = new SockJS('/ws-chat'); // 실제 서버 엔드포인트로 변경
       this.stompClient = Stomp.over(socket);
-      
+
       this.stompClient.connect({}, () => {
         const userNo = this.userStore.user?.userNo;
+
         if (userNo) {
           // 사용자별 캘린더 갱신 구독
-        this.stompClient.subscribe(`/topic/calendar/refresh/${userNo}`, (message) => {
-          console.log('📨 [WebSocket] 메시지 수신:', message.body); // 여기를 추가해줘!
+          this.stompClient.subscribe(`/topic/calendar/refresh/${userNo}`, (message) => {
+            console.log('📨 [WebSocket] 메시지 수신:', message.body);
 
-          if (message.body.startsWith('eventDeleted:')) {
-            const deletedId = message.body.split(':')[1];
-            console.log('🗑️ 삭제 이벤트 감지, 삭제할 ID:', deletedId); // 이것도 추가
-            this.handleEventDeleted(deletedId);
-          } else {
-            console.log('📅 일반 이벤트 수신 - fetchUserEvents 호출');
-            this.fetchUserEvents();
-          }
-        });
-      }
+            if (message.body.startsWith('eventDeleted:')) {
+              const deletedId = message.body.split(':')[1];
+              console.log('🗑️ 삭제 이벤트 감지, 삭제할 ID:', deletedId);
+              this.handleEventDeleted(deletedId);
+
+              // 🔔 삭제 알림 중복 방지 후 추가
+              if (!this.notifications.some(n => n.message === '🗑️ 일정이 삭제되었습니다.')) {
+                this.notifications.push({ type: 'delete', message: '🗑️ 일정이 삭제되었습니다.' });
+              }
+            } else {
+              console.log('📅 일반 이벤트 수신 - fetchUserEvents 호출');
+              this.fetchUserEvents();
+
+              // 🔔 등록 알림 중복 방지 후 추가
+              if (!this.notifications.some(n => n.message === '🔔 새로운 일정이 등록되었습니다.')) {
+                this.notifications.push({ type: 'new', message: '🔔 새로운 일정이 등록되었습니다.' });
+              }
+            }
+
+            // ⏱️ 알림 3초 후 자동 제거
+            setTimeout(() => {
+              if (this.notifications.length > 0) {
+                this.notifications.shift();
+              }
+            }, 3000);
+          });
+        }
       }, (error) => {
         console.error('WebSocket 연결 실패:', error);
       });
@@ -162,7 +209,7 @@ export default {
       });
     },
 
-    // ✅ 캘린더 존재하지 않으면 생성
+    // 캘린더 존재하지 않으면 생성
     async checkOrCreateCalendar() {
       const teamNo = this.$route.params.teamNo;
       const userNo = this.userStore.user?.userNo;
@@ -221,6 +268,7 @@ export default {
         alert('일정이 삭제되었습니다.');
         this.showModal = false;
         this.fetchUserEvents();
+        this.sendWebSocketMessage(`eventDeleted:${this.formData.calDetailNo}`);
       } catch (error) {
         console.error('일정 삭제 실패:', error);
         alert('삭제에 실패했습니다.');
@@ -289,7 +337,7 @@ export default {
 
       async fetchUserEvents() {
         try {
-          const userNo = this.userStore.user?.userNo;  // 사용자 번호 얻기
+          const userNo = this.userStore.user?.userNo;
 
           const { data } = await instance.get('/calendar/events', {
             params: {
@@ -333,7 +381,7 @@ export default {
         startTime: '00:00',
         endDate: selectedDate,
         endTime: '00:00',
-        participantUserNos: [this.userStore.user?.userNo]  // 초대된 팀원 user_no 리스트
+        participantUserNos: [this.userStore.user?.userNo]
       };
       this.showModal = true;
     },
@@ -372,7 +420,7 @@ export default {
       const formatTime = (timeStr) => {
         if (!timeStr || !timeStr.includes(':')) return '00:00:00';
         if (timeStr.length === 5) return `${timeStr}:00`;  // HH:mm → HH:mm:00
-        if (timeStr.includes('+')) return timeStr.split('+')[0]; // ✅ 타임존 제거
+        if (timeStr.includes('+')) return timeStr.split('+')[0]; // 타임존 제거
         return timeStr;
       };
           // 강제로 일정만든이, 나를 participantUserNos에 추가
@@ -382,6 +430,7 @@ export default {
 
           if (creatorNo) participantSet.add(Number(creatorNo));
           if (myUserNo) participantSet.add(Number(myUserNo));
+
       const payload = {
               detail: {
                 ...this.formData,
@@ -390,8 +439,7 @@ export default {
                 startTime: formatTime(this.formData.startTime),
                 endTime: formatTime(this.formData.endTime),
               },
-              participantUserNos: [...participantSet],  // 여기 반영
-              //participantUserNos: this.formData.participantUserNos,
+              participantUserNos: [...participantSet],
             };
             console.log('팀원 리스트:', this.formData.participantUserNos);
 
@@ -402,6 +450,7 @@ export default {
           }
           this.showModal = false;
           await this.fetchUserEvents();
+          this.sendWebSocketMessage('eventUpdated');
 
         } catch (error) {
           console.error('일정 저장 실패:', error);
@@ -442,7 +491,7 @@ export default {
         this.checkOrCreateCalendar();
         this.fetchUserEvents();
         this.fetchTeamMembers();
-        this.connectWebSocket(); // 여기서 소켓 연결 및 구독 시작
+        this.connectWebSocket();
       },
     };
 </script>
@@ -467,7 +516,31 @@ export default {
   overflow-y: auto;
 }
 .calendar-wrapper {
-  max-width: 700px;  /* 원하는 최대 너비 */
-  margin: 0 auto;    /* 가운데 정렬 */
+  max-width: 700px;
+  margin: 0 auto;
 }
+.notification-area {
+  position: fixed;
+  top: 20px;
+  right: 20px;
+  z-index: 1000;
+}
+.notification {
+  padding: 10px 16px;
+  margin-bottom: 10px;
+  border-radius: 6px;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+  color: #333;
+  background-color: #f0f0f0;
+  transition: all 0.3s ease;
+}
+.notification.new {
+  background-color: #e0f7fa;
+  color: #00796b;
+}
+.notification.delete {
+  background-color: #ffebee;
+  color: #c62828;
+}
+
 </style>

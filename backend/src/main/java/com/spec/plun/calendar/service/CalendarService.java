@@ -55,7 +55,7 @@ public class CalendarService {
 
 	            calendarDAO.insertParticipant(calDetailNo, userNo);
 	            
-	            // 실시간 메시지 전송 (캘린더 새로고침 신호)
+	            // 실시간 메시지 전송
 	            messagingTemplate.convertAndSend(
 	                "/topic/calendar/refresh/" + userNo,
 	                "newEventCreated"
@@ -67,6 +67,15 @@ public class CalendarService {
 	// 일정 수정
     public void updateEvent(CalendarDetail calendarDetail) {
         calendarDAO.updateEvent(calendarDetail);
+        
+        // 🔔 일정 수정 → 참가자에게 WebSocket 메시지 발송
+        List<Integer> participants = calendarDAO.getParticipantsByCalDetailNo(calendarDetail.getCalDetailNo());
+        for (Integer userNo : participants) {
+            messagingTemplate.convertAndSend(
+                "/topic/calendar/refresh/" + userNo,
+                "eventUpdated"
+            );
+        }
     }
     // 일정 삭제
     @Transactional

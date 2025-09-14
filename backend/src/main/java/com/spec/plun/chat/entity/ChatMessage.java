@@ -21,4 +21,6 @@ public class ChatMessage {
     
     private List<Attachment> attachments;
 
+    // mentions: DB에 저장 안 해도 되므로 transient 처리 가능
+    private transient List<Integer> mentions;
 }

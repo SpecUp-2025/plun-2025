@@ -1,34 +1,6 @@
 <template>
   <div>
     <h2>채팅방 목록</h2>
-
-    <!-- 통합 알림 뱃지 -->
-    <!-- <div class="alarm-dropdown">
-      <div class="alarm-icon" @click="toggleDropdown">
-        🔔
-        <span v-if="unreadCount > 0" class="badge">{{ unreadCount }}</span>
-      </div>
-
-      <div v-if="showDropdown" class="dropdown-content">
-        <div v-if="alarms.length === 0" class="no-alarm">알림이 없습니다</div>
-
-        <ul v-else>
-          <li
-            v-for="alarm in alarms"
-            :key="alarm.alarmNo"
-            @click="goToChatRoom(alarm)"
-            class="alarm-item"
-            :class="{ read: alarm.isRead === 'Y' }"
-            >
-
-            <strong>{{ alarm.senderName }}</strong> : {{ alarm.content }}
-          </li>
-        </ul>
-
-        <button v-if="alarms.length" @click="markAllAsRead">모두 읽음</button>
-      </div>
-    </div> -->
-
     <ul>
       <li
         v-for="room in chatRooms"
@@ -69,9 +41,6 @@ const enterRoom = async (roomNo) => {
 
   router.push(`/room/${roomNo}`)
 }
-// const enterRoom = (roomNo) => {
-//   router.push(`/room/${roomNo}`)
-// }
 
 const fetchChatRooms = async () => {
   try {
@@ -107,6 +76,12 @@ const connectWebSocket = () => {
 
       alarms.value.unshift(alarm)
       unreadCount.value++
+
+      // 채팅 초대 알림이면 채팅방 목록 다시 불러오기
+    if (alarm.alarmType === 'CHAT') {
+      console.log('📥 초대 알림 수신, 채팅방 목록 갱신')
+      fetchChatRooms()
+    }
     })
   }, (err) => {
     console.error('❌ 알림 WebSocket 연결 실패:', err)
@@ -158,7 +133,6 @@ onMounted(() => {
   connectWebSocket()
 })
 </script>
-
 
 <style scoped>
 .dot {
