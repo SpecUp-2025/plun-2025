@@ -169,7 +169,7 @@ export default {
             } else {
               console.log('📅 일반 이벤트 수신 - fetchUserEvents 호출');
               this.fetchUserEvents();
-w
+
               // 🔔 등록 알림 중복 방지 후 추가
               if (!this.notifications.some(n => n.message === '🔔 새로운 일정이 등록되었습니다.')) {
                 this.notifications.push({ type: 'new', message: '🔔 새로운 일정이 등록되었습니다.' });
