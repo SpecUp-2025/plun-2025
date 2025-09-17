@@ -1,0 +1,24 @@
+.page{
+    display: block; 
+    min-height: 100dvh;
+    background: #f6f7fb;
+    padding-top: 64px; 
+}
+
+.container{
+    width: 100%;
+    max-width: 1400px;
+    margin: 0 auto;
+    padding: 20px 16px 40px;
+}
+.btn{ border:0; border-radius:10px; padding:8px 12px; cursor:pointer; font-size:14px; }
+.btn.ghost{ background:#fff; border:1px solid #e5e7eb; }
+.btn.ghost:hover{ background:#f9fafb; }
+.btn.primary{ background:#10b981; color:#fff; }
+.btn.primary:hover{ filter:brightness(.97); }
+
+.who__name{ margin: 0; font-size: 18px; font-weight: 700; }
+.who__email{ margin: 2px 0 0; font-size: 14px; color:#6b7280; }
+.btn:disabled{ opacity:.6; cursor:not-allowed; }
+.btn.danger-btn{ background:#ef4444; color:#fff; }
+.btn.danger-btn:hover{ filter:brightness(.97); }
