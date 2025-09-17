@@ -12,10 +12,9 @@ public interface AlarmDAO {
 
     void insertAlarm(Alarm alarm);
 
-    List<Alarm> selectAlarmsByUserNo(int userNo);
+    List<Alarm> selectAlarmsByUserNo(Integer userNo);
     
-    // AlarmDAO 인터페이스에 추가
-    String selectUserNameByUserNo(int userNo);
+    String selectUserNameByUserNo(Integer userNo);
 
-    void updateAlarmIsRead(@Param("alarmNo") int alarmNo);
+    void updateAlarmIsRead(@Param("alarmNo") Integer alarmNo);
 }

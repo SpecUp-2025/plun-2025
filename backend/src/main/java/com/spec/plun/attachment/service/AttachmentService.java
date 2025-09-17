@@ -55,7 +55,7 @@ public class AttachmentService {
 	}
 	
 	// 파일 업로드
-	public Attachment saveFile(MultipartFile file, int messageNo) throws IOException{
+	public Attachment saveFile(MultipartFile file, Integer messageNo) throws IOException{
 		
 		// 1. 파일 저장 이름 생성
 		String uuid = UUID.randomUUID().toString();

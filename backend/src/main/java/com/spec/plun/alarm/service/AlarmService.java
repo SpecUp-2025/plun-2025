@@ -17,17 +17,17 @@ public class AlarmService {
 	private final AlarmDAO alarmDAO;
 	private final SimpMessagingTemplate messagingTemplate;
 	
-	public void createChatAlarm(int fromUserNo ,int toUserNo, int roomNo, String content) {
+	public void createChatAlarm(Integer senderNo ,Integer userNo, Integer roomNo, String content) {
         Alarm alarm = new Alarm();
-        alarm.setUserNo(toUserNo);
-        alarm.setSenderNo(fromUserNo);
+        alarm.setUserNo(userNo);
+        alarm.setSenderNo(senderNo);
         alarm.setAlarmType("CHAT");
         alarm.setReferenceNo(roomNo);
         alarm.setContent(content);
         alarm.setIsRead("N");
         
         // 사용자 이름 조회 (DAO 메서드 필요)
-        String senderName = alarmDAO.selectUserNameByUserNo(fromUserNo);
+        String senderName = alarmDAO.selectUserNameByUserNo(senderNo);
         System.out.println("[AlarmService] 사용자 이름: " + senderName);
         alarm.setSenderName(senderName);
 
@@ -36,16 +36,16 @@ public class AlarmService {
         // 실시간 WebSocket 알림 전송
         System.out.println("[AlarmService] 알림 전송 전: " + alarm);
         messagingTemplate.convertAndSend(
-            "/topic/notifications/" + toUserNo,
+            "/topic/notifications/" + userNo,
             alarm
         );
     }
 
-    public List<Alarm> getUserAlarms(int userNo) {
+    public List<Alarm> getUserAlarms(Integer userNo) {
         return alarmDAO.selectAlarmsByUserNo(userNo);
     }
 
-    public void markAsRead(int alarmNo) {
+    public void markAsRead(Integer alarmNo) {
     	alarmDAO.updateAlarmIsRead(alarmNo);
     }
 }

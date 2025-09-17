@@ -22,12 +22,12 @@ public class AlarmController {
     private final AlarmService alarmService;
 
     @GetMapping("/{userNo}")
-    public ResponseEntity<List<Alarm>> getAlarms(@PathVariable("userNo") int userNo) {
+    public ResponseEntity<List<Alarm>> getAlarms(@PathVariable("userNo") Integer userNo) {
         return ResponseEntity.ok(alarmService.getUserAlarms(userNo));
     }
 
     @PutMapping("/{alarmNo}/read")
-    public ResponseEntity<Void> markAsRead(@PathVariable("alarmNo") int alarmNo) {
+    public ResponseEntity<Void> markAsRead(@PathVariable("alarmNo") Integer alarmNo) {
         alarmService.markAsRead(alarmNo);
         return ResponseEntity.ok().build();
     }

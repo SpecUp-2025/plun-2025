@@ -79,7 +79,7 @@ public class ChatService {
 	    return message;
 	}
 	
-	public List<ChatMessage> getChatMessagesWithAttachments(int roomNo) {
+	public List<ChatMessage> getChatMessagesWithAttachments(Integer roomNo) {
 	    List<ChatMessage> messages = chatDAO.getChatMessageByRoomNo(roomNo);
 
 	    for (ChatMessage message : messages) {
@@ -92,7 +92,7 @@ public class ChatService {
 	}
 	
 	// 채팅방 메시지 목록
-	public List<ChatMessage> getChatMessages(int roomNo){
+	public List<ChatMessage> getChatMessages(Integer roomNo){
 		List<ChatMessage> messages = chatDAO.getChatMessageByRoomNo(roomNo);
 		
 		for (ChatMessage message : messages) {
@@ -106,7 +106,7 @@ public class ChatService {
 		return chatDAO.getChatRooms();
 	}
 	// 채팅방 이름 변경
-	public void updateRoomName(int roomNo, String newName) {
+	public void updateRoomName(Integer roomNo, String newName) {
 		if (newName == null || newName.trim().isEmpty()) {
 			throw new IllegalArgumentException("❌ 채팅방 이름은 비워둘 수 없습니다.");
 		}
@@ -147,7 +147,7 @@ public class ChatService {
     }
 
     // 상대방 userNo 찾는 헬퍼 메서드
-    public int findOtherUserInRoom(int roomNo, int senderUserNo) {
+    public int findOtherUserInRoom(Integer roomNo, Integer senderUserNo) {
         List<ChatMember> members = getChatMembers(roomNo);
         for (ChatMember member : members) {
             if (member.getUserNo() != senderUserNo) {
@@ -157,11 +157,11 @@ public class ChatService {
         return -1;
     }
 	// 채팅방 목록 조회
-	public List<ChatMember> getChatMembers(int roomNo){
+	public List<ChatMember> getChatMembers(Integer roomNo){
 		return chatDAO.getChatMembers(roomNo);
 	}
 	// 채팅방 입장 시 등록
-	public void addMemberToRoom(int roomNo, int userNo) {
+	public void addMemberToRoom(Integer roomNo, Integer userNo) {
 		// 참여자가 이미 존재하는지 체크
 		if(chatDAO.existMember(roomNo,userNo)) {
 			return;
@@ -169,15 +169,15 @@ public class ChatService {
 		chatDAO.insertMember(roomNo, userNo);
 	}
 	// 채팅방 퇴장
-	public void removeMemberFromRoom(int roomNo, int userNo) {
+	public void removeMemberFromRoom(Integer roomNo, Integer userNo) {
 		chatDAO.deleteChatMember(roomNo, userNo);
 	}
 	// 채팅방 이름 조회
-	public ChatRoom getChatRoom(int roomNo) {
+	public ChatRoom getChatRoom(Integer roomNo) {
 		return chatDAO.getChatRoom(roomNo);
 	}
 	// 팀원 초대 채팅방 초대
-	public ChatRoom createChatRoomWithMembers(String roomName, List<Integer> memberUserNos, int creatorUserNo) {
+	public ChatRoom createChatRoomWithMembers(String roomName, List<Integer> memberUserNos, Integer creatorUserNo) {
 	    // 1. 채팅방 생성
 	    ChatRoom room = new ChatRoom();
 	    room.setRoomName(roomName);

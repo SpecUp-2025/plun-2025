@@ -10,9 +10,9 @@ import lombok.Data;
 @Data
 public class ChatMessage {
 	
-	private int messageNo;
-	private int roomNo;
-	private int userNo;
+	private Integer messageNo;
+	private Integer roomNo;
+	private Integer userNo;
 	private String name;
 	private String content; // 텍스트 또는 멘션 포함 문자열
 	private LocalDateTime createDate;
