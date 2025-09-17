@@ -1,9 +1,19 @@
 <script setup>
 const year = new Date().getFullYear()
 </script>
+
 <template>
-  <footer class="ftr"><slot>© {{ year }}</slot></footer>
+  <footer class="site-footer"><slot>© {{ year }}</slot></footer>
 </template>
+
 <style scoped>
-.ftr{background:#ffd8e6;border-top:1px solid #ffc2db;color:#6b2f45;padding:8px 14px;font-size:12px;}
+.site-footer {
+  background-color: #ffffff;
+  color: #4A90E2;
+  padding: 12px 16px;
+  font-size: 14px;
+  text-align: center;
+  border-top: 2px solid #4A90E2;
+  font-weight: 600;
+}
 </style>

@@ -1,77 +1,70 @@
 <template>
-  <div class="alarm-dropdown">
-    <div class="alarm-icon" @click="toggleDropdown">
-      🔔
-      <span v-if="unreadCount > 0" class="badge">{{ unreadCount }}</span>
+    <link rel="stylesheet"
+    href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.4/css/all.min.css"/>
+
+    <div class="alarm-dropdown">
+    <div class="icon-button " @click="toggleDropdown">
+      <i class="fas fa-bell"></i>
+      <span v-if="alarmStore.unreadCount > 0" class="badge">{{ alarmStore.unreadCount }}</span>
     </div>
 
     <div v-if="showDropdown" class="dropdown-content">
-      <div v-if="alarms.length === 0" class="no-alarm">알림이 없습니다</div>
+      <div v-if="alarmStore.alarms.length === 0" class="no-alarm">알림이 없습니다</div>
 
       <ul v-else>
         <li
-          v-for="alarm in alarms"
+          v-for="alarm in alarmStore.alarms.filter(a => a.isRead === 'N')"
           :key="alarm.alarmNo"
           @click="goToChatRoom(alarm)"
           class="alarm-item"
         >
-          <strong>{{ alarm.senderName }}</strong> : {{ alarm.content }}
+          💬 새로운 메시지가 도착했습니다.
         </li>
       </ul>
 
-      <button v-if="alarms.length" @click="markAllAsRead">모두 읽음</button>
+      <button v-if="alarmStore.alarms.length" @click="markAllAsRead">모두 읽음</button>
     </div>
   </div>
 </template>
 
-<script>
-import instance from '@/util/interceptors'
+<script setup>
+import { useAlarmStore } from '@/store/useAlarmStore'
+import { ref } from 'vue'
+import { useRouter } from 'vue-router'
 
-export default {
-  name: "AlarmDropdown",
-  props: {
-    alarms: Array, // 부모 컴포넌트에서 받은 알림 배열
-  },
-  data() {
-    return {
-      showDropdown: false,
-    };
-  },
-  computed: {
-    unreadCount() {
-      return this.alarms.filter(alarm => alarm.isRead === 'N').length;
-    },
-  },
-  methods: {
-    toggleDropdown() {
-      this.showDropdown = !this.showDropdown;
-    },
-    async goToChatRoom(alarm) {
-      try {
-        // 읽음 처리
-        await instance.put(`/alarms/${alarm.alarmNo}/read`);
-        alarm.isRead = 'Y';
+const emit = defineEmits(['alarmClicked'])
+const router = useRouter()
+const alarmStore = useAlarmStore()
 
-        // 채팅방으로 이동
-        this.$router.push(`/chat/${alarm.referenceNo}`);
-        this.showDropdown = false;
-      } catch (error) {
-        console.error('❌ 알림 읽음 처리 실패', error);
-      }
-    },
-    async markAllAsRead() {
-      const unreadAlarms = this.alarms.filter(a => a.isRead === 'N');
-      for (const alarm of unreadAlarms) {
-        try {
-          await instance.put(`/alarms/${alarm.alarmNo}/read`);
-          alarm.isRead = 'Y';
-        } catch (e) {
-          console.error("❌ 알림 읽음 처리 실패", e);
-        }
-      }
-    },
-  },
-};
+const toggleDropdown = () => {
+  showDropdown.value = !showDropdown.value
+}
+
+const showDropdown = ref(false)
+
+const goToChatRoom = async (alarm) => {
+  try {
+    await alarmStore.markAsRead(alarm.alarmNo)
+    // 읽음 처리 후 라우팅
+    alarm.isRead = 'Y' // 혹은 이 부분은 스토어에서 업데이트 됐으니 필요 없을 수도 있음
+    emit('alarmClicked', alarm.referenceNo)
+    showDropdown.value = false
+  } catch (error) {
+    console.error('❌ 알림 읽음 처리 실패', error)
+  }
+}
+
+const markAllAsRead = async () => {
+  const unreadAlarms = alarmStore.alarms.filter(a => a.isRead === 'N')
+  for (const alarm of unreadAlarms) {
+    try {
+      await alarmStore.markAsRead(alarm.alarmNo)
+      alarm.isRead = 'Y'
+    } catch (e) {
+      console.error('❌ 알림 읽음 처리 실패', e)
+    }
+  }
+}
 </script>
 
 <style scoped>
@@ -81,26 +74,27 @@ export default {
   margin-left: 20px;
 }
 .badge {
-  background-color: #4285F4; /* 파란색 */
-  color: white;
-  border-radius: 9999px;
-  font-size: 12px;
-  padding: 2px 6px;
   position: absolute;
-  top: -5px;
-  right: -10px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  min-width: 18px;
-  height: 18px;
-  font-weight: bold;
-  box-shadow: 0 0 0 2px white; /* 흰 테두리로 더 눈에 띄게 */
+  top: -6px;
+  right: -6px;
+  background-color: red;
+  color: white;
+  font-size: 10px;
+  padding: 2px 5px;
+  border-radius: 50%;
+  line-height: 1;
+  box-shadow: 0 0 0 2px white; /* 흰 테두리 */
 }
-.alarm-icon {
-  cursor: pointer;
+
+.icon-button {
   position: relative;
+  background: none;
+  border: none;
+  font-size: 20px;
+  color: #3399FF;
+  cursor: pointer;
 }
+
 .dropdown-content {
   position: absolute;
   background-color: white;

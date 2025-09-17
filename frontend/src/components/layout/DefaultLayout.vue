@@ -1,14 +1,18 @@
 <script setup>
 import HeaderBar from './HeaderBar.vue'
-import SideNav from './SideNav.vue'
 import SiteFooter from './SiteFooter.vue'
 </script>
 
 <template>
   <div class="wrap">
-    <HeaderBar><slot name="header"/></HeaderBar>
+    <HeaderBar 
+      @go-profile="$emit('go-profile')"
+      @alarmClicked="$emit('alarmClicked', $event)"
+      @logout="$emit('logout')" 
+      >
+    <slot name="header"/></HeaderBar>
     <div class="body">
-      <SideNav><slot name="sidebar"/></SideNav>
+      <slot name="sidebar"/>
       <main class="main"><slot/></main>
     </div>
     <SiteFooter><slot name="footer"/></SiteFooter>

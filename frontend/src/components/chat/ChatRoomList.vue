@@ -1,6 +1,5 @@
 <template>
-  <div>
-    <h2>채팅방 목록</h2>
+  <div class="side">
     <ul>
       <li
         v-for="room in chatRooms"
@@ -9,25 +8,29 @@
         class="chat-room-item"
       >
         {{ room.roomName }}
-        <span v-if="hasUnreadByRoom[room.roomNo]" class="dot">●</span>
+        <span v-if="hasUnreadByRoom[room.roomNo]" class="badge-new">New</span>
       </li>
     </ul>
   </div>
 </template>
 
 <script setup>
-import { ref, onMounted, computed } from 'vue'
+import { ref, onMounted, computed, defineEmits } from 'vue'
 import { useRouter } from 'vue-router'
 import instance from '@/util/interceptors'
 import SockJS from 'sockjs-client'
 import Stomp from 'stompjs'
 import { useUserStore } from '@/store/userStore'
+import { useAlarmStore } from '@/store/useAlarmStore'
 
+const alarmStore = useAlarmStore()
+const alarms = computed(() => alarmStore.alarms)
+const unreadCount = computed(() => alarmStore.unreadCount)
+
+const emit = defineEmits(['roomSelected', 'updateAlarms'])
 const chatRooms = ref([])
 const router = useRouter()
 
-const alarms = ref([])         // 전체 알림 목록
-const unreadCount = ref(0)     // 읽지 않은 알림 수
 const showDropdown = ref(false)
 const stompClient = ref(null)
 const userStore = useUserStore()
@@ -35,11 +38,20 @@ const userNo = userStore.user?.userNo
 
 const enterRoom = async (roomNo) => {
   const unread = alarms.value.filter(a => a.referenceNo === roomNo && a.isRead === 'N')
+  
   await Promise.all(unread.map(a => instance.put(`/alarms/${a.alarmNo}/read`)))
-  unread.forEach(a => a.isRead = 'Y')
+  
+  alarmStore.alarms = alarmStore.alarms.map(a => {
+    if (a.referenceNo === roomNo) {
+      return { ...a, isRead: 'Y' }
+    }
+    return a
+  })
+
+  emit('updateAlarms', alarms.value)
   unreadCount.value = alarms.value.filter(a => a.isRead === 'N').length
 
-  router.push(`/room/${roomNo}`)
+  emit('roomSelected', Number(roomNo))  // 부모 컴포넌트에 방 번호 전달
 }
 
 const fetchChatRooms = async () => {
@@ -48,17 +60,6 @@ const fetchChatRooms = async () => {
     chatRooms.value = res.data
   } catch (error) {
     console.error('채팅방 목록 불러오기 실패:', error)
-  }
-}
-
-// 🔔 안 읽은 알림 목록 불러오기
-const fetchAlarms = async () => {
-  try {
-    const res = await instance.get(`/alarms/${userNo}`)
-    alarms.value = res.data
-    unreadCount.value = alarms.value.filter(a => a.isRead === 'N').length
-  } catch (e) {
-    console.error('알림 불러오기 실패:', e)
   }
 }
 
@@ -77,6 +78,8 @@ const connectWebSocket = () => {
       alarms.value.unshift(alarm)
       unreadCount.value++
 
+      emit('updateAlarms', alarms.value)
+
       // 채팅 초대 알림이면 채팅방 목록 다시 불러오기
     if (alarm.alarmType === 'CHAT') {
       console.log('📥 초대 알림 수신, 채팅방 목록 갱신')
@@ -87,37 +90,9 @@ const connectWebSocket = () => {
     console.error('❌ 알림 WebSocket 연결 실패:', err)
   })
 }
-
-// 알림 목록 토글
-const toggleDropdown = () => {
-  showDropdown.value = !showDropdown.value
-}
-
-// 알림 클릭 → 채팅방 이동
-const goToChatRoom = async (alarm) => {
-  if (alarm.alarmNo) {
-    await instance.put(`/alarms/${alarm.alarmNo}/read`) // 읽음 처리
-    alarm.isRead = 'Y'
-    unreadCount.value = alarms.value.filter(a => a.isRead === 'N').length
-  }
-
-  router.push(`/room/${alarm.referenceNo}`)
-}
-
-// 모든 알림 읽음 처리
-const markAllAsRead = async () => {
-  const unread = alarms.value.filter(a => a.isRead === 'N')
-
-  await Promise.all(unread.map(alarm =>
-    instance.put(`/alarms/${alarm.alarmNo}/read`)
-  ))
-
-  alarms.value.forEach(a => a.isRead = 'Y')
-  unreadCount.value = 0
-}
 const hasUnreadByRoom = computed(() => {
   const map = {}
-  alarms.value.forEach(alarm => {
+  alarmStore.alarms.forEach(alarm => {
     if (alarm.isRead === 'N') {
       map[alarm.referenceNo] = true
     }
@@ -125,55 +100,59 @@ const hasUnreadByRoom = computed(() => {
   return map
 })
 
-// 초기 실행
 onMounted(() => {
   if (!userNo) return
   fetchChatRooms()
-  fetchAlarms()
+  alarmStore.fetchAlarms(userNo)
   connectWebSocket()
 })
 </script>
 
 <style scoped>
-.dot {
-  color: red;
-  font-size: 14px;
-  margin-left: 6px;
-}
-.badge {
-  background-color: red;
-  color: white;
-  border-radius: 50%;
-  padding: 2px 6px;
-  font-size: 12px;
-  margin-left: 4px;
+
+.side {
+  background-color: #e9eef5; /* SideNav과 동일 */
+  border-right: 1px solid #c5d4e7;
+  padding: 0px;
+  color: #2c3e50;
+  font-weight: 550;
+  font-size: 16px;
+  overflow: auto;
 }
 
-.alarm-dropdown {
-  position: relative;
-  display: inline-block;
-  margin-bottom: 10px;
+.side ul {
+  list-style: none;
+  margin: 0;
+  padding: 0;
 }
 
-.dropdown-content {
-  position: absolute;
-  background-color: white;
-  border: 1px solid #ccc;
-  width: 200px;
-  max-height: 300px;
-  overflow-y: auto;
-  z-index: 999;
-  padding: 10px;
-}
-
-.alarm-item {
+.side li {
+  padding: 0px 8px;
+  margin-bottom: 6px;
   cursor: pointer;
-  padding: 5px;
-  border-bottom: 1px solid #eee;
+  border-radius: 6px;
+  font-weight: 700;
+  font-size: 18px;
+  color: #2c3e50;
+  transition: background-color 0.2s ease;
+  user-select: none;
 }
 
-.alarm-item.read {
-  color: gray;
-  font-style: italic;
+.side li:hover {
+  background-color: #e0efff;
+  color: #4A90E2;
+}
+
+.badge-new {
+  display: inline-block;
+  background-color: #ff7a45; /* 부드러운 주황색 */
+  color: white;
+  font-weight: 600;
+  font-size: 12px;
+  padding: 2px 8px;
+  border-radius: 12px;
+  margin-left: 6px;
+  user-select: none;
+  font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
 }
 </style>

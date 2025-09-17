@@ -14,48 +14,15 @@
 
     <FullCalendar ref="fullCalendar" :options="calendarOptions" />
 
-    <!-- 일정 등록 모달 -->
-    <div v-if="showModal" class="modal">
-      <h3>일정 등록</h3>
-
-      <!-- 팀원 초대 -->
-      <label>팀원 초대</label>
-
-      <button @click="showTeamMemberSelector = !showTeamMemberSelector">
-        팀원 선택 ({{ formData.participantUserNos.length }}명)
-      </button>
-
-      <!-- 팀원 목록은 필요할 때만 보여줌 -->
-      <div v-if="showTeamMemberSelector" style="margin-top: 8px;">
-        <div v-for="member in teamMembers" :key="member.userNo">
-        <input
-          type="checkbox"
-          :value="Number(member.userNo)"
-          v-model="formData.participantUserNos"
-          :disabled="formData.regUserNo === member.userNo || member.isSelf"
-          />
-          {{ member.name }}
-        <span v-if="formData.regUserNo === member.userNo">(일정만든이)</span>
-        </div>
-      </div>
-
-      <label>제목</label>
-      <input v-model="formData.title" type="text" />
-
-      <label>내용</label>
-      <textarea v-model="formData.contents"></textarea>
-
-      <label>시작 시간</label>
-      <input v-model="formData.startTime" type="time" />
-
-      <label>종료 시간</label>
-      <input v-model="formData.endTime" type="time" />
-
-      <br />
-      <button @click="saveEvent">저장</button>
-      <button @click="showModal = false">취소</button>
-      <button v-if="formData.calDetailNo && formData.regUserNo === userStore.user?.userNo" @click="deleteEvent">삭제</button>
-    </div>
+    <!-- 모달 컴포넌트 호출 -->
+    <CalendarRegModal
+      :showModal="showModal"
+      :formData="formData"
+      :teamMembers="teamMembers"
+      @close="showModal = false"
+      @save="saveEvent"
+      @delete="deleteEvent"
+    />
   </div>
 </template>
 
@@ -68,18 +35,19 @@ import instance from '@/util/interceptors';
 import { useUserStore } from '@/store/userStore';
 import SockJS from 'sockjs-client';
 import Stomp from 'stompjs';
+import CalendarRegModal from './CalendarRegModal.vue';
 
 export default {
-  components: { FullCalendar },
+  components: { FullCalendar, CalendarRegModal, },
   data() {
     return {
-      notifications: [],  // 알림 메시지를 저장할 배열
+      notifications: [],
       stompClient: null,
-      isConnected: false,  // 연결 여부 추적
+      isConnected: false,
       userStore: useUserStore(),
       teamNo: this.$route.params.teamNo,
       teamMembers: [],
-      calendarNo: null, // 캘린더 번호 저장
+      calendarNo: null,
       calendarEvents: [],
       showModal: false,
       showTeamMemberSelector: false,
@@ -108,7 +76,7 @@ export default {
         eventClick: this.handleEventClick,
         eventDrop: this.handleEventDrop,
         datesSet: this.handleDatesSet,
-        height: 500,
+        height:900,
         events: (fetchInfo, successCallback, failureCallback) => {
         successCallback(this.calendarEvents);
       },
@@ -442,11 +410,13 @@ export default {
               participantUserNos: [...participantSet],
             };
             console.log('팀원 리스트:', this.formData.participantUserNos);
-
+            console.log('저장할 payload:', payload);
           if (payload.detail.calDetailNo) {
             await instance.put('/calendar/event', payload);
+            console.log('PUT 응답:', payload);
           } else {
             await instance.post('/calendar/event', payload);
+            console.log('post 응답:', payload);
           }
           this.showModal = false;
           await this.fetchUserEvents();
@@ -496,18 +466,14 @@ export default {
     };
 </script>
 
-<style scoped>
-.modal {
-  position: fixed;
-  top: 20%;
-  left: 30%;
-  width: 300px;
-  background: white;
-  padding: 20px;
-  border: 1px solid #ccc;
-  z-index: 999;
-  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
+<style>
+
+.fc-event-title {
+  white-space: normal;
+  word-wrap: break-word;
+  overflow: visible;
 }
+
 .member-selector {
   border: 1px solid #ccc;
   padding: 8px;
@@ -543,4 +509,12 @@ export default {
   color: #c62828;
 }
 
+.time-input {
+  width: 100%;
+  padding: 10px 12px;
+  font-size: 18px;
+  border-radius: 6px;
+  border: 1px solid #ccc;
+  box-sizing: border-box;
+}
 </style>
