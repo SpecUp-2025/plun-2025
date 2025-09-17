@@ -65,16 +65,30 @@ public class CalendarService {
 	    return inserted;
 	}
 	// 일정 수정
-    public void updateEvent(CalendarDetail calendarDetail) {
-        calendarDAO.updateEvent(calendarDetail);
+    public void updateEvent(EventRequestDTO dto) {
+    	
+    	CalendarDetail detail = dto.getDetail();
+    	
+        calendarDAO.updateEvent(detail);
+        
+     // 2. 참가자 업데이트 (기존 삭제 후 새로 insert 등)
+        updateParticipants(detail.getCalDetailNo(), dto.getParticipantUserNos());
         
         // 🔔 일정 수정 → 참가자에게 WebSocket 메시지 발송
-        List<Integer> participants = calendarDAO.getParticipantsByCalDetailNo(calendarDetail.getCalDetailNo());
+        List<Integer> participants = calendarDAO.getParticipantsByCalDetailNo(detail.getCalDetailNo());
         for (Integer userNo : participants) {
             messagingTemplate.convertAndSend(
                 "/topic/calendar/refresh/" + userNo,
                 "eventUpdated"
             );
+        }
+    }
+    @Transactional
+    public void updateParticipants(Integer calDetailNo, List<Integer> userNos) {
+        calendarDAO.deleteParticipantsByCalDetailNo(calDetailNo);
+        
+        if (userNos != null && !userNos.isEmpty()) {
+            calendarDAO.insertParticipants(calDetailNo, userNos);
         }
     }
     // 일정 삭제

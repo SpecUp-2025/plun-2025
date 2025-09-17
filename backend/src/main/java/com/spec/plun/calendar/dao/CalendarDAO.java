@@ -32,4 +32,6 @@ public interface CalendarDAO {
     Integer getCalNoByUserNo(@Param("userNo") Integer userNo);
     // 일정에 참가한 사용자 번호 리스트 조회
     List<Integer> getParticipantsByCalDetailNo(@Param("calDetailNo") Integer calDetailNo);
+    void insertParticipants(@Param("calDetailNo") Integer calDetailNo, @Param("userNos") List<Integer> userNos);
+
 }
