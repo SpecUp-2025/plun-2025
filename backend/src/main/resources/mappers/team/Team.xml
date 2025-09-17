@@ -58,20 +58,27 @@
 		WHERE user_no = #{userNo} and team_no = #{teamNo}
 	</update>
 	
-	<select id = "teamDetail">
-	SELECT team_name as teamName, create_date as createDate 
+	<select id = "teamDetail" parameterType="com.spec.plun.team.dto.TeamDTO">
+	SELECT team_name, create_date 
 	FROM TB_TEAM
 	WHERE team_no = #{teamNo}
 	</select>
 	
 	
 	<select id="invitation" parameterType="com.spec.plun.team.dto.TeamsInvitationDTO">
-	SELECT tt.team_name, ti.invited_email,ti.create_date, ti.team_no, ti.invited_id
+	SELECT
+  		tt.team_name,
+  		ti.create_date,
+  		ti.team_no,
+  		ti.invited_id,
+  		inv.name  AS inviter_name
 	FROM TB_INVITED ti
-	LEFT OUTER JOIN TB_TEAM tt
-	ON ti.team_no  = tt.team_no
-	WHERE ti.user_no = #{userNo}
-	AND ti.group_no = 'F001'
+	JOIN TB_MEMBER me ON me.email = ti.invited_email
+	LEFT JOIN TB_TEAM tt ON tt.team_no = ti.team_no
+	JOIN TB_MEMBER inv ON inv.user_no = ti.user_no
+	WHERE me.user_no = #{userNo}
+  	AND ti.group_no = 'F001'
+	ORDER BY ti.create_date DESC;
 	</select>
 	
 	

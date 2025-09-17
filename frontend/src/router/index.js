@@ -24,8 +24,8 @@ const routes = [
   { path: '/', name: 'login', component: LoginForm },
   { path: '/oauth/callback', component: SocailCallBack },
   { path: '/teamList', name: 'teamList', component: TeamList,
-    children : [{ path: '/teamCreate', name: 'teamCreate', component: TeamCreate },
-                {path:'/invitation' ,name : 'invitation', component:TeamsInvitation}
+    children : [{ path: 'teamCreate', name: 'teamCreate', component: TeamCreate },
+                {path:'invitation' ,name : 'invitation', component:TeamsInvitation}
     ]
   },
   { path: '/register', name: 'register', component: Register},

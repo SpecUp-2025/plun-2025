@@ -11,5 +11,6 @@ public class TeamsInvitationDTO {
 	private Integer teamNo;
 	private LocalDateTime createDate;
 	private String invitedEmail;
+	private String inviterName;
 	
 }
