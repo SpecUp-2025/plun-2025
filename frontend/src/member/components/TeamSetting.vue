@@ -1,51 +1,37 @@
 <template>
     <HomeHeader/>
-
-    <main class="page">
-        <div class="container">
-            <section class="card">
-                <header class="team-head">
-                    <div class="avatar">{{ (form.list.teamName || '팀').slice(0,1) }}</div>
-                    <div class="who">
-                        <h2 class="team__name">{{form.list.teamName}}</h2>
-                        <p class="team__meta">
-                        {{ formatDate(form.list.createDate) }}
-                        </p>
-                    </div>
-                    <button class="btn primary" @click = "router.push({name : 'teamMain', params:{ teamNo: item.teamNo }})">입장하기</button>
-                </header>
-
-                <details ref="delDetail" class="block danger">
+  <main class="page">
+    <div class="container">
+      <section class="card">
+        <header class="team-head">
+            <div class="avatar">{{ (form.list.teamName || '팀').slice(0,1) }}</div>
+            <div class="who">
+                <h2 class="team__name">{{form.list.teamName}}</h2>
+                <p class="team__meta">
+                {{ formatDate(form.list.createDate) }}
+                </p>
+            </div>
+            <button class="btn primary" @click = "router.push({name : 'teamMain', params:{ teamNo: item.teamNo }})">입장하기</button>
+        </header>
+        <details ref="delTeam" class="block danger">
           <summary class="summary">팀 탈퇴</summary>
           <div class="panel">
             <div class="warn">
               탈퇴 시 이 팀에서의 권한과 데이터 접근이 제거됩니다. 계속하려면 <b>탈퇴</b> 라고 입력하세요.
             </div>
-            <input
-              v-model.trim="confirmText"
-              placeholder="탈퇴 라고 입력하세요"
-            />
+            <input v-model.trim="confirmText" placeholder="탈퇴 라고 입력하세요" />
             <div class="actions">
               <button class="btn ghost" type="button" @click="onCancelDelete">취소</button>
-              <button
-                class="btn danger-btn"
-                :disabled="confirmText !== '탈퇴'"
-                @click="teamDelete"
-              >
-                탈퇴하기
-              </button>
+              <button class="btn danger-btn" :disabled="confirmText !== '탈퇴'" @click="teamDelete"> 탈퇴하기</button>
             </div>
           </div>
         </details>
         <div class="footer-back">
-            <button class="btn ghost" @click="router.back()">뒤로가기</button>
+          <button class="btn ghost" @click="router.back()">뒤로가기</button>
         </div>
-        </section>
-</div>
-    </main>
-    
-        
-        
+      </section>
+    </div>
+  </main>
 </template>
 
 <script setup>
