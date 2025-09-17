@@ -1,7 +1,6 @@
 package com.spec.plun.team.service;
 
 import java.util.List;
-import java.util.Map;
 
 import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
@@ -15,6 +14,7 @@ import com.spec.plun.team.dao.TeamDAO;
 import com.spec.plun.team.dto.TeamAcceptRequest;
 import com.spec.plun.team.dto.TeamCreateRequest;
 import com.spec.plun.team.dto.TeamCreateResponse;
+import com.spec.plun.team.dto.TeamDTO;
 import com.spec.plun.team.dto.TeamDeleteRequest;
 import com.spec.plun.team.dto.TeamMemberDTO;
 import com.spec.plun.team.dto.TeamsInvitationDTO;
@@ -69,7 +69,7 @@ public class TeamService {
 		return teamDAO.isTeam(userNo);
 	}
 
-	public Map<String, Object> teamDetail(Integer teamNo) {
+	public TeamDTO teamDetail(Integer teamNo) {
 		return teamDAO.teamDetail(teamNo);
 	}
 

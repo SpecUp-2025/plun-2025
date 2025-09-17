@@ -1,6 +1,6 @@
 package com.spec.plun.team.dto;
 
-import java.sql.Date;
+import java.time.LocalDateTime;
 
 import lombok.Data;
 
@@ -8,6 +8,6 @@ import lombok.Data;
 public class TeamDTO {
 	private Integer teamNo;
 	private String teamName;
-	private Date createDate;
+	private LocalDateTime createDate;
 
 }
