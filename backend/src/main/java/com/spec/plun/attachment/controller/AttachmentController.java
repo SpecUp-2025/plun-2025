@@ -93,7 +93,7 @@ public class AttachmentController {
 	
 	// 파일 업로드
 	@PostMapping("/upload")
-	public ResponseEntity<Attachment> uploadFile(@RequestParam("file") MultipartFile file, @RequestParam("messageNo") int messageNo){
+	public ResponseEntity<Attachment> uploadFile(@RequestParam("file") MultipartFile file, @RequestParam("messageNo") Integer messageNo){
         
 		try {
             Attachment savedAttachment = attachmentService.saveFile(file, messageNo);

@@ -1,14 +1,23 @@
 <template>
   <div class="chat-input">
-    <input
+
+    <textarea
       v-model="inputMessage"
+      class="message-textarea"
       @input="onInputChange"
-      @keyup.enter="send"
+      @keyup.enter="onKeydownEnter"
       @keydown.down.prevent="moveAutocomplete(1)"
       @keydown.up.prevent="moveAutocomplete(-1)"
       @keydown.enter.prevent="selectAutocomplete"
       placeholder="메시지를 입력하세요"
-    />
+      rows="2"
+    ></textarea>
+
+    <!-- 아이콘 액션 그룹 -->
+    <div class="input-actions">
+      <button @click="send">⤴️</button>
+      <button @click="triggerFileInput">📁</button>
+    </div>
     <ul v-if="showAutocomplete" class="autocomplete-list">
       <li
         v-for="(member, index) in autocompleteList"
@@ -32,8 +41,6 @@
       <button @click="triggerFileInput">파일 선택</button>
       <span v-if="files.length > 0">파일 {{ files.length }}개 선택됨</span>
     </div>
-    
-    <button @click="send">전송</button>
 
     <!-- 선택된 파일 목록 표시 -->
     <div v-if="files.length > 0" class="file-list">
@@ -56,24 +63,31 @@ import { useUserStore } from '@/store/userStore';
 export default {
     name: 'ChatInput',
 
-      props: {
-        chatMembers: {
-          type: Array,
-          required: true
-        }
+      props: { 
+        chatMembers: { type: Array, required: true }, 
+        roomNo: { type: Number, required: true },
+        teamNo: { type: Number, required: true },
       },
 
     data() {
         return {
         inputMessage: '',
         files: [],
-        mentions: [],            // ✅ 멘션된 userNo 리스트
-        showAutocomplete: false, // 자동완성창 보여줄지
-        autocompleteList: [],    // 필터링된 자동완성 후보
-        autocompleteIndex: -1    // 선택된 인덱스
+        mentions: [],
+        showAutocomplete: false,
+        autocompleteList: [],
+        autocompleteIndex: -1
         }
     },
     methods: {
+
+      onKeydownEnter(event) {
+        if (this.showAutocomplete && this.autocompleteList.length > 0) {
+          this.selectAutocomplete();
+        } else {
+          this.send();
+        }
+      },
 
       onInputChange() {
         const cursorIndex = this.inputMessage.lastIndexOf('@');
@@ -144,7 +158,7 @@ export default {
         },
 
         async send() {
-
+          console.log('📌 전송 직전 roomNo:', this.roomNo);  // 👈 이거 추가
         if (!this.inputMessage.trim() && this.files.length === 0) return;
 
             const userStore = useUserStore();
@@ -160,7 +174,8 @@ export default {
         const formData = new FormData();
 
         const messageDTO = {
-          roomNo: this.$route.params.roomNo,
+          roomNo: this.roomNo,
+          //roomNo: this.$route.params.roomNo,
           userNo: userNo,
           content: this.inputMessage,
           messageType: 'FILE',
@@ -195,7 +210,6 @@ export default {
         });
         this.inputMessage = '';
         this.mentions = [];
-
       }
     }
   }
@@ -203,28 +217,80 @@ export default {
 </script>
 
 <style scoped>
+
+.message-textarea {
+  flex: 1;
+  max-width: 600px;
+  padding: 12px 16px;
+  font-size: 1rem;
+  border: 1px solid #ccc;
+  border-radius: 12px;
+  resize: none;
+}
+
 .chat-input {
-  position: relative;
-  margin-top: 10px;
-}
-input {
-  width: 80%;
-  padding: 8px;
-}
-button {
+  position: fixed;
+  display: flex;
+  justify-content: center;
+  align-items: center;
   padding: 8px 12px;
+  border-top: 1px solid #ddd;
+  background-color: #fafafa;
+  position: relative;
+  gap: 12px;
 }
+
+.chat-input > input {
+  flex: 1;
+  max-width: 600px;
+  padding: 50px 30px;
+  font-size: 1rem;
+  border: 5px solid #ccc;
+  border-radius: 24px;
+  outline: none;
+  line-height: 1.4;
+}
+
+.input-actions {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.input-actions button {
+  background: none;
+  border: none;
+  cursor: pointer;
+  font-size: 1.2rem;
+  color: #555;
+}
+
+.input-actions button:hover {
+  color: #000;
+}
+
+.file-select-group {
+  display: none;
+}
+
+/* 자동완성 리스트 */
 .autocomplete-list {
+  position: absolute;
+  top: 100%;
+  left: 42%;
+  transform: translateX(-50%);
+  width: calc(100% - 20px);
+  max-width: 400px;
   border: 1px solid #ccc;
   background: white;
   list-style: none;
   padding: 0;
-  margin: 4px 0;
+  margin: 4px 0 0 0;
   max-height: 150px;
   overflow-y: auto;
-  position: absolute;
   z-index: 10;
-  width: 200px;
+  border-radius: 4px;
+  box-shadow: 0 2px 6px rgba(0,0,0,0.15);
 }
 
 .autocomplete-list li {
@@ -236,4 +302,27 @@ button {
   background-color: #f0f0f0;
 }
 
+.file-list {
+  margin-top: 8px;
+  font-size: 0.9rem;
+}
+
+.file-item {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 4px 8px;
+  background: #f5f5f5;
+  border-radius: 4px;
+  margin-bottom: 4px;
+}
+.file-item button {
+  background: transparent;
+  border: none;
+  cursor: pointer;
+  color: #999;
+}
+.file-item button:hover {
+  color: #333;
+}
 </style>

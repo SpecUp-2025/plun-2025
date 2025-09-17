@@ -9,6 +9,6 @@ public class CreateChatRoomRequestDTO {
     private String roomName;
     private List<Integer> memberUserNos;
     private Integer teamNo;
-    private Integer creatorUserNo;
+    private Integer userNo;
 
 }

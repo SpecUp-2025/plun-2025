@@ -1,6 +1,85 @@
 <template>
-  <header class="hdr"><slot>PLUN</slot></header>
+  <link
+    rel="stylesheet"
+    href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.4/css/all.min.css"
+    />
+  <header class="header-bar">
+    <div class="logo">PLUN</div>
+
+    <div class="page-title">
+      <slot>페이지 제목</slot>
+    </div>
+
+    <div class="header-actions">
+      <button class="icon-button" @click="$emit('go-profile')"><i class="fas fa-user"></i></button>
+      <AlarmDropdown @alarmClicked="$emit('alarmClicked', $event)" />&nbsp;
+      <button class="logout-button" @click="$emit('logout')">로그아웃</button>
+    </div>
+  </header>
 </template>
+
+<script setup>
+import { useAlarmStore } from '@/store/useAlarmStore'
+import AlarmDropdown from '@/components/alarm/AlarmDropdown.vue'
+
+defineEmits(['go-profile', 'alarmClicked', 'logout'])
+
+const alarmStore = useAlarmStore()
+
+</script>
+
 <style scoped>
-.hdr{background:#ffd8e6;border-bottom:1px solid #ffc2db;color:#6b2f45;padding:10px 14px;font-weight:700;}
+
+.header-bar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  background-color: #ffffff;
+  padding: 12px 16px;
+  border-bottom: 2px solid #007BFF;
+}
+
+.logo {
+  font-weight: bold;
+  font-size: 18px;
+  color: #007BFF;
+}
+
+.page-title {
+  font-size: 20px;
+  font-weight: 600;
+  color: #333;
+}
+
+.header-actions {
+  display: flex;
+  align-items: center;
+  gap: 20px;
+}
+
+.icon-button {
+  background: none;
+  border: none;
+  font-size: 18px;
+  color: #3399FF;
+  cursor: pointer;
+}
+
+.icon-button:hover {
+  color: #0056b3;
+}
+
+.logout-button {
+  background-color: #3399FF;
+  color: #fff;
+  border: none;
+  padding: 6px 20px;
+  border-radius: 4px;
+  cursor: pointer;
+  font-size: 14px;
+}
+
+.logout-button:hover {
+  background-color: #0056b3;
+}
 </style>

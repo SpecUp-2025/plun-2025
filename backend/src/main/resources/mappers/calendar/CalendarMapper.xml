@@ -4,6 +4,14 @@
   "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
 
 <mapper namespace="com.spec.plun.calendar.dao.CalendarDAO">
+
+  <insert id="insertParticipants" parameterType="map">
+	  INSERT INTO tb_calendar_detail_participant (cal_detail_no, user_no)
+	  VALUES
+	  <foreach collection="userNos" item="userNo" separator=",">
+	    (#{calDetailNo}, #{userNo})
+	  </foreach>
+  </insert>
 	
   <select id="getParticipantsByCalDetailNo" resultType="int">
 	SELECT user_no FROM tb_calendar_detail_participant WHERE cal_detail_no = #{calDetailNo}
