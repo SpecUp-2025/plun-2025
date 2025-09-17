@@ -54,10 +54,10 @@ public class EmailService {
         message.setRecipients(MimeMessage.RecipientType.TO, mail);
         message.setSubject("Plun 이메일 인증");
         String body = "";
-        body += "<h3>인증 번호 확인 후 이메일 인증 완료해주세요.</h3>";
-        body += "<h1> plun </h1>";
+        body += "<h2>인증 번호 확인 후 이메일 인증 완료해주세요.</h2>";
         body += "<h1>  인증번호 : " + authCode + "</h1>";
         body += "<h3>감사합니다.</h3>";
+        body += "<h4> plun </h4>";
         message.setText(body, "UTF-8", "html");
         return message;
     }
