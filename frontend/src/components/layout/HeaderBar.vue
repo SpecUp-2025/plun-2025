@@ -164,7 +164,6 @@ onBeforeUnmount(() => {
 .invite-button:active{ transform: translateY(1px); box-shadow: 0 1px 4px rgba(51,153,255,.3); }
 .invite-button:focus-visible{ outline: 2px solid #93c5fd; outline-offset: 2px; }
 
-/* 필요하면 간격 살짝 줄이기 */
 .header-actions{ display:flex; align-items:center; gap:12px; }
 
 </style>
