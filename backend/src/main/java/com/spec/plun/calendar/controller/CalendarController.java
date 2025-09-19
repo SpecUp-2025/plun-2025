@@ -66,8 +66,8 @@ public class CalendarController {
 
 	// 일정 수정
 	@PutMapping("/event")
-	public void updateEvent(@RequestBody CalendarDetail calendarDetail) {
-	    calendarService.updateEvent(calendarDetail);
+	public void updateEvent(@RequestBody EventRequestDTO dto) {
+	    calendarService.updateEvent(dto);
 	}
 	// 일정 삭제
 	@DeleteMapping("/event")

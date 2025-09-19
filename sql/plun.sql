@@ -142,6 +142,7 @@ CREATE TABLE TB_ALARM (
   CONSTRAINT tb_alarm_ibfk_1 FOREIGN KEY (user_no) REFERENCES tb_member (user_no)
 );
 
+
 CREATE TABLE `TB_MEETING_PARTICIPANT` (
   `room_no` int(11) NOT NULL,
   `role_no` varchar(4) NOT NULL,
@@ -194,4 +195,46 @@ CREATE TABLE `TB_MEETING_TRANSCRIPT` (
   `updated_at` datetime NOT NULL DEFAULT current_timestamp() ON UPDATE current_timestamp(),
   PRIMARY KEY (`room_no`),
   CONSTRAINT `fk_mt_room` FOREIGN KEY (`room_no`) REFERENCES `tb_meeting_room` (`room_no`) ON DELETE CASCADE ON UPDATE CASCADE
+
+CREATE TABLE TB_CALENDAR (
+  cal_no int(11) NOT NULL AUTO_INCREMENT COMMENT '자동증가',
+  team_no int(11) NOT NULL COMMENT '팀 번호 (FK)',
+  user_no int(11) NOT NULL COMMENT '작성자 (FK)',
+  PRIMARY KEY (cal_no),
+  KEY team_no (team_no),
+  KEY user_no (user_no),
+  CONSTRAINT tb_calendar_ibfk_1 FOREIGN KEY (team_no) REFERENCES tb_team (team_no),
+  CONSTRAINT tb_calendar_ibfk_2 FOREIGN KEY (user_no) REFERENCES tb_member (user_no)
+)
+
+CREATE TABLE TB_CALENDAR_DETAIL (
+  cal_detail_no int(11) NOT NULL AUTO_INCREMENT COMMENT '자동증가',
+  cal_no int(11) NOT NULL COMMENT '달력 번호 (FK)',
+  contents text DEFAULT NULL,
+  start_date date NOT NULL COMMENT '시작 날짜 (YYYY-MM-DD)',
+  start_time time DEFAULT NULL COMMENT '시작 시간 (HH:mm:ss)',
+  end_date date NOT NULL COMMENT '종료 날짜 (YYYY-MM-DD)',
+  end_time time DEFAULT NULL COMMENT '종료 시간 (HH:mm:ss)',
+  delete_yn char(1) NOT NULL DEFAULT 'N',
+  create_date datetime NOT NULL DEFAULT current_timestamp(),
+  reg_user_no int(11) NOT NULL COMMENT '등록자 (FK)',
+  update_dt datetime DEFAULT NULL,
+  update_user_no int(11) DEFAULT NULL,
+  title varchar(100) NOT NULL,
+  PRIMARY KEY (cal_detail_no),
+  KEY cal_no (cal_no),
+  KEY reg_user_no (reg_user_no),
+  KEY update_user_no (update_user_no),
+  CONSTRAINT tb_calendardetail_ibfk_1 FOREIGN KEY (cal_no) REFERENCES tb_calendar (cal_no),
+  CONSTRAINT tb_calendardetail_ibfk_2 FOREIGN KEY (reg_user_no) REFERENCES tb_member (user_no),
+  CONSTRAINT tb_calendardetail_ibfk_3 FOREIGN KEY (update_user_no) REFERENCES tb_member (user_no)
+)
+
+CREATE TABLE TB_CALENDAR_DETAIL_PARTICIPANT (
+  cal_detail_no int(11) NOT NULL COMMENT 'FK → tb_calendardetail.cal_detail_no',
+  user_no int(11) NOT NULL COMMENT 'FK → tb_member.user_no',
+  PRIMARY KEY (cal_detail_no,user_no),
+  KEY idx_cdp_user_no (user_no),
+  CONSTRAINT fk_cdp_cal_detail FOREIGN KEY (cal_detail_no) REFERENCES tb_calendardetail (cal_detail_no) ON DELETE CASCADE ON UPDATE CASCADE,
+  CONSTRAINT fk_cdp_user FOREIGN KEY (user_no) REFERENCES tb_member (user_no) ON UPDATE CASCADE
 )

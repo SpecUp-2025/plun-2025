@@ -1,0 +1,55 @@
+.error { 
+    margin: 0; font-size: 11px; color: #d93025; 
+}
+.error-slot { 
+    min-height: 16px; padding-top: 2px;
+}
+.l-page {
+    min-height: 100dvh;        
+    display: grid;
+    place-items: center;
+    padding: 24px;
+    background: #f6f7fb;
+}
+.auth-card {
+    width: 100%;
+    max-width: 420px;
+    background: #fff;
+    border-radius: 16px;
+    box-shadow: 0 10px 30px rgba(0,0,0,.08);
+    padding: 28px;
+    min-height: 520px;
+}
+.auth-wrap{
+    display: grid;
+    justify-items: center; 
+    gap: 18px;             
+    width: min(420px, 90vw);
+}
+.form {
+    display: grid;
+    gap: 10px;
+}
+.field { 
+    display: grid; gap: 6px; 
+}
+.label {
+    font-size: 13px;
+    color: #555;
+    font-weight: 600; 
+    
+}
+input {
+    width: 100%;
+    padding: 12px 14px;
+    border: 1px solid #ddd;
+    border-radius: 10px;
+    font-size: 14px;
+    outline: none;
+}
+input:focus {
+    border-color: #8ab4f8;
+    box-shadow: 0 0 0 3px rgba(31,111,235,.12);
+}
+input::placeholder { color: #c0c6d1; }
+

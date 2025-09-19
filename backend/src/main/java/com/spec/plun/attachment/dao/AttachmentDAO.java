@@ -11,7 +11,7 @@ public interface  AttachmentDAO {
 	
 	void insertAttachment(Attachment attachment);
 	
-	List<Attachment> getAttachmentsByMessageNo(int messageNo);
+	List<Attachment> getAttachmentsByMessageNo(Integer messageNo);
 	
 	Attachment getAttachmentById(String attachmentNo);
 	

@@ -22,6 +22,7 @@ import org.springframework.web.multipart.MultipartFile;
 
 import com.spec.plun.alarm.service.AlarmService;
 import com.spec.plun.chat.dto.ChatMessageRequestDTO;
+import com.spec.plun.chat.dto.CreateChatRoomRequestDTO;
 import com.spec.plun.chat.entity.ChatMember;
 import com.spec.plun.chat.entity.ChatMessage;
 import com.spec.plun.chat.entity.ChatRoom;
@@ -40,7 +41,7 @@ public class ChatController {
 	@PostMapping("/send")
 	public ResponseEntity<?> sendMessageWithOptionalAttachment(
 	        @RequestPart("message") ChatMessageRequestDTO messageDTO,
-	        @RequestPart(value = "file", required = false) MultipartFile file
+	        @RequestPart(value = "file", required = false) List<MultipartFile> file
 	) {
 	    try {
 	        ChatMessage savedMessage = chatService.sendMessageWithOptionalAttachment(messageDTO, file);
@@ -65,7 +66,7 @@ public class ChatController {
 	}
 	// 채팅방 메시지 및 파일 목록을 조회
 	@GetMapping("/message")
-	public ResponseEntity<List<ChatMessage>> getMessageWithAttachments(@RequestParam int roomNo){
+	public ResponseEntity<List<ChatMessage>> getMessageWithAttachments(@RequestParam Integer roomNo){
 		// 1. 서비스 호출로 roomNo에 해당하는 메시지(첨부파일 포함) 목록을 조회
 		List<ChatMessage> messages = chatService.getChatMessagesWithAttachments(roomNo);
 		// 2. HTTP 200 OK와 함께 메시지 리스트를 반환
@@ -73,7 +74,7 @@ public class ChatController {
 	}
 	// 채팅방 이름 조회
 	@GetMapping("/room/{roomNo}")
-	public ResponseEntity<ChatRoom> getChatRoom(@PathVariable("roomNo") int roomNo) {
+	public ResponseEntity<ChatRoom> getChatRoom(@PathVariable("roomNo") Integer roomNo) {
 	    ChatRoom chatRoom = chatService.getChatRoom(roomNo);
 	    if (chatRoom != null) {
 	        return ResponseEntity.ok(chatRoom);
@@ -84,17 +85,21 @@ public class ChatController {
 
 	// 채팅방 이름 변경
 	@PutMapping("/room/{roomNo}/name")
-	public ResponseEntity<?> updateRoomName(@PathVariable("roomNo") int roomNo, @RequestBody Map<String, String> request) {
+	public ResponseEntity<?> updateRoomName(@PathVariable("roomNo") Integer roomNo, @RequestBody Map<String, String> request) {
 	    String newName = request.get("roomName");
 	    chatService.updateRoomName(roomNo, newName);
 	    return ResponseEntity.ok().build();
 	}
 	// 채팅방 생성
 	@PostMapping("/room")
-	public ChatRoom createChatRoom(@RequestBody Map<String, String> roomName) {
+	public ResponseEntity<ChatRoom> createChatRoom(@RequestBody CreateChatRoomRequestDTO request) {
 		
-		String name = roomName.get("roomName");
-		return chatService.createChatRoom(name);
+	    String roomName = request.getRoomName();
+	    List<Integer> memberUserNos = request.getMemberUserNos();
+	    int userNo = request.getUserNo();
+	    
+	    ChatRoom createdRoom = chatService.createChatRoomWithMembers(roomName, memberUserNos, userNo);
+	    return ResponseEntity.ok(createdRoom);
 	}
 	// 채팅방 목록
 	@GetMapping("/rooms")
@@ -103,14 +108,14 @@ public class ChatController {
 	}
 	// 특정 채팅방 메시지 목록
 	@GetMapping("/room/{roomNo}/messages")
-	public List<ChatMessage> getChatMessages(@PathVariable("roomNo") int roomNo){
+	public List<ChatMessage> getChatMessages(@PathVariable("roomNo") Integer roomNo){
 		return chatService.getChatMessages(roomNo);
 	}
 	
 	// WebSocket 메시지 및 파일 삭제 
 	@MessageMapping("/chat.deleteAttachment")
 	public void deleteAttachment(@Payload Map<String, Object> payload) {
-	    int roomNo = (int) payload.get("roomNo");
+		Integer roomNo = (Integer) payload.get("roomNo");
 	    System.out.println("📩 WebSocket 첨부파일 삭제 요청 수신: " + payload);
 	    // 실제 삭제는 REST API로 이미 처리됐다고 가정
 	    messagingTemplate.convertAndSend("/topic/chat/room/" + roomNo, payload);
@@ -126,13 +131,13 @@ public class ChatController {
     }
     // 특정 채팅방 참여자 목록 조회
     @GetMapping("/rooms/{roomNo}/members")
-    public ResponseEntity<List<ChatMember>> getChatMember(@PathVariable("roomNo") int roomNo){
+    public ResponseEntity<List<ChatMember>> getChatMember(@PathVariable("roomNo") Integer roomNo){
     	List<ChatMember> members = chatService.getChatMembers(roomNo);
     	return ResponseEntity.ok(members);
     }
     // 채팅방 입장
     @PostMapping("/room/{roomNo}/member/{userNo}")
-    public ResponseEntity<Void> addMemberToRoom(@PathVariable("roomNo") int roomNo, @PathVariable("userNo") int userNo ){
+    public ResponseEntity<Void> addMemberToRoom(@PathVariable("roomNo") Integer roomNo, @PathVariable("userNo") Integer userNo ){
     	// 기존 참여자 등록
         chatService.addMemberToRoom(roomNo, userNo);
 
@@ -146,7 +151,7 @@ public class ChatController {
     }
     // 채팅방 퇴장
     @DeleteMapping("/room/{roomNo}/member/{userNo}")
-    public ResponseEntity<Void> leaveChatRoom(@PathVariable("roomNo") int roomNo, @PathVariable("userNo") int userNo) {
+    public ResponseEntity<Void> leaveChatRoom(@PathVariable("roomNo") Integer roomNo, @PathVariable("userNo") Integer userNo) {
         // 기존 퇴장 처리
         chatService.removeMemberFromRoom(roomNo, userNo);
 

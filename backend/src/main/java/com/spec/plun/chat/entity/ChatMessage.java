@@ -10,9 +10,9 @@ import lombok.Data;
 @Data
 public class ChatMessage {
 	
-	private int messageNo;
-	private int roomNo;
-	private int userNo;
+	private Integer messageNo;
+	private Integer roomNo;
+	private Integer userNo;
 	private String name;
 	private String content; // 텍스트 또는 멘션 포함 문자열
 	private LocalDateTime createDate;
@@ -21,4 +21,6 @@ public class ChatMessage {
     
     private List<Attachment> attachments;
 
+    // mentions: DB에 저장 안 해도 되므로 transient 처리 가능
+    private transient List<Integer> mentions;
 }

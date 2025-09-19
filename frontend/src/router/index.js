@@ -19,13 +19,13 @@ import SocailCallBack from '@/auth/components/SocialCallBack.vue'
 
 const routes = [
   { path: '/chat', name: 'ChatRoomList', component: ChatRoomList },
-  { path: '/room/new', name: 'ChatRoomForm', component: ChatRoomForm },
+  { path: '/room/new/:teamNo', name: 'ChatRoomForm', component: ChatRoomForm },
   { path: '/room/:roomNo', name: 'ChatRoom', component: ChatRoom },
   { path: '/', name: 'login', component: LoginForm },
   { path: '/oauth/callback', component: SocailCallBack },
   { path: '/teamList', name: 'teamList', component: TeamList,
-    children : [{ path: '/teamCreate', name: 'teamCreate', component: TeamCreate },
-                {path:'/invitation' ,name : 'invitation', component:TeamsInvitation}
+    children : [{ path: 'teamCreate', name: 'teamCreate', component: TeamCreate },
+                {path:'invitation' ,name : 'invitation', component:TeamsInvitation}
     ]
   },
   { path: '/register', name: 'register', component: Register},

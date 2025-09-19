@@ -33,39 +33,53 @@ public class ChatService {
 	@Autowired
 	private AlarmService alarmService;
 	
-	public ChatMessage sendMessageWithOptionalAttachment(ChatMessageRequestDTO dto, MultipartFile file) throws IOException {
-		System.out.println("[ChatService] sendMessageWithOptionalAttachment 호출됨: dto=" + dto + ", file=" + (file != null ? file.getOriginalFilename() : "null"));
+	public ChatMessage sendMessageWithOptionalAttachment(ChatMessageRequestDTO dto, List<MultipartFile> files) throws IOException {
+	
 		ChatMessage message = new ChatMessage();
 	    message.setRoomNo(dto.getRoomNo());
 	    message.setUserNo(dto.getUserNo());
 	    message.setContent(dto.getContent());
 	    message.setMessageType(dto.getMessageType());
 	    message.setCreateDate(LocalDateTime.now());
+	    
+	    // Mentions 저장 (transient 필드이므로 DB 저장은 안 됨)
+	    message.setMentions(dto.getMentions());
 
-	    // 1. 메시지 저장
+	    // 메시지 저장
 	    chatDAO.insertMessage(message); // messageNo가 생성됨
 	    System.out.println("[ChatService] 메시지 저장 완료: messageNo=" + message.getMessageNo());
 	    
+	    if (files != null && !files.isEmpty()) {
+	        for (MultipartFile file : files) {
+	            attachmentService.saveFile(file, message.getMessageNo());
+	        }
+	    }
 	    // 작성자 이름 세팅 추가
 	    String name = chatDAO.getUserNameByUserNo(message.getUserNo());
 	    message.setName(name);
-
-
-	    // 2. 파일이 있을 경우 첨부파일 저장
-	    if (file != null && !file.isEmpty()) {
-	    	System.out.println("[ChatService] 첨부파일 저장 시작: " + file.getOriginalFilename());
-	        attachmentService.saveFile(file, message.getMessageNo());
-	        System.out.println("[ChatService] 첨부파일 저장 완료");
-	    }
 	    
-	    // 3. 메시지 객체에 첨부파일 리스트 세팅
+	    // 첨부파일 리스트 세팅
 	    List<Attachment> attachments = attachmentDAO.getAttachmentsByMessageNo(message.getMessageNo());
 	    message.setAttachments(attachments);
+	    
+	    // Mentions 알림 처리
+	    if (dto.getMentions() != null && !dto.getMentions().isEmpty()) {
+	        for (Integer mentionedUserNo : dto.getMentions()) {
+	            if (mentionedUserNo != dto.getUserNo()) {
+	                alarmService.createChatAlarm(
+	                    dto.getUserNo(),
+	                    mentionedUserNo,
+	                    dto.getRoomNo(),
+	                    name + "님이 당신을 멘션했습니다: " + dto.getContent()
+	                );
+	            }
+	        }
+	    }
 
 	    return message;
 	}
 	
-	public List<ChatMessage> getChatMessagesWithAttachments(int roomNo) {
+	public List<ChatMessage> getChatMessagesWithAttachments(Integer roomNo) {
 	    List<ChatMessage> messages = chatDAO.getChatMessageByRoomNo(roomNo);
 
 	    for (ChatMessage message : messages) {
@@ -78,7 +92,7 @@ public class ChatService {
 	}
 	
 	// 채팅방 메시지 목록
-	public List<ChatMessage> getChatMessages(int roomNo){
+	public List<ChatMessage> getChatMessages(Integer roomNo){
 		List<ChatMessage> messages = chatDAO.getChatMessageByRoomNo(roomNo);
 		
 		for (ChatMessage message : messages) {
@@ -92,7 +106,7 @@ public class ChatService {
 		return chatDAO.getChatRooms();
 	}
 	// 채팅방 이름 변경
-	public void updateRoomName(int roomNo, String newName) {
+	public void updateRoomName(Integer roomNo, String newName) {
 		if (newName == null || newName.trim().isEmpty()) {
 			throw new IllegalArgumentException("❌ 채팅방 이름은 비워둘 수 없습니다.");
 		}
@@ -133,7 +147,7 @@ public class ChatService {
     }
 
     // 상대방 userNo 찾는 헬퍼 메서드
-    public int findOtherUserInRoom(int roomNo, int senderUserNo) {
+    public int findOtherUserInRoom(Integer roomNo, Integer senderUserNo) {
         List<ChatMember> members = getChatMembers(roomNo);
         for (ChatMember member : members) {
             if (member.getUserNo() != senderUserNo) {
@@ -143,11 +157,11 @@ public class ChatService {
         return -1;
     }
 	// 채팅방 목록 조회
-	public List<ChatMember> getChatMembers(int roomNo){
+	public List<ChatMember> getChatMembers(Integer roomNo){
 		return chatDAO.getChatMembers(roomNo);
 	}
 	// 채팅방 입장 시 등록
-	public void addMemberToRoom(int roomNo, int userNo) {
+	public void addMemberToRoom(Integer roomNo, Integer userNo) {
 		// 참여자가 이미 존재하는지 체크
 		if(chatDAO.existMember(roomNo,userNo)) {
 			return;
@@ -155,12 +169,39 @@ public class ChatService {
 		chatDAO.insertMember(roomNo, userNo);
 	}
 	// 채팅방 퇴장
-	public void removeMemberFromRoom(int roomNo, int userNo) {
+	public void removeMemberFromRoom(Integer roomNo, Integer userNo) {
 		chatDAO.deleteChatMember(roomNo, userNo);
 	}
 	// 채팅방 이름 조회
-	public ChatRoom getChatRoom(int roomNo) {
+	public ChatRoom getChatRoom(Integer roomNo) {
 		return chatDAO.getChatRoom(roomNo);
 	}
+	// 팀원 초대 채팅방 초대
+	public ChatRoom createChatRoomWithMembers(String roomName, List<Integer> memberUserNos, Integer creatorUserNo) {
+	    // 1. 채팅방 생성
+	    ChatRoom room = new ChatRoom();
+	    room.setRoomName(roomName);
+	    room.setCreateDate(LocalDateTime.now());
+	    chatDAO.createChatRoom(room); // DB에서 roomNo 생성됨
+
+	    // 2. 참여자 등록
+	    if (memberUserNos != null && !memberUserNos.isEmpty()) {
+	        for (Integer userNo : memberUserNos) {
+	            chatDAO.insertMember(room.getRoomNo(), userNo);
+	            
+	         // 알림 생성 및 전송 (WebSocket 포함)
+	            alarmService.createChatAlarm(
+	            	creatorUserNo, // 시스템 또는 방 생성자로 추후 변경 가능
+	                userNo,
+	                room.getRoomNo(),
+	                "'" + roomName + "' 방에 초대되었습니다."
+	            );
+	        }
+	    }
+
+	    // 3. 반환
+	    return room;
+	}
+
 
 }

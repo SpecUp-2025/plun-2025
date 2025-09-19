@@ -4,6 +4,14 @@
   "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
 
 <mapper namespace="com.spec.plun.calendar.dao.CalendarDAO">
+
+  <insert id="insertParticipants" parameterType="map">
+	  INSERT INTO tb_calendar_detail_participant (cal_detail_no, user_no)
+	  VALUES
+	  <foreach collection="userNos" item="userNo" separator=",">
+	    (#{calDetailNo}, #{userNo})
+	  </foreach>
+  </insert>
 	
   <select id="getParticipantsByCalDetailNo" resultType="int">
 	SELECT user_no FROM tb_calendar_detail_participant WHERE cal_detail_no = #{calDetailNo}
@@ -33,13 +41,32 @@
   
   <!-- 일정 조회 -->
   <select id="getEventsBetween" resultType="com.spec.plun.calendar.entity.CalendarDetail" parameterType="map">
-	SELECT cd.*
+	    (
+      SELECT cd.*
+      FROM TB_CALENDAR c
+      JOIN TB_CALENDARDETAIL cd ON c.cal_no = cd.cal_no
+      WHERE c.user_no = #{userNo}
+        AND cd.start_date &lt;= #{end}
+        AND cd.end_date &gt;= #{start}
+        AND cd.delete_yn = 'N'
+    )
+    UNION
+    (
+      SELECT cd.*
+      FROM tb_calendar_detail_participant p
+      JOIN TB_CALENDARDETAIL cd ON p.cal_detail_no = cd.cal_detail_no
+      WHERE p.user_no = #{userNo}
+        AND cd.start_date &lt;= #{end}
+        AND cd.end_date &gt;= #{start}
+        AND cd.delete_yn = 'N'
+    )
+<!-- 	SELECT cd.*
 	FROM TB_CALENDAR c
 	JOIN TB_CALENDARDETAIL cd ON c.cal_no = cd.cal_no
 	WHERE c.user_no = #{userNo}
 	  AND cd.start_date &lt;= #{end}
 	  AND cd.end_date &gt;= #{start}
-	  AND cd.delete_yn = 'N'
+	  AND cd.delete_yn = 'N' -->
 	</select>
 	
   <select id="getEventsBetweenShared" 
@@ -84,6 +111,11 @@
 	SET delete_yn = 'Y', update_dt = NOW()
 	WHERE cal_detail_no = #{calDetailNo}
   </update>
+  <!-- 참가자 정보 삭제 -->
+  <delete id="deleteParticipantsByCalDetailNo">
+	DELETE FROM tb_calendar_detail_participant
+	WHERE cal_detail_no = #{calDetailNo}
+  </delete>
 
 </mapper>
   

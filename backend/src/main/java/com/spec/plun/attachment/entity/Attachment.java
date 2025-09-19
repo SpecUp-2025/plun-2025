@@ -7,11 +7,11 @@ import lombok.Data;
 @Data
 public class Attachment {
 	private String attachmentNo; 
-	private int messageNo;
+	private Integer messageNo;
 	private String originalName;
 	private String fileName;
 	private String path;
-	private int size;
+	private Integer size;
 	private String contentType;
 	private String extension;
 	private LocalDateTime createDate;

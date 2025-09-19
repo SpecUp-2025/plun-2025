@@ -30,12 +30,12 @@ public class EmailSendInviteService {
 
         message.setFrom(senderEmail);
         message.setRecipients(MimeMessage.RecipientType.TO, mail);
-        message.setSubject("Plun 이메일 인증");
+        message.setSubject("Plun 초대");
         String body = "";
-        body += "<h1>" + name + " (" + email + ")님이 회원님을 초대하셨습니다.</h1>";
-        body += "<h2> plun </h2>";
+        body += "<h3>" + name + " (" + email + ")님이 회원님을 초대하셨습니다.</h3>";
         body += "<p><a href=\"" + frontUrl + "\">바로가기</a></p>";
         body += "<h3>감사합니다.</h3>";
+        body += "<h4> plun </h4>";
         message.setText(body, "UTF-8", "html");
         return message;
     }

@@ -11,12 +11,12 @@ import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.PutMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
 import com.spec.plun.team.dto.TeamAcceptRequest;
 import com.spec.plun.team.dto.TeamCreateRequest;
 import com.spec.plun.team.dto.TeamCreateResponse;
+import com.spec.plun.team.dto.TeamDTO;
 import com.spec.plun.team.dto.TeamDeleteRequest;
 import com.spec.plun.team.dto.TeamMemberDTO;
 import com.spec.plun.team.dto.TeamsInvitationDTO;
@@ -52,7 +52,7 @@ public class TeamController {
     
     @GetMapping("/teamDetail/{teamNo}")
     public ResponseEntity<Object> teamDetail(@PathVariable("teamNo") Integer teamNo) {
-    	Map<String, Object> map = teamService.teamDetail(teamNo); 
+    	TeamDTO map = teamService.teamDetail(teamNo); 
         return ResponseEntity.ok(Map.of("list",map));
     }
     

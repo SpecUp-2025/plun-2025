@@ -8,7 +8,7 @@ import lombok.Data;
 @Data
 @AllArgsConstructor
 public class ChatRoom {
-	private int roomNo;
+	private Integer roomNo;
 	private String roomName;
 	private LocalDateTime createDate;
 	
@@ -16,7 +16,7 @@ public class ChatRoom {
     public ChatRoom() {}
 
     // 명시적 생성자 - 파라미터 변수를 사용
-    public ChatRoom(int roomNo, String roomName) {
+    public ChatRoom(Integer roomNo, String roomName) {
         this.roomNo = roomNo;
         this.roomName = roomName;
         this.createDate = LocalDateTime.now();

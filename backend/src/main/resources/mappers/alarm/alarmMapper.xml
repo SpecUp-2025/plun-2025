@@ -5,13 +5,18 @@
 
 <mapper namespace="com.spec.plun.alarm.dao.AlarmDAO" >
 
-  <insert id="insertAlarm" parameterType="com.spec.plun.alarm.entity.Alarm">
+  <insert id="insertAlarm" parameterType="com.spec.plun.alarm.entity.Alarm" useGeneratedKeys="true" keyProperty="alarmNo">
+    INSERT INTO TB_ALARM (user_no, sender_no, alarm_type, reference_no, content, is_read, create_date)
+    VALUES (#{userNo}, #{senderNo}, #{alarmType}, #{referenceNo}, #{content}, 'N', NOW())
+  </insert>
+
+<!--   <insert id="insertAlarm" parameterType="com.spec.plun.alarm.entity.Alarm">
 	<selectKey keyProperty="createDate" resultType="java.time.LocalDateTime" order="AFTER">
 	  SELECT create_date FROM TB_ALARM WHERE alarm_no = LAST_INSERT_ID()
 	</selectKey>
 	INSERT INTO TB_ALARM (user_no, sender_no, alarm_type, reference_no, content, is_read, create_date)
 	VALUES (#{userNo}, #{senderNo}, #{alarmType}, #{referenceNo}, #{content}, 'N', NOW())
-  </insert>
+  </insert> -->
 
   <select id="selectAlarmsByUserNo" resultType="com.spec.plun.alarm.entity.Alarm">
 	SELECT 
