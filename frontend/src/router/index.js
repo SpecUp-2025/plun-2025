@@ -15,6 +15,7 @@ import MemberDetail from '@/member/components/MemberDetail.vue'
 import TeamSetting from '@/member/components/TeamSetting.vue'
 import TeamsInvitation from '@/member/components/TeamsInvitation.vue'
 import SocailCallBack from '@/auth/components/SocialCallBack.vue'
+import TeamInvitation from '@/main/components/TeamInvitation.vue'
 
 
 const routes = [
@@ -29,7 +30,9 @@ const routes = [
     ]
   },
   { path: '/register', name: 'register', component: Register},
-  { path: '/teamMain/:teamNo', name: 'teamMain', component: TeamMain},
+  { path: '/teamMain/:teamNo', name: 'teamMain', component: TeamMain,
+    children : [{ path: 'teamInvit', name: 'teamInvit', component: TeamInvitation ,props: true },]
+  },
   { path: '/meeting-room/:roomCode', name: 'MeetingRoom', component: MeetingRoom},
   {path: '/findPassword', name: 'find', component : FindPassword},
   {path : '/memberDetail', name: 'detail', component:MemberDetail},
