@@ -11,7 +11,7 @@
     </div>
 
     <div class="header-actions">
-      <button class="logout-button" @click="router.push({name:'teamInvit'})">+</button>
+      <button class="invite-button" @click="router.push({name:'teamInvit'})">+</button>
       <AlarmDropdown @alarmClicked="$emit('alarmClicked', $event)" />&nbsp;
       <div class="user-wrap" ref="userWrap" >
           <button class="user-trigger" @click="menuOpen = !menuOpen">
@@ -141,17 +141,30 @@ onBeforeUnmount(() => {
   color: #0056b3;
 }
 
-.logout-button {
-  background-color: #3399FF;
-  color: #fff;
+.invite-button{
+  --btn-size: 34px;
+  inline-size: var(--btn-size);
+  block-size: var(--btn-size);
+  padding: 0;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
   border: none;
-  padding: 6px 20px;
-  border-radius: 4px;
+  border-radius: 10px;
+  background: #3399FF;
+  color: #fff;
+  font-size: 20px;
+  font-weight: 700;
+  line-height: 1;
   cursor: pointer;
-  font-size: 14px;
+  box-shadow: 0 2px 6px rgba(51,153,255,.35);
+  transition: background .15s ease, box-shadow .15s ease, transform .05s ease;
 }
+.invite-button:hover{ background:#1e80ff; }
+.invite-button:active{ transform: translateY(1px); box-shadow: 0 1px 4px rgba(51,153,255,.3); }
+.invite-button:focus-visible{ outline: 2px solid #93c5fd; outline-offset: 2px; }
 
-.logout-button:hover {
-  background-color: #0056b3;
-}
+/* 필요하면 간격 살짝 줄이기 */
+.header-actions{ display:flex; align-items:center; gap:12px; }
+
 </style>
