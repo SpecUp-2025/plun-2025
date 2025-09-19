@@ -9,8 +9,6 @@
           <div class="spinner" aria-hidden="true"></div>
         </div>
         <div class="modal-body">
-          <label class="label" for="teamName">팀 이름</label>
-          <input v-model="form.teamName" type="text" id="teamName" placeholder="팀 제목을 입력해주세요"/>
           <label class="label" for="inviteEmail">초대 이메일</label>
           <div class="row">
             <input v-model.trim="inputEmail" type="email" 
@@ -39,12 +37,15 @@
 
 <script setup>
 import { computed, onBeforeUnmount, onMounted, reactive, ref } from 'vue';
-import { useRouter } from 'vue-router';
+import { useRoute, useRouter } from 'vue-router';
 import instance from '@/util/interceptors';
 import { useUserStore } from '@/store/userStore';
 import '@/assets/css/home.css'
-import { REGEX_PATTERN } from '../util/Regex';
+import { REGEX_PATTERN } from '@/member/util/Regex';
 
+const props = defineProps({
+  teamNo: { type: String, required: true }
+})
 const pending = ref(false); 
 const router = useRouter()
 const userStore = useUserStore();
@@ -52,7 +53,6 @@ const userNo = computed(() => userStore.user?.userNo ?? '')
 const userEmail = computed(() => userStore.user?.email ?? '')
 const userName = computed(() => userStore.user?.name ?? '')
 const form = reactive({
-    teamName:'',
     invite:[],
 })
 const inputEmail = ref('')
@@ -72,38 +72,30 @@ onBeforeUnmount(() => {
 });
 const create = async () => {
     if (pending.value) return; 
-    if(!form.teamName.trim()){
-        alert("팀 이름을 입력해주세요")
-        return;
-    }
     const email  = (userEmail.value ?? '').trim().toLowerCase()
     pending.value = true;
     try {
-        const {status,data} = await instance.post(`teams/createTeam`,{
+        const {status,data} = await instance.post(`teams/memberInvite`,{
             userNo : userNo.value,
+            teamNo : props.teamNo,
             invite: form.invite,
-            teamName : form.teamName,
             email,
             userName:userName.value
 
         })
-        if(status ===201){
-            alert("팀 생성했습니다.")
-            console.log(data.teamName)
-            router.push({name:'teamMain',params:{teamNo:data.teamNo}})
+        if(status ===200){
+            alert("초대했습니다.")
+            close()
         }
     } 
     catch (error) {
-        console.error('팀을 생성하지 못했습니다.',error);
-        alert("팀을 생성하지 못했습니다.")
+        console.error('초대하지 못했습니다.',error);
+        alert("초대하지 못했습니다.")
     }
     finally {
       pending.value = false;
   }
-    
-   
 }
-
 function addEmail(){
     const email = inputEmail.value.trim().toLowerCase();
     const me  = (userEmail.value ?? '').trim().toLowerCase()

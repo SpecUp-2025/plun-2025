@@ -114,33 +114,33 @@ const cancel = async (invitedId) =>{
 .modal-overlay{
   position: fixed; inset: 0;
   display: grid; place-items: start center;
-  padding-top:22vh;
+  padding-top:10vh;
   background: rgba(0,0,0,.35);
   z-index: 1000;
 }
-
 .modal{
   width: 100%;
   max-width: 720px;
   background: #fff;
   border-radius: 16px;
   box-shadow: 0 20px 60px rgba(0,0,0,.25);
+  display: flex;
+  flex-direction: column;
+  max-height: clamp(520px, 70dvh, 720px);
   overflow: hidden;
-  max-height: 90dvh;
-  overflow: auto;
   animation: pop .16s ease;
 }
-@keyframes pop{ from{ transform: translateY(8px); opacity:0 } to{ transform: translateY(0); opacity:1 } }
 
+@keyframes pop{ from{ transform: translateY(8px); opacity:0 } to{ transform: translateY(0); opacity:1 } }
 .modal-header{
+  position: sticky; top: 0; z-index: 1;
+  background: #fff;
   display:flex; align-items:center; justify-content:space-between;
   padding:14px 16px; border-bottom:1px solid #eef0f3;
 }
 .modal-header h2{ margin:0; font-size:18px; }
 .icon-btn{ background:transparent; border:0; cursor:pointer; font-size:22px; padding:2px 6px; border-radius:8px; }
 .icon-btn:hover{ background:#f3f4f6; }
-
-.modal-body{ padding:16px; display:grid; gap:12px; }
 .empty{
   background:#fff; border:1px dashed #e5e7eb; border-radius:12px;
   padding:18px; text-align:center; color:#6b7280;
@@ -164,7 +164,18 @@ const cancel = async (invitedId) =>{
 .dot{ color:#d1d5db; }
 .right{ display:flex; align-items:center; gap:8px; }
 
+.modal-body{
+  padding:16px;
+  display:grid; gap:12px;
+  flex: 1 1 auto;      
+  min-height: 0;
+  overflow: auto;
+  overscroll-behavior: contain;
+  -webkit-overflow-scrolling: touch;
+}
 .modal-footer{
+  position: sticky; bottom: 0; z-index: 1;
+  background: #fff;
   display:flex; justify-content:flex-end; gap:8px;
   padding:12px 16px; border-top:1px solid #eef0f3;
 }

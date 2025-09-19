@@ -54,11 +54,6 @@ const onAlarmRead = (alarmNo) => {
   );
 };
 
-const goToProfile = () => {
-  router.push({ name: 'detail' })
-  console.log('프로필 페이지로 이동 (구현)');
-};
-
 const goToNotifications = () => {
   // 예를 들어 팀 메인에서 알림 탭으로 이동하거나 알림 페이지가 있으면 이동
   // 여기선 알림 탭으로 강제 이동하는 예시
@@ -67,19 +62,11 @@ const goToNotifications = () => {
   console.log('알림 페이지 이동 (미구현 - 필요시 수정)')
 }
 
-const logout = () => {
-  // 로그아웃 처리(토큰 삭제 등)
-  console.log('로그아웃 처리 (미구현)')
-  // 로그아웃 후 로그인 페이지로 이동
-  router.push({ name: 'login' })
-}
 </script>
 
 <template>
   <DefaultLayout
-    @go-profile="goToProfile"
     @alarmClicked="openChatRoom"
-    @logout="logout"
     >
     <template #header><strong>Team Workspace</strong></template>
       <template #sidebar>
@@ -100,4 +87,5 @@ const logout = () => {
 
     <template #footer>© PLUN</template>
   </DefaultLayout>
+  <RouterView/>
 </template>

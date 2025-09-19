@@ -13,6 +13,7 @@ import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
+import com.spec.plun.team.dto.MemberInviteRequest;
 import com.spec.plun.team.dto.TeamAcceptRequest;
 import com.spec.plun.team.dto.TeamCreateRequest;
 import com.spec.plun.team.dto.TeamCreateResponse;
@@ -47,6 +48,13 @@ public class TeamController {
     public ResponseEntity<Object> createTeam( @RequestBody TeamCreateRequest teamCreateRequest) {
     	TeamCreateResponse teamCreateResponse = teamService.createTeam(teamCreateRequest);
         return ResponseEntity.status(HttpStatus.CREATED).body(teamCreateResponse);
+    }
+    
+    
+    @PostMapping("/memberInvite")
+    public ResponseEntity<Object> memberInvite( @RequestBody MemberInviteRequest memberInviteRequest) {
+        teamService.memberInvite(memberInviteRequest);
+        return ResponseEntity.ok().build();
     }
     
     
