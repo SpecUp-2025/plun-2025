@@ -42,7 +42,15 @@
     </insert>
     
     <insert id="insertInvite">
-   	INSERT INTO TB_INVITED(team_no,user_no,group_no,invited_email) VALUES(#{teamNo},#{userNo},'F001',#{inviteEmail})
+   	INSERT INTO TB_INVITED (team_no, user_no, group_no, invited_email)
+	SELECT #{teamNo}, #{userNo}, 'F001', #{inviteEmail}
+		FROM DUAL
+		WHERE NOT EXISTS (
+  			SELECT 1
+  			FROM TB_INVITED
+  			WHERE team_no = #{teamNo}
+    		AND group_no = 'F001'
+    		AND invited_email = #{inviteEmail})
     </insert>
     
 
