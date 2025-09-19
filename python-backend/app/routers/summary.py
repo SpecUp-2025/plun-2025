@@ -1,74 +1,165 @@
 # app/routers/summary.py
-from typing import Optional
-from fastapi import APIRouter, HTTPException, Query
+from fastapi import APIRouter, Query, HTTPException, BackgroundTasks
 from pydantic import BaseModel
+from typing import Optional
 
-from app.services.db_service import get_merged_transcript, upsert_meeting_summary
-from app.services.summary_llm import generate_minutes_md
-from app.services.summary_parse import extract_section
+from app.services.db_service import (
+    get_transcript,
+    save_summary,
+    update_calendar_contents,
+)
+from app.services.ai_service import generate_summary, get_ai_provider_info
 
 router = APIRouter()
 
-class SummaryOut(BaseModel):
+
+class SummaryResponse(BaseModel):
     room_no: int
+    summary: str
+    action_items: str
+    decisions: str
     provider: str
-    minutes_md: str
-    saved: bool
+    success: bool
 
-def _fallback_md(text: str, limit: int = 600) -> str:
-    head = " ".join((text or "").split())[:limit]
-    return f"""# 회의 요약
-- {head}
 
-## 액션 아이템
-- (없음)
+class SummaryRequest(BaseModel):
+    room_no: int
+    save_to_db: bool = True
+    update_calendar: bool = True
 
-## 결정 사항
-- (없음)
-"""
 
-def _do_generate(room_no: int, limit_chars: Optional[int], save: bool) -> SummaryOut:
-    # 1) 전사 로드
-    text = get_merged_transcript(room_no)
-    if not text or not text.strip():
-        raise HTTPException(404, "전사 텍스트 없음")
-    src = text[:limit_chars] if limit_chars else text
-
-    # 2) 생성 (실패시 폴백)
-    provider = "ollama"
+@router.post("/summary/generate", response_model=SummaryResponse)
+async def generate_meeting_summary(request: SummaryRequest):
+    """회의 요약 생성 및 저장"""
     try:
-        md = generate_minutes_md(src)
-    except Exception:
-        provider = "fallback"
-        md = _fallback_md(src)
+        room_no = request.room_no
+        save_to_db = request.save_to_db
+        update_calendar = request.update_calendar
 
-    # 3) 섹션 파싱 → DB 저장용 분리
-    ai_md = extract_section(md, "액션 아이템")
-    dc_md = extract_section(md, "결정 사항")
+        print(f"[SUMMARY] 요약 생성 요청: room_no={room_no}")
 
-    saved = False
-    if save:
-        try:
-            upsert_meeting_summary(room_no, md, ai_md, dc_md)
-            saved = True
-        except Exception:
-            saved = False  # 저장 실패해도 API는 200으로 본문 반환
+        # 1. 전사 텍스트 조회
+        transcript = get_transcript(room_no)
+        if not transcript:
+            raise HTTPException(
+                status_code=404, detail="전사 텍스트를 찾을 수 없습니다."
+            )
 
-    return SummaryOut(room_no=room_no, provider=provider, minutes_md=md, saved=saved)
+        print(f"[SUMMARY] 전사 텍스트 조회 완료: {len(transcript)}자")
 
-@router.post("/summary/generate", response_model=SummaryOut)
-def summary_generate(
-    room_no: int = Query(..., description="전사 텍스트가 있는 room_no"),
-    limit_chars: Optional[int] = Query(1200, ge=300, le=5000, description="요약 입력 길이"),
+        # 2. AI 요약 생성
+        summary, action_items, decisions = generate_summary(transcript)
+
+        provider_info = get_ai_provider_info()
+        provider = provider_info.get("provider", "unknown")
+
+        print(f"[SUMMARY] 요약 생성 완료 ({provider})")
+
+        # 3. DB 저장 (옵션)
+        if save_to_db:
+            db_saved = save_summary(room_no, summary, action_items, decisions)
+            if db_saved:
+                print(f"[SUMMARY] 요약 DB 저장 완료")
+            else:
+                print(f"[SUMMARY] 요약 DB 저장 실패")
+
+        # 4. 달력 업데이트 (옵션)
+        if update_calendar:
+            calendar_updated = update_calendar_contents(room_no, summary)
+            if calendar_updated:
+                print(f"[SUMMARY] 달력 업데이트 완료")
+            else:
+                print(f"[SUMMARY] 달력 업데이트 실패")
+
+        return SummaryResponse(
+            room_no=room_no,
+            summary=summary,
+            action_items=action_items,
+            decisions=decisions,
+            provider=provider,
+            success=True,
+        )
+
+    except HTTPException:
+        raise
+    except Exception as e:
+        print(f"[SUMMARY] 요약 생성 실패: {e}")
+        raise HTTPException(status_code=500, detail=str(e))
+
+
+@router.get("/summary/generate/{room_no}", response_model=SummaryResponse)
+async def generate_summary_by_room_no(
+    room_no: int,
     save: bool = Query(True, description="DB 저장 여부"),
+    update_calendar: bool = Query(True, description="달력 업데이트 여부"),
 ):
-    return _do_generate(room_no, limit_chars, save)
+    """회의실 번호로 요약 생성 (GET 방식)"""
+    request = SummaryRequest(
+        room_no=room_no, save_to_db=save, update_calendar=update_calendar
+    )
+    return await generate_meeting_summary(request)
 
-# ✅ 이전 호환 (기존 프론트가 /minutes/generate를 쓰고 있어도 깨지지 않게)
-@router.post("/minutes/generate", response_model=SummaryOut)
-def minutes_generate_compat(
-    room_no: int = Query(...),
-    limit_chars: Optional[int] = Query(1200, ge=300, le=5000),
-    save: bool = Query(True),
+
+@router.get("/summary/{room_no}")
+def get_existing_summary(room_no: int):
+    """기존 저장된 요약 조회"""
+    try:
+        from app.services.db_service import engine
+        from sqlalchemy import text
+
+        with engine.connect() as conn:
+            query = text(
+                """
+                SELECT summary, action_items, decisions, updated_at
+                FROM tb_meeting_summary 
+                WHERE room_no = :room_no
+            """
+            )
+            result = conn.execute(query, {"room_no": room_no})
+            row = result.fetchone()
+
+            if row:
+                return {
+                    "room_no": room_no,
+                    "summary": row[0],
+                    "action_items": row[1],
+                    "decisions": row[2],
+                    "updated_at": row[3].isoformat() if row[3] else None,
+                    "found": True,
+                }
+            else:
+                return {
+                    "room_no": room_no,
+                    "found": False,
+                    "message": "저장된 요약을 찾을 수 없습니다.",
+                }
+
+    except Exception as e:
+        print(f"[SUMMARY] 기존 요약 조회 실패: {e}")
+        raise HTTPException(status_code=500, detail=str(e))
+
+
+@router.get("/summary/provider/info")
+def get_summary_provider_info():
+    """AI 제공자 정보 조회"""
+    try:
+        provider_info = get_ai_provider_info()
+        return {"success": True, "provider_info": provider_info}
+    except Exception as e:
+        print(f"[SUMMARY] 제공자 정보 조회 실패: {e}")
+        raise HTTPException(status_code=500, detail=str(e))
+
+
+# 하위 호환성을 위한 별칭 엔드포인트
+@router.post("/minutes/generate", response_model=SummaryResponse)
+async def generate_minutes_compat(request: SummaryRequest):
+    """기존 코드 호환용 별칭"""
+    return await generate_meeting_summary(request)
+
+
+@router.get("/minutes/generate/{room_no}", response_model=SummaryResponse)
+async def generate_minutes_by_room_compat(
+    room_no: int, save: bool = Query(True), update_calendar: bool = Query(True)
 ):
-    return _do_generate(room_no, limit_chars, save)
+    """기존 코드 호환용 별칭"""
+    return await generate_summary_by_room_no(room_no, save, update_calendar)

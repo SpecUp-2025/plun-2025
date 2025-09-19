@@ -55,13 +55,6 @@ INSERT INTO TB_ROLE_CODE (group_no, group_name) VALUES
 ('B002', '팀원'),
 ('C001', '방장'),
 ('C002', '참여자'),
-('D001','예약'),
-('D002','시작'),
-('D003','종료'),
-('E001','업로드'),
-('E002','진행 중'),
-('E003','완료'),
-('E003','실패'),
 ('F001','대기'),
 ('F002','수락'),
 ('F003','거절')
@@ -88,43 +81,6 @@ CREATE TABLE `TB_INVITED` (
   CONSTRAINT `TB_INVITED_TB_MEMBER_FK` FOREIGN KEY (`user_no`) REFERENCES `TB_MEMBER` (`user_no`),
   CONSTRAINT `TB_INVITED_TB_MEMBER_FK_1` FOREIGN KEY (`user_no`) REFERENCES `TB_MEMBER` (`user_no`),
   CONSTRAINT `TB_INVITED_TB_ROLE_CODE_FK` FOREIGN KEY (`group_no`) REFERENCES `TB_ROLE_CODE` (`group_no`)
-);
-
-CREATE TABLE `TB_MEETING_ROOM` (
-  `room_no` int(11) NOT NULL AUTO_INCREMENT,
-  `team_no` int(11) DEFAULT NULL,
-  `title` varchar(100) NOT NULL,
-  `scheduled_time` datetime NOT NULL DEFAULT current_timestamp(),
-  `scheduled_end_time` datetime DEFAULT NULL,
-  `started_time` datetime DEFAULT NULL,
-  `ended_time` datetime DEFAULT NULL,
-  `room_code` varchar(255) NOT NULL,
-  `is_private` enum('Y','N') NOT NULL DEFAULT 'N',
-  `room_password_hash` varchar(255) DEFAULT NULL,
-  `create_date` datetime NOT NULL DEFAULT current_timestamp(),
-  `update_date` datetime DEFAULT NULL ON UPDATE current_timestamp(),
-  PRIMARY KEY (`room_no`),
-  UNIQUE KEY `UK_MEETING_ROOM_CODE` (`room_code`),
-  KEY `IDX_MEETING_SCHEDULED` (`scheduled_time`),
-  KEY `IDX_MEETING_SCHEDULE_END` (`scheduled_end_time`),
-  KEY `IDX_MEETING_TEAM_NO` (`team_no`),
-  CONSTRAINT `FK_MEETING_TEAM_ROLE` FOREIGN KEY (`team_no`) REFERENCES `tb_team` (`team_no`) ON DELETE SET NULL,
-  CONSTRAINT `CK_MEETING_SCHEDULE_RANGE` CHECK (`scheduled_end_time` is null or `scheduled_end_time` >= `scheduled_time`)
-);
-
-
-CREATE TABLE `TB_MEETING_PARTICIPANT` (
-  `room_no` int(11) NOT NULL,
-  `role_no` varchar(4) NOT NULL,
-  `user_no` int(11) NOT NULL,
-  `join_time` datetime DEFAULT NULL,
-  `out_time` datetime DEFAULT NULL,
-  PRIMARY KEY (`room_no`,`user_no`),
-  KEY `IDX_MP_ROLE` (`role_no`),
-  KEY `FK_MP_USER` (`user_no`),
-  CONSTRAINT `FK_MP_ROLE` FOREIGN KEY (`role_no`) REFERENCES `tb_role_code` (`group_no`),
-  CONSTRAINT `FK_MP_ROOM` FOREIGN KEY (`room_no`) REFERENCES `tb_meeting_room` (`room_no`) ON DELETE CASCADE,
-  CONSTRAINT `FK_MP_USER` FOREIGN KEY (`user_no`) REFERENCES `tb_member` (`user_no`) ON DELETE CASCADE
 );
 
 CREATE TABLE `TB_CHAT_MEMBER` (
@@ -186,7 +142,61 @@ CREATE TABLE TB_ALARM (
   CONSTRAINT tb_alarm_ibfk_1 FOREIGN KEY (user_no) REFERENCES tb_member (user_no)
 );
 
-CREATE TABLE tb_calendar (
+
+CREATE TABLE `TB_MEETING_PARTICIPANT` (
+  `room_no` int(11) NOT NULL,
+  `role_no` varchar(4) NOT NULL,
+  `user_no` int(11) NOT NULL,
+  `join_time` datetime DEFAULT NULL,
+  `out_time` datetime DEFAULT NULL,
+  PRIMARY KEY (`room_no`,`user_no`),
+  KEY `IDX_MP_ROLE` (`role_no`),
+  KEY `FK_MP_USER` (`user_no`),
+  CONSTRAINT `FK_MP_ROLE` FOREIGN KEY (`role_no`) REFERENCES `tb_role_code` (`group_no`),
+  CONSTRAINT `FK_MP_ROOM` FOREIGN KEY (`room_no`) REFERENCES `tb_meeting_room` (`room_no`) ON DELETE CASCADE,
+  CONSTRAINT `FK_MP_USER` FOREIGN KEY (`user_no`) REFERENCES `tb_member` (`user_no`) ON DELETE CASCADE
+)
+
+CREATE TABLE `TB_MEETING_ROOM` (
+  `room_no` int(11) NOT NULL AUTO_INCREMENT,
+  `team_no` int(11) DEFAULT NULL,
+  `title` varchar(100) NOT NULL,
+  `scheduled_time` datetime NOT NULL DEFAULT current_timestamp(),
+  `scheduled_end_time` datetime DEFAULT NULL,
+  `started_time` datetime DEFAULT NULL,
+  `ended_time` datetime DEFAULT NULL,
+  `room_code` varchar(255) NOT NULL,
+  `create_date` datetime NOT NULL DEFAULT current_timestamp(),
+  `update_date` datetime DEFAULT NULL ON UPDATE current_timestamp(),
+  `cal_detail_no` int(11) DEFAULT NULL COMMENT '생성된 달력상세 PK',
+  PRIMARY KEY (`room_no`),
+  UNIQUE KEY `UK_MEETING_ROOM_CODE` (`room_code`),
+  KEY `IDX_MEETING_SCHEDULED` (`scheduled_time`),
+  KEY `IDX_MEETING_SCHEDULE_END` (`scheduled_end_time`),
+  KEY `IDX_MEETING_TEAM_NO` (`team_no`),
+  KEY `idx_mr_cal_detail` (`cal_detail_no`),
+  CONSTRAINT `FK_MEETING_TEAM_ROLE` FOREIGN KEY (`team_no`) REFERENCES `tb_team` (`team_no`) ON DELETE SET NULL,
+  CONSTRAINT `CK_MEETING_SCHEDULE_RANGE` CHECK (`scheduled_end_time` is null or `scheduled_end_time` >= `scheduled_time`)
+)
+
+CREATE TABLE `TB_MEETING_SUMMARY` (
+  `room_no` int(11) NOT NULL,
+  `summary` longtext DEFAULT NULL,
+  `action_items` longtext DEFAULT NULL,
+  `decisions` longtext DEFAULT NULL,
+  `updated_at` datetime NOT NULL DEFAULT current_timestamp() ON UPDATE current_timestamp(),
+  PRIMARY KEY (`room_no`),
+  CONSTRAINT `fk_ms_room` FOREIGN KEY (`room_no`) REFERENCES `tb_meeting_room` (`room_no`) ON DELETE CASCADE ON UPDATE CASCADE
+)
+
+CREATE TABLE `TB_MEETING_TRANSCRIPT` (
+  `room_no` int(11) NOT NULL,
+  `merged_text` longtext DEFAULT NULL,
+  `updated_at` datetime NOT NULL DEFAULT current_timestamp() ON UPDATE current_timestamp(),
+  PRIMARY KEY (`room_no`),
+  CONSTRAINT `fk_mt_room` FOREIGN KEY (`room_no`) REFERENCES `tb_meeting_room` (`room_no`) ON DELETE CASCADE ON UPDATE CASCADE
+
+CREATE TABLE TB_CALENDAR (
   cal_no int(11) NOT NULL AUTO_INCREMENT COMMENT '자동증가',
   team_no int(11) NOT NULL COMMENT '팀 번호 (FK)',
   user_no int(11) NOT NULL COMMENT '작성자 (FK)',
@@ -197,7 +207,7 @@ CREATE TABLE tb_calendar (
   CONSTRAINT tb_calendar_ibfk_2 FOREIGN KEY (user_no) REFERENCES tb_member (user_no)
 )
 
-CREATE TABLE tb_calendardetail (
+CREATE TABLE TB_CALENDAR_DETAIL (
   cal_detail_no int(11) NOT NULL AUTO_INCREMENT COMMENT '자동증가',
   cal_no int(11) NOT NULL COMMENT '달력 번호 (FK)',
   contents text DEFAULT NULL,
@@ -220,7 +230,7 @@ CREATE TABLE tb_calendardetail (
   CONSTRAINT tb_calendardetail_ibfk_3 FOREIGN KEY (update_user_no) REFERENCES tb_member (user_no)
 )
 
-CREATE TABLE tb_calendar_detail_participant (
+CREATE TABLE TB_CALENDAR_DETAIL_PARTICIPANT (
   cal_detail_no int(11) NOT NULL COMMENT 'FK → tb_calendardetail.cal_detail_no',
   user_no int(11) NOT NULL COMMENT 'FK → tb_member.user_no',
   PRIMARY KEY (cal_detail_no,user_no),
