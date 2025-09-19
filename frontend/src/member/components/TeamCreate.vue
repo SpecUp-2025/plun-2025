@@ -9,25 +9,25 @@
           <div class="spinner" aria-hidden="true"></div>
         </div>
         <div class="modal-body">
-            <label class="label" for="teamName">팀 이름</label>
-        <input v-model="form.teamName" type="text" id="teamName" placeholder="팀 제목을 입력해주세요"/>
-        <label class="label" for="inviteEmail">초대 이메일</label>
-        <div class="row">
-        <input v-model.trim="inputEmail" type="email" 
-            placeholder="example@example.com" 
-            @keydown.enter.prevent="add"
-            @keydown.space.prevent="add"
-            @keyup="onComma"/>
+          <label class="label" for="teamName">팀 이름</label>
+          <input v-model="form.teamName" type="text" id="teamName" placeholder="팀 제목을 입력해주세요"/>
+          <label class="label" for="inviteEmail">초대 이메일</label>
+          <div class="row">
+            <input v-model.trim="inputEmail" type="email" 
+              placeholder="example@example.com" 
+              @keydown.enter.prevent="add"
+              @keydown.space.prevent="add"
+              @keyup="onComma"/>
             <button type="button" class="btn ghost" @click="add" :disabled="!inputEmail">추가</button>
-        </div>
-        <div v-show ="unEmailVaild" class="error" v-text="unEmailVaild"></div>
+          </div>
+          <div v-show ="unEmailVaild" class="error" v-text="unEmailVaild"></div>
         
-        <div v-if="form.invite.length" class="chips">
+          <div v-if="form.invite.length" class="chips">
             <span v-for="(e,i) in form.invite" :key="e" class="chip">
-            {{ e }}
-                <button class="chip__remove" @click="remove(i)" aria-label="삭제">×</button>
+              {{ e }}
+              <button class="chip__remove" @click="remove(i)" aria-label="삭제">×</button>
             </span>
-            </div>
+          </div>
         </div>
         <footer class="modal-footer">
             <button class="btn ghost" @click="close">취소</button>
@@ -40,10 +40,10 @@
 <script setup>
 import { computed, onBeforeUnmount, onMounted, reactive, ref } from 'vue';
 import { useRouter } from 'vue-router';
-import { REGEX_PATTERN } from '../util/Regex';
 import instance from '@/util/interceptors';
 import { useUserStore } from '@/store/userStore';
 import '@/assets/css/home.css'
+import { REGEX_PATTERN } from '../util/Regex';
 
 const pending = ref(false); 
 const router = useRouter()
@@ -61,14 +61,12 @@ const close = () => router.back()
 const onEsc = e => { if (e.key === 'Escape') close() }
 
 onMounted(() => {
-  // 배경 스크롤 잠금
   const prev = document.body.style.overflow;
   document.body.dataset.prevOverflow = prev;
   document.body.style.overflow = 'hidden';
   window.addEventListener('keydown', onEsc);
 });
 onBeforeUnmount(() => {
-  // 잠금 해제
   document.body.style.overflow = document.body.dataset.prevOverflow || '';
   window.removeEventListener('keydown', onEsc);
 });
@@ -216,7 +214,7 @@ input:focus{ border-color: #9ca3af; }
   gap:10px;
   text-align:center;
   z-index: 2;
-  pointer-events: all; /* 클릭 막기 */
+  pointer-events: all;
   border-radius: 16px;
 }
 

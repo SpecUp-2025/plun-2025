@@ -30,20 +30,15 @@
               </div>
               <div class="team__meta">
                 <span class="date">
-                  {{ item.createDate }}
+                  {{ formatDate(item.createDate) }}
                 </span>
               </div>
             </div>
           </div>
           
           <div class="item-right">
-            <button class="btn ghost" @click = "router.push({name:'setting',
-              params:{teamNo:item.teamNo}})">
-              설정하기
-            </button>
-            <button class="btn primary" @click = "router.push({name : 'teamMain', 
-              params:{ teamNo: item.teamNo }})">
-              입장하기</button>
+            <button class="btn ghost" @click = "router.push({name:'setting', params:{teamNo:item.teamNo}})"> 설정하기</button>
+            <button class="btn primary" @click = "router.push({name : 'teamMain', params:{ teamNo: item.teamNo }})">입장하기</button>
           </div>
         </li>
       </ul>
@@ -71,6 +66,7 @@ const userNo = computed(() => userStore.user?.userNo ?? '');
 const team = reactive({
   list:[],
 })
+const formatDate = (s) => s ? s.replace('T', ' ').slice(0, 16) : '';
 onMounted(async ()=>{
   await teamList()
 }) 
