@@ -31,7 +31,7 @@ const routes = [
   },
   { path: '/register', name: 'register', component: Register},
   { path: '/teamMain/:teamNo', name: 'teamMain', component: TeamMain,
-    children : [{ path: 'teamInvit', name: 'teamInvit', component: TeamInvitation ,props: true },]
+    children : [{ path: 'teamInvite', name: 'teamInvite', component: TeamInvitation ,props: true },]
   },
   { path: '/meeting-room/:roomCode', name: 'MeetingRoom', component: MeetingRoom},
   {path: '/findPassword', name: 'find', component : FindPassword},

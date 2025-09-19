@@ -11,7 +11,7 @@
     </div>
 
     <div class="header-actions">
-      <button class="invite-button" @click="router.push({name:'teamInvit'})">+</button>
+      <button class="invite-button" @click="router.push({name:'teamInvite'})">+</button>
       <AlarmDropdown @alarmClicked="$emit('alarmClicked', $event)" />&nbsp;
       <div class="user-wrap" ref="userWrap" >
           <button class="user-trigger" @click="menuOpen = !menuOpen">
