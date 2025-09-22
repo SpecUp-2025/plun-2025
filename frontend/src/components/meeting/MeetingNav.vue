@@ -149,8 +149,8 @@ watch(teamNo, () => {
 
 <template>
   <div>
-    <div style="display:flex;align-items:center;gap:6px;">
-      <button @click="toggleMeet">회의 {{ openMeet ? '▾' : '▸' }}</button>
+    <div style="display:flex;align-items:center;gap:100px;">
+      <button @click="toggleMeet">{{ openMeet ? '▾' : '▸' }} 회의 </button>
       <button @click.stop="modalOpen = true" title="회의 생성">＋</button>
     </div>
 

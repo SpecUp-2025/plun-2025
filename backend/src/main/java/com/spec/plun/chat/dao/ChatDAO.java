@@ -34,5 +34,6 @@ public interface ChatDAO {
     ChatRoom getChatRoom(Integer roomNo);
     
     String getUserNameByUserNo(Integer userNo);
+    Integer getTeamNoByRoomNo(Integer roomNo);
 
 }

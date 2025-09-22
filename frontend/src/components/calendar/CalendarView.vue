@@ -36,6 +36,7 @@ import { useUserStore } from '@/store/userStore';
 import SockJS from 'sockjs-client';
 import Stomp from 'stompjs';
 import CalendarRegModal from './CalendarRegModal.vue';
+import { useAlarmStore } from '@/store/useAlarmStore';
 
 export default {
   components: { FullCalendar, CalendarRegModal, },
@@ -45,6 +46,7 @@ export default {
       stompClient: null,
       isConnected: false,
       userStore: useUserStore(),
+      alarmStore: useAlarmStore(),
       teamNo: this.$route.params.teamNo,
       teamMembers: [],
       calendarNo: null,
@@ -76,7 +78,7 @@ export default {
         eventClick: this.handleEventClick,
         eventDrop: this.handleEventDrop,
         datesSet: this.handleDatesSet,
-        height:900,
+        height: 800,
         events: (fetchInfo, successCallback, failureCallback) => {
         successCallback(this.calendarEvents);
       },
@@ -370,7 +372,7 @@ export default {
         startDate: start.split('T')[0],
         startTime: this.normalizeTime(start.split('T')[1] || '00:00:00'),
         endDate: end ? end.split('T')[0] : start.split('T')[0],
-        endTime: this.normalizeTime(end.split('T')[1] || '23:59:59'),
+        endTime: this.normalizeTime(end.split('T')[1] || '23:59'),
         participantUserNos: (props.participantUserNos || []).map(Number),
       };
       this.showModal = true;
@@ -378,57 +380,62 @@ export default {
 
     async saveEvent() {
       if (this.isSaving) {
-      console.log('저장 중복 호출 방지');
-      return;
+        console.log('저장 중복 호출 방지');
+        return;
       }
-    this.isSaving = true;
-    try{
-      console.log('saveEvent 호출됨', new Date().toISOString());
-      console.log('saveEvent 호출 - calDetailNo:', this.formData.calDetailNo);
-      const formatTime = (timeStr) => {
-        if (!timeStr || !timeStr.includes(':')) return '00:00:00';
-        if (timeStr.length === 5) return `${timeStr}:00`;  // HH:mm → HH:mm:00
-        if (timeStr.includes('+')) return timeStr.split('+')[0]; // 타임존 제거
-        return timeStr;
-      };
-          // 강제로 일정만든이, 나를 participantUserNos에 추가
-          const participantSet = new Set(this.formData.participantUserNos || []);
-          const creatorNo = this.formData.regUserNo;
-          const myUserNo = this.userStore.user?.userNo;
+      this.isSaving = true;
+      try{
+        console.log('saveEvent 호출됨', new Date().toISOString());
+        console.log('saveEvent 호출 - calDetailNo:', this.formData.calDetailNo);
+        
+        const formatTime = (timeStr) => {
+          if (!timeStr || !timeStr.includes(':')) return '00:00:00';
+          if (timeStr.length === 5) return `${timeStr}:00`;
+          if (timeStr.includes('+')) return timeStr.split('+')[0];
+          return timeStr;
+        };
 
-          if (creatorNo) participantSet.add(Number(creatorNo));
-          if (myUserNo) participantSet.add(Number(myUserNo));
+        // 강제로 일정만든이, 나를 participantUserNos에 추가
+        const participantSet = new Set(this.formData.participantUserNos || []);
+        const creatorNo = this.formData.regUserNo;
+        const myUserNo = this.userStore.user?.userNo;
 
-      const payload = {
-              detail: {
-                ...this.formData,
-                calNo: this.calendarNo,
-                regUserNo: this.userStore.user?.userNo,
-                startTime: formatTime(this.formData.startTime),
-                endTime: formatTime(this.formData.endTime),
-              },
-              participantUserNos: [...participantSet],
-            };
-            console.log('팀원 리스트:', this.formData.participantUserNos);
-            console.log('저장할 payload:', payload);
-          if (payload.detail.calDetailNo) {
-            await instance.put('/calendar/event', payload);
-            console.log('PUT 응답:', payload);
-          } else {
-            await instance.post('/calendar/event', payload);
-            console.log('post 응답:', payload);
-          }
-          this.showModal = false;
-          await this.fetchUserEvents();
-          this.sendWebSocketMessage('eventUpdated');
+        if (creatorNo) participantSet.add(Number(creatorNo));
+        if (myUserNo) participantSet.add(Number(myUserNo));
 
-        } catch (error) {
-          console.error('일정 저장 실패:', error);
-        } finally {
-          this.isSaving = false;
+        const payload = {
+          detail: {
+            ...this.formData,
+            calNo: this.calendarNo,
+            regUserNo: this.userStore.user?.userNo,
+            startTime: formatTime(this.formData.startTime),
+            endTime: formatTime(this.formData.endTime),
+          },
+          participantUserNos: [...participantSet],
+        };
+
+        console.log('팀원 리스트:', this.formData.participantUserNos);
+        console.log('저장할 payload:', payload);
+
+        // 서버에 저장 (백엔드에서 자동으로 초대 알림 생성)
+        if (payload.detail.calDetailNo) {
+          await instance.put('/calendar/event', payload);
+          console.log('PUT 응답:', payload);
+        } else {
+          await instance.post('/calendar/event', payload);
+          console.log('POST 응답:', payload);
         }
-      },
+        
+        this.showModal = false;
+        await this.fetchUserEvents();
+        this.sendWebSocketMessage('eventUpdated');
 
+      } catch (error) {
+        console.error('일정 저장 실패:', error);
+      } finally {
+        this.isSaving = false;
+      }
+    },
       async handleEventDrop(info) {
         const getTime = (datetimeStr, defaultTime) => {
           if (!datetimeStr) return defaultTime;
@@ -436,7 +443,7 @@ export default {
           return this.normalizeTime(timePart?.split('+')[0] || defaultTime);
         };
 
-        const payload = {
+        const detailPayload = {
           calDetailNo: info.event.id,
           title: info.event.title,
           calNo: this.calendarNo,
@@ -448,14 +455,19 @@ export default {
           endTime: info.event.endStr ? getTime(info.event.endStr, '23:59:59') : '',
         };
 
-      try {
-            await instance.put('/calendar/event', payload);
-            this.fetchUserEvents();
-          } catch (error) {
-            console.error('이벤트 드래그 저장 실패:', error);
-            info.revert();
-          }
-        },
+        const participantUserNos = info.event.extendedProps.participantUserNos || [];
+
+        try {
+          await instance.put('/calendar/event', {
+            detail: detailPayload,
+            participantUserNos: participantUserNos,
+          });
+          this.fetchUserEvents();
+        } catch (error) {
+          console.error('이벤트 드래그 저장 실패:', error);
+          info.revert();
+        }
+      },
       },
       mounted() {
         this.checkOrCreateCalendar();
@@ -480,10 +492,6 @@ export default {
   margin-top: 8px;
   max-height: 150px;
   overflow-y: auto;
-}
-.calendar-wrapper {
-  max-width: 700px;
-  margin: 0 auto;
 }
 .notification-area {
   position: fixed;

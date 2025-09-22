@@ -1,6 +1,6 @@
 <template>
   <div class="container" role="main" aria-label="채팅방 생성">
-    <h3 class="title">채팅방 ＋</h3>
+    <h3 class="title">채팅방 생성</h3>
 
     <label for="roomName" class="input-label">채팅방 이름</label>
     <input

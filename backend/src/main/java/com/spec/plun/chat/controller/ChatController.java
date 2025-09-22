@@ -88,6 +88,20 @@ public class ChatController {
 	public ResponseEntity<?> updateRoomName(@PathVariable("roomNo") Integer roomNo, @RequestBody Map<String, String> request) {
 	    String newName = request.get("roomName");
 	    chatService.updateRoomName(roomNo, newName);
+	    
+	    Map<String, Object> roomNameUpdate = Map.of(
+	        "type", "ROOM_NAME_UPDATE",
+	        "roomNo", roomNo,
+	        "roomName", newName
+	    );
+	    messagingTemplate.convertAndSend("/topic/chat/room/" + roomNo, roomNameUpdate);
+	    
+	    // 팀별 브로드캐스트 추가
+	    Integer teamNo = chatService.getTeamNoByRoomNo(roomNo);
+	    if (teamNo != null) {
+	        messagingTemplate.convertAndSend("/topic/team/" + teamNo + "/roomNameUpdate", roomNameUpdate);
+	    }
+	    
 	    return ResponseEntity.ok().build();
 	}
 	// 채팅방 생성

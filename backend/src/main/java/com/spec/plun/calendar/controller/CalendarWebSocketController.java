@@ -20,7 +20,6 @@ public class CalendarWebSocketController {
     public void handleCalendarRefresh(String message) {
         log.info("📩 [WebSocket] 메시지 수신됨: {}", message);
 
-        // 정 userNo만 타게팅해야 함
         for (int userNo = 1; userNo <= 3; userNo++) {
             messagingTemplate.convertAndSend(
                 "/topic/calendar/refresh/" + userNo,

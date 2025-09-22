@@ -18,7 +18,9 @@
           @click="goToChatRoom(alarm)"
           class="alarm-item"
         >
-          💬 새로운 메시지가 도착했습니다.
+        💬 
+        <span v-if="alarm.alarmType === 'CHAT'">새 메시지가 도착했습니다.</span>
+        <span v-else>{{ alarm.content }}</span>
         </li>
       </ul>
 
@@ -46,7 +48,7 @@ const goToChatRoom = async (alarm) => {
   try {
     await alarmStore.markAsRead(alarm.alarmNo)
     // 읽음 처리 후 라우팅
-    alarm.isRead = 'Y' // 혹은 이 부분은 스토어에서 업데이트 됐으니 필요 없을 수도 있음
+    alarm.isRead = 'Y'
     emit('alarmClicked', alarm.referenceNo)
     showDropdown.value = false
   } catch (error) {
@@ -72,7 +74,22 @@ const markAllAsRead = async () => {
   position: relative;
   display: inline-block;
   margin-left: 20px;
+  font-family: 'Segoe UI', sans-serif;
 }
+/* 알림 아이콘 버튼 */
+.icon-button {
+  position: relative;
+  background: none;
+  border: none;
+  font-size: 22px;
+  color: #3399FF;
+  cursor: pointer;
+  transition: color 0.3s ease;
+}
+.icon-button:hover {
+  color: #2678cc;
+}
+/* 알림 배지 */
 .badge {
   position: absolute;
   top: -6px;
@@ -80,42 +97,103 @@ const markAllAsRead = async () => {
   background-color: red;
   color: white;
   font-size: 10px;
-  padding: 2px 5px;
+  padding: 2px 6px;
   border-radius: 50%;
   line-height: 1;
-  box-shadow: 0 0 0 2px white; /* 흰 테두리 */
+  box-shadow: 0 0 0 2px white;
+  animation: pulse 1.5s infinite;
 }
-
-.icon-button {
-  position: relative;
-  background: none;
-  border: none;
-  font-size: 20px;
-  color: #3399FF;
-  cursor: pointer;
+@keyframes pulse {
+  0% { transform: scale(1); opacity: 1; }
+  50% { transform: scale(1.2); opacity: 0.7; }
+  100% { transform: scale(1); opacity: 1; }
 }
-
+/* 드롭다운 영역 */
 .dropdown-content {
   position: absolute;
-  background-color: white;
-  border: 1px solid #ccc;
-  width: 250px;
   right: 0;
-  margin-top: 10px;
+  top: 100%;
+  margin-top: 12px;
+  width: 280px;
+  background-color: rgba(255, 255, 255, 0.95);
+  backdrop-filter: blur(10px);
+  border: 1px solid #ddd;
+  border-radius: 12px;
   z-index: 100;
   padding: 10px;
+  box-shadow: 0 8px 20px rgba(0, 0, 0, 0.1);
+  animation: dropdownFade 0.25s ease-out;
+}
+@keyframes dropdownFade {
+  from {
+    transform: translateY(-10px);
+    opacity: 0;
+  }
+  to {
+    transform: translateY(0);
+    opacity: 1;
+  }
+}
+/* 알림 목록 */
+.dropdown-content ul {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+  max-height: 260px;
+  overflow-y: auto;
+  overflow-x: hidden;
+  scrollbar-width: thin;
+  scrollbar-color: #ccc transparent;
+}
+.dropdown-content ul::-webkit-scrollbar {
+  width: 6px;
+}
+.dropdown-content ul::-webkit-scrollbar-thumb {
+  background-color: #ccc;
+  border-radius: 3px;
 }
 .alarm-item {
-  padding: 8px;
+  padding: 12px 14px;
   border-bottom: 1px solid #eee;
+  font-size: 14px;
   cursor: pointer;
+  transition: background-color 0.2s ease, transform 0.2s ease;
+  border-radius: 6px;
+  word-break: break-word;
+  white-space: normal;
 }
 .alarm-item:hover {
-  background-color: #f5f5f5;
+  background-color: #e6f2ff;
+  transform: translateX(4px);
 }
+
+.alarm-item:last-child {
+  border-bottom: none;
+}
+
+/* 알림 없을 때 */
 .no-alarm {
   text-align: center;
+  padding: 25px 10px;
+  font-size: 14px;
+  color: #aaa;
+}
+
+/* 모두 읽음 버튼 */
+.dropdown-content button {
+  margin-top: 12px;
+  width: 100%;
   padding: 10px;
-  color: gray;
+  background: linear-gradient(to right, #3399FF, #4facfe);
+  color: white;
+  font-size: 14px;
+  font-weight: 500;
+  border: none;
+  border-radius: 8px;
+  cursor: pointer;
+  transition: background 0.3s ease;
+}
+.dropdown-content button:hover {
+  background: linear-gradient(to right, #2678cc, #3e9fff);
 }
 </style>

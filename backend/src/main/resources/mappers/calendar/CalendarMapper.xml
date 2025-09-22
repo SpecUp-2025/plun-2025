@@ -44,7 +44,7 @@
 	    (
       SELECT cd.*
       FROM TB_CALENDAR c
-      JOIN TB_CALENDARDETAIL cd ON c.cal_no = cd.cal_no
+      JOIN TB_CALENDAR_DETAIL cd ON c.cal_no = cd.cal_no
       WHERE c.user_no = #{userNo}
         AND cd.start_date &lt;= #{end}
         AND cd.end_date &gt;= #{start}
@@ -54,27 +54,20 @@
     (
       SELECT cd.*
       FROM tb_calendar_detail_participant p
-      JOIN TB_CALENDARDETAIL cd ON p.cal_detail_no = cd.cal_detail_no
+      JOIN TB_CALENDAR_DETAIL cd ON p.cal_detail_no = cd.cal_detail_no
       WHERE p.user_no = #{userNo}
         AND cd.start_date &lt;= #{end}
         AND cd.end_date &gt;= #{start}
         AND cd.delete_yn = 'N'
     )
-<!-- 	SELECT cd.*
-	FROM TB_CALENDAR c
-	JOIN TB_CALENDARDETAIL cd ON c.cal_no = cd.cal_no
-	WHERE c.user_no = #{userNo}
-	  AND cd.start_date &lt;= #{end}
-	  AND cd.end_date &gt;= #{start}
-	  AND cd.delete_yn = 'N' -->
-	</select>
+  </select>
 	
   <select id="getEventsBetweenShared" 
         resultType="com.spec.plun.calendar.entity.CalendarDetail" 
         parameterType="map">
 	SELECT cd.*
 	FROM TB_CALENDAR c
-	JOIN TB_CALENDARDETAIL cd ON c.cal_no = cd.cal_no
+	JOIN TB_CALENDAR_DETAIL cd ON c.cal_no = cd.cal_no
 	WHERE c.user_no = #{userNo}                 -- 📌 나에게 공유된 일정들
 	  AND cd.start_date &lt;= #{end}
 	  AND cd.end_date &gt;= #{start}
@@ -82,7 +75,7 @@
   </select>
   <!-- 일정 등록 -->
   <insert id="insertEvent" parameterType="com.spec.plun.calendar.entity.CalendarDetail" useGeneratedKeys="true" keyProperty="calDetailNo">
-    INSERT INTO TB_CALENDARDETAIL (
+    INSERT INTO TB_CALENDAR_DETAIL (
         cal_no, title, contents, start_date, start_time,
         end_date, end_time, delete_yn, create_date, reg_user_no
     )
@@ -93,7 +86,7 @@
   </insert>
   <!-- 일정 수정 -->
   <update id="updateEvent" parameterType="com.spec.plun.calendar.entity.CalendarDetail">
-	UPDATE tb_calendardetail
+	UPDATE TB_CALENDAR_DETAIL
 	SET
 	  title = #{title},
 	  contents = #{contents},
@@ -107,7 +100,7 @@
   </update>
   <!-- 일정 삭제 -->
   <update id="deleteEvent">
-	UPDATE tb_calendardetail
+	UPDATE TB_CALENDAR_DETAIL
 	SET delete_yn = 'Y', update_dt = NOW()
 	WHERE cal_detail_no = #{calDetailNo}
   </update>

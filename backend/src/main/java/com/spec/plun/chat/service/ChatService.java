@@ -116,6 +116,9 @@ public class ChatService {
 			throw new RuntimeException("❌ 채팅방 이름 변경 실패 (roomNo=" + roomNo + ")");
 		}	
 	}
+	public Integer getTeamNoByRoomNo(Integer roomNo) {
+	    return chatDAO.getTeamNoByRoomNo(roomNo);
+	}
 	// 채팅방 생성
 	public ChatRoom createChatRoom(String roomName) {
 	    ChatRoom room = new ChatRoom();
@@ -202,6 +205,4 @@ public class ChatService {
 	    // 3. 반환
 	    return room;
 	}
-
-
 }
