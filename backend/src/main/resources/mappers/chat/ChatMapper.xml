@@ -4,7 +4,15 @@
   "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
   
 <mapper namespace="com.spec.plun.chat.dao.ChatDAO">
-	
+
+  <select id="getTeamNoByRoomNo" parameterType="int" resultType="int">
+    SELECT DISTINCT tm.team_no 
+    FROM tb_chat_member cm
+    JOIN tb_team_member tm ON cm.user_no = tm.user_no
+    WHERE cm.room_no = #{roomNo}
+    LIMIT 1
+  </select>
+  
   <select id="getChatRoom" parameterType="int" resultType="com.spec.plun.chat.entity.ChatRoom">
 	SELECT room_no AS roomNo, room_name AS roomName, create_date AS createDate
 	FROM TB_CHAT_ROOM

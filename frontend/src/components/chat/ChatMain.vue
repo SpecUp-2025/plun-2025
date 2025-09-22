@@ -1,10 +1,8 @@
 <script setup>
-import { ref } from 'vue';
 import ChatRoom from './ChatRoom.vue'
 import ChatRoomForm from './ChatRoomForm.vue'
 import { useAlarmStore } from '@/store/useAlarmStore' 
 
-//const alarms = ref([]);
 
 const alarmStore = useAlarmStore()
 
@@ -14,10 +12,9 @@ const props = defineProps({
   activeTab: { type: String, default: 'calendar' }
 })
 
-const emits = defineEmits(['roomCreated', 'closeRoom'])
+const emits = defineEmits(['roomCreated', 'closeRoom', 'roomNameChanged'])
 
 
-// 🔧 이 부분이 없으면 Vue가 경고 띄움!
 const handleAlarmRead = (alarmNo) => {
   alarmStore.markAsRead(alarmNo)
 }
@@ -30,7 +27,9 @@ const handleAlarmRead = (alarmNo) => {
       :team-no="teamNo" 
       :room-no="roomNo"
       @closeRoom="() => emits('closeRoom')"
-      @alarmRead="handleAlarmRead"/>
+      @alarmRead="handleAlarmRead"
+      @roomNameChanged="(data) => emits('roomNameChanged', data)"
+      />
 
     <ChatRoomForm v-else-if="activeTab === 'createChat'" 
     :team-no="teamNo" @roomCreated="roomNo => emits('roomCreated', roomNo)"

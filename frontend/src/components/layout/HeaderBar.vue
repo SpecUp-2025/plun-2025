@@ -4,8 +4,7 @@
     href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.4/css/all.min.css"
     />
   <header class="header-bar">
-    <div class="logo">PLUN</div>
-
+    <RouterLink to="/teamList" class="logo"><img src = "@/assets/icons/PLUN.png" alt="로고"/></img></RouterLink>
     <div class="page-title">
       <slot>페이지 제목</slot>
     </div>
@@ -37,12 +36,6 @@ const alarmStore = useAlarmStore()
   background-color: #ffffff;
   padding: 12px 16px;
   border-bottom: 2px solid #007BFF;
-}
-
-.logo {
-  font-weight: bold;
-  font-size: 18px;
-  color: #007BFF;
 }
 
 .page-title {
@@ -81,5 +74,11 @@ const alarmStore = useAlarmStore()
 
 .logout-button:hover {
   background-color: #0056b3;
+}
+
+.logo img{
+  height: 40px;               
+  width: auto; 
+  display: block;
 }
 </style>

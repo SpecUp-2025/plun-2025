@@ -3,20 +3,20 @@
       <div class="room-name">
           <template v-if="isEditingRoomName">
               <input v-model="newRoomName" />
-                <button class="save-btn" @click="saveRoomName">채팅방 이름 수정</button>
-                <button class="cancel-btn" @click="cancelEditRoomName">그대로 사용</button>
+                <button class="save-btn" @click="saveRoomName">이름 변경</button>
+                <button class="cancel-btn" @click="cancelEditRoomName">그대로</button>
             </template>
             <template v-else>
         <h2 class="room-header">
         <span @click="startEditRoomName" class="room-name-text">{{ roomName }}</span>
-        <button @click="leaveChatRoom" class="btn btn-exit">❌ 채팅 종료</button>
+        <button @click="leaveChatRoom" class="btn btn-exit">❌</button>
         </h2>
     </template>
 </div>
 <div class="chat-date">{{ todayDate }}</div>
     
     <!-- 참여자 목록 표시 -->
-       <div class="chat-body">
+    <div class="chat-body">
     <div class="chat-content">
         <!-- 채팅 메시지 -->
         <section class="chat-messages">
@@ -30,6 +30,7 @@
             @attachment-deleted="handleAttachmentDeleted"
             />
         </section>
+        
         <!-- 참여자 목록 표시 -->
         <aside class="chat-members">
             <p><strong>💬 참여자 목록 ({{ chatMembers.length }})</strong></p>
@@ -54,7 +55,7 @@
 </template>
 
 <script setup>
-import { ref, reactive, computed, onMounted, nextTick } from 'vue'
+import { ref, computed, onMounted, nextTick } from 'vue'
 import { useRouter } from 'vue-router'
 import ChatMessage from './ChatMessage.vue';
 import ChatInput from './ChatInput.vue';
@@ -64,17 +65,13 @@ import Stomp from 'stompjs';
 import { useUserStore } from '@/store/userStore';
 import { useAlarmStore } from '@/store/useAlarmStore'
 
-
-// ✅ props 정의
 const props = defineProps({
   roomNo: { type: Number, required: true },
   teamNo: { type: Number, required: true }
 });
 
-// ✅ emits 정의
-const emit = defineEmits(['closeRoom', 'alarmRead']);
+const emit = defineEmits(['closeRoom', 'alarmRead', 'roomNameChanged']);
 
-// ✅ 스토어 가져오기
 const userStore = useUserStore();
 const alarmStore = useAlarmStore();
 const router = useRouter();
@@ -99,13 +96,11 @@ const filteredMessages = computed(() =>
 const todayDate = computed(() => {
   const today = new Date();
   const year = today.getFullYear();
-  const month = today.getMonth() + 1; // 0-based index
+  const month = today.getMonth() + 1;
   const day = today.getDate();
   return `${year}년 ${month}월 ${day}일`;
 });
 
-
-// loadRoomInfo 함수
 const loadRoomInfo = async () => {
   try {
     const res = await instance.get(`/chat/room/${props.roomNo}`);
@@ -115,7 +110,6 @@ const loadRoomInfo = async () => {
   }
 };
 
-// handleAttachmentDeleted 함수
 const handleAttachmentDeleted = ({ messageNo, attachmentNo }) => {
   if (!stompConnected.value || !stompClient.value) return;
   const payload = {
@@ -128,7 +122,6 @@ const handleAttachmentDeleted = ({ messageNo, attachmentNo }) => {
   stompClient.value.send('/app/chat.deleteAttachment', {}, JSON.stringify(payload));
 };
 
-// removeMessageIfEmpty 함수
 const removeMessageIfEmpty = (message) => {
   const isEmpty = !message.content && (!message.attachments || message.attachments.length === 0);
   if (isEmpty) {
@@ -137,7 +130,6 @@ const removeMessageIfEmpty = (message) => {
   }
 };
 
-// realLeaveChatRoom 함수
 const realLeaveChatRoom = async () => {
   try {
     await instance.delete(`/chat/room/${props.roomNo}/member/${userNo.value}`);
@@ -148,13 +140,11 @@ const realLeaveChatRoom = async () => {
     }
     console.log("🚪 채팅방 영구 나가기 성공");
     emit('closeRoom');
-    // router.push('/chat'); // 필요시 주석 해제
   } catch (error) {
     console.error("❌ 채팅방 나가기 실패:", error);
   }
 };
 
-// leaveChatRoom 함수
 const leaveChatRoom = async () => {
   const confirmLeave = window.confirm(
     "정말로 이 채팅방을 완전히 나가시겠습니까?\n\n(채팅 종료를 하시면 더이상 이 채팅방의 알림을 가지않습니다.)"
@@ -164,8 +154,6 @@ const leaveChatRoom = async () => {
   }
 };
 
-
-// registerChatMember 함수
 const registerChatMember = async () => {
   try {
     await instance.post(`/chat/room/${props.roomNo}/member/${userNo.value}`);
@@ -175,7 +163,6 @@ const registerChatMember = async () => {
   }
 };
 
-// loadChatMembers 함수
 const loadChatMembers = async () => {
   try {
     const response = await instance.get(`/chat/rooms/${props.roomNo}/members`);
@@ -186,7 +173,6 @@ const loadChatMembers = async () => {
   }
 };
 
-// loadMessages 함수
 const loadMessages = async () => {
   try {
     const response = await instance.get(`/chat/room/${props.roomNo}/messages`);
@@ -207,7 +193,6 @@ const loadMessages = async () => {
   }
 };
 
-// handleSendMessage 함수
 const handleSendMessage = (payload) => {
   if (!stompConnected.value) {
     console.warn('⚠️ WebSocket 연결이 되어 있지 않습니다.');
@@ -234,19 +219,16 @@ const handleSendMessage = (payload) => {
   }
 };
 
-// startEditRoomName 함수
 const startEditRoomName = () => {
   isEditingRoomName.value = true;
   newRoomName.value = roomName.value;
 };
 
-// cancelEditRoomName 함수
 const cancelEditRoomName = () => {
   isEditingRoomName.value = false;
   newRoomName.value = '';
 };
 
-// saveRoomName 함수
 const saveRoomName = async () => {
   try {
     await instance.put(`/chat/room/${props.roomNo}/name`, {
@@ -261,7 +243,6 @@ const saveRoomName = async () => {
   }
 };
 
-// connectWebSocket 함수
 const connectWebSocket = () => {
   const socket = new SockJS('/ws-chat');
   stompClient.value = Stomp.over(socket);
@@ -287,6 +268,16 @@ const connectWebSocket = () => {
         }
         return;
       }
+      // 채팅방 이름 변경 처리
+      if (received.type === 'ROOM_NAME_UPDATE') {
+        roomName.value = received.roomName;
+        
+        emit('roomNameChanged', {
+          roomNo: received.roomNo,
+          roomName: received.roomName
+        });
+        return;
+      }
 
       if (!received.timestamp && received.createDate) {
         received.timestamp = new Date(received.createDate).getTime();
@@ -299,13 +290,10 @@ const connectWebSocket = () => {
           messageContainer.scrollTop = messageContainer.scrollHeight;
         }
       });
-
-      console.log('📝 messages 배열 업데이트:', messages.value);
     });
 
     stompClient.value.subscribe(`/topic/chat/room/${props.roomNo}/members`, (msg) => {
       const members = JSON.parse(msg.body);
-      console.log('👥 실시간 참여자 목록 수신:', members);
       chatMembers.value = members;
     });
 
@@ -314,7 +302,7 @@ const connectWebSocket = () => {
       console.log('🔔 알림 수신 전체:', alarm);
       if (
         alarm.alarmType === 'CHAT' &&
-        Number(alarm.referenceNo) === Number(props.roomNo)
+        Number(alarm.referenceNo) === Number(props.roomNo) && isChatActive.value
       ) {
         try {
           await instance.put(`/alarms/${alarm.alarmNo}/read`);
@@ -338,20 +326,34 @@ const connectWebSocket = () => {
   });
 };
 
+const isChatActive = ref(false);
 onMounted(() => {
   if (!userNo.value) {
     console.warn('❌ 로그인되지 않았습니다.')
-    // ❗ NOTE: this.$router → useRouter로 전환 필요
-    // 예시: const router = useRouter(); router.push('/login');
     return
   }
-    console.log("✅ 현재 로그인한 사용자:", userStore.user)
+  console.log("✅ 현재 로그인한 사용자:", userStore.user)
   registerChatMember()
   loadMessages()
   connectWebSocket()
   loadChatMembers()
   loadRoomInfo()
-})
+
+  // 메시지 영역 DOM 선택
+  nextTick(() => {
+    const messageContainer = document.querySelector('.chat-messages')
+    if (messageContainer) {
+      const activateChat = () => {
+        if (!isChatActive.value) {
+          isChatActive.value = true
+          console.log('💡 채팅 활성 상태로 변경됨');
+        }
+      };
+      messageContainer.addEventListener('scroll', activateChat, { once: true })
+      messageContainer.addEventListener('mouseenter', activateChat, { once: true })
+    }
+  })
+});
 </script>
 
 <style scoped>

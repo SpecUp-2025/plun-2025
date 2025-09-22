@@ -10,6 +10,7 @@ import com.spec.plun.calendar.dao.CalendarDAO;
 import com.spec.plun.calendar.dto.EventRequestDTO;
 import com.spec.plun.calendar.entity.Calendar;
 import com.spec.plun.calendar.entity.CalendarDetail;
+import com.spec.plun.alarm.service.AlarmService;
 
 import lombok.RequiredArgsConstructor;
 
@@ -19,6 +20,7 @@ public class CalendarService {
 	
 	private final CalendarDAO calendarDAO;
 	private final SimpMessagingTemplate messagingTemplate;
+	private final AlarmService alarmService;
 
 	
 	public Integer getCalNoByTeamAndUser(Integer teamNo, Integer userNo) {
@@ -28,7 +30,7 @@ public class CalendarService {
 	public int createCalendar(Calendar calendar) {
 	    return calendarDAO.insertCalendar(calendar);
 	}
-	// 일정 조회
+
 	public List<CalendarDetail> getEventsBetween(Integer userNo, String start, String end) {
 	    List<CalendarDetail> events = calendarDAO.getEventsBetween(userNo, start, end);
 	    for (CalendarDetail event : events) {
@@ -40,47 +42,76 @@ public class CalendarService {
 	    }
 	    return events;
 	}
-	// 일정 등록
+
 	public int insertSharedEvent(EventRequestDTO dto) {
 	    CalendarDetail detail = dto.getDetail();
+	    Integer creatorUserNo = detail.getRegUserNo(); // 일정 생성자
 	    
-	    // 1️. 내 일정 먼저 등록 (자동 증가 키를 detail.calDetailNo에 주입되도록 mapper 설정 필요)
 	    int inserted = calendarDAO.insertEvent(detail);
 	    Integer calDetailNo = detail.getCalDetailNo();
 
-	    // 2️. 내가 만든 일정에 대한 참가자 정보 추가
 	    if (dto.getParticipantUserNos() != null && calDetailNo != null) {
-	        for (Integer userNoStr : dto.getParticipantUserNos()) {
-	            Integer userNo = Integer.valueOf(userNoStr);
-
+	        for (Integer userNo : dto.getParticipantUserNos()) {
 	            calendarDAO.insertParticipant(calDetailNo, userNo);
 	            
-	            // 실시간 메시지 전송
+	            // 캘린더 갱신 메시지 전송
 	            messagingTemplate.convertAndSend(
 	                "/topic/calendar/refresh/" + userNo,
 	                "newEventCreated"
 	            );
+	            
+	            // 초대 알림 생성 (본인 제외)
+	            if (!userNo.equals(creatorUserNo)) {
+	                System.out.println("📩 캘린더 초대 알림 생성: " + creatorUserNo + " → " + userNo);
+	                alarmService.createCalendarInviteAlarm(
+	                    creatorUserNo, 
+	                    userNo, 
+	                    calDetailNo, 
+	                    detail.getTitle(),
+	                    detail.getStartDate() + "T" + detail.getStartTime(),
+	                    null // teamNo - 필요시 추가
+	                );
+	            }
 	        }
 	    }
 	    return inserted;
 	}
-	// 일정 수정
+
     public void updateEvent(EventRequestDTO dto) {
-    	
     	CalendarDetail detail = dto.getDetail();
+    	Integer updaterUserNo = detail.getRegUserNo();
+    	
+    	// 기존 참가자 목록 조회
+    	List<Integer> oldParticipants = calendarDAO.getParticipantsByCalDetailNo(detail.getCalDetailNo());
     	
         calendarDAO.updateEvent(detail);
-        
-     // 2. 참가자 업데이트 (기존 삭제 후 새로 insert 등)
         updateParticipants(detail.getCalDetailNo(), dto.getParticipantUserNos());
         
-        // 🔔 일정 수정 → 참가자에게 WebSocket 메시지 발송
+        // 참가자에게 갱신 메시지 발송
         List<Integer> participants = calendarDAO.getParticipantsByCalDetailNo(detail.getCalDetailNo());
         for (Integer userNo : participants) {
             messagingTemplate.convertAndSend(
                 "/topic/calendar/refresh/" + userNo,
                 "eventUpdated"
             );
+        }
+        
+        // 새로 추가된 참가자에게 초대 알림 발송
+        if (dto.getParticipantUserNos() != null) {
+            for (Integer newUserNo : dto.getParticipantUserNos()) {
+                // 기존에 없던 참가자이고, 수정자 본인이 아닌 경우
+                if (!oldParticipants.contains(newUserNo) && !newUserNo.equals(updaterUserNo)) {
+                    System.out.println("📩 일정 수정 시 새 초대 알림: " + updaterUserNo + " → " + newUserNo);
+                    alarmService.createCalendarInviteAlarm(
+                        updaterUserNo, 
+                        newUserNo, 
+                        detail.getCalDetailNo(), 
+                        detail.getTitle(),
+                        detail.getStartDate() + "T" + detail.getStartTime(),
+                        null
+                    );
+                }
+            }
         }
     }
     @Transactional
@@ -91,18 +122,14 @@ public class CalendarService {
             calendarDAO.insertParticipants(calDetailNo, userNos);
         }
     }
-    // 일정 삭제
     @Transactional
     public int deleteEvent(Integer calDetailNo) {
-    	
-        // 🔍 참가자 정보는 삭제 전에 가져와야 함!
         List<Integer> participants = calendarDAO.getParticipantsByCalDetailNo(calDetailNo);
         
-        int result1 = calendarDAO.deleteEvent(calDetailNo); // 일정 삭제
-        int result2 = calendarDAO.deleteParticipantsByCalDetailNo(calDetailNo); // 참가자 삭제
+        int result1 = calendarDAO.deleteEvent(calDetailNo);
+        int result2 = calendarDAO.deleteParticipantsByCalDetailNo(calDetailNo);
         
         if (result1 > 0 && result2 >= 0) {
-
             for (Integer userNo : participants) {
                 messagingTemplate.convertAndSend(
                     "/topic/calendar/refresh/" + userNo,

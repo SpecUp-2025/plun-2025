@@ -1,6 +1,17 @@
 <template>
-  <div class="chat-input">
-
+    <div>
+    <div v-if="files.length > 0" class="file-list">
+        <div
+            v-for="(file, index) in files"
+            :key="index"
+            class="file-item"
+          >
+            <span>📄 {{ file.name }}</span>
+            <button @click="removeFile(index)">❌</button>
+          </div>
+        </div>
+    <div class="chat-input">
+    
     <textarea
       v-model="inputMessage"
       class="message-textarea"
@@ -41,18 +52,7 @@
       <button @click="triggerFileInput">파일 선택</button>
       <span v-if="files.length > 0">파일 {{ files.length }}개 선택됨</span>
     </div>
-
-    <!-- 선택된 파일 목록 표시 -->
-    <div v-if="files.length > 0" class="file-list">
-      <div
-        v-for="(file, index) in files"
-        :key="index"
-        class="file-item"
-      >
-        📄 {{ file.name }}
-        <button @click="removeFile(index)">❌</button>
-      </div>
-    </div>
+  </div>
   </div>
 </template>
 
@@ -62,6 +62,7 @@ import { useUserStore } from '@/store/userStore';
 
 export default {
     name: 'ChatInput',
+    emits: ['send-message'],
 
       props: { 
         chatMembers: { type: Array, required: true }, 
@@ -135,9 +136,13 @@ export default {
             this.inputMessage.slice(0, cursorIndex) + '@' + member.userName + ' ';
         }
 
-        // 멘션 중복 방지
-        if (!this.mentions.includes(member.userNo)) {
-          this.mentions.push(member.userNo);
+        // 멘션 객체로 저장 (userNo와 userName 모두 포함)
+        const mentionExists = this.mentions.some(m => m.userNo === member.userNo);
+        if (!mentionExists) {
+          this.mentions.push({
+            userNo: member.userNo,
+            userName: member.userName
+          });
         }
 
         this.showAutocomplete = false;
@@ -158,7 +163,7 @@ export default {
         },
 
         async send() {
-          console.log('📌 전송 직전 roomNo:', this.roomNo);  // 👈 이거 추가
+          console.log('📌 전송 직전 roomNo:', this.roomNo);
         if (!this.inputMessage.trim() && this.files.length === 0) return;
 
             const userStore = useUserStore();
@@ -169,22 +174,24 @@ export default {
           return;
         }
 
-      // ✅ 파일이 하나라도 있으면 multipart 전송
-      if (this.files.length > 0) {
-        const formData = new FormData();
+        // mentions에서 userNo만 추출
+        const mentionUserNos = this.mentions.map(m => m.userNo);
 
-        const messageDTO = {
-          roomNo: this.roomNo,
-          //roomNo: this.$route.params.roomNo,
-          userNo: userNo,
-          content: this.inputMessage,
-          messageType: 'FILE',
-          mentions: this.mentions
-        };
+        // 파일이 하나라도 있으면 multipart 전송
+        if (this.files.length > 0) {
+          const formData = new FormData();
+
+          const messageDTO = {
+            roomNo: this.roomNo,
+            userNo: userNo,
+            content: this.inputMessage,
+            messageType: 'FILE',
+            mentions: mentionUserNos
+          };
 
         formData.append('message', new Blob([JSON.stringify(messageDTO)], { type: 'application/json' }));
         this.files.forEach(file => {
-          formData.append('file', file); // 파일 여러 개 추가
+          formData.append('file', file);
         });
         try {
           const response = await instance.post('/chat/send', formData
@@ -195,7 +202,7 @@ export default {
           this.mentions = [];
           this.$refs.fileInput.value = '';
 
-          // 옵션: 백엔드에서 WebSocket 브로드캐스트 한다면 생략 가능
+          
           this.$emit('message-sent', response.data);
 
         } catch (error) {
@@ -203,10 +210,9 @@ export default {
         }
 
       } else {
-        // 일반 메시지는 WebSocket으로 전송
         this.$emit('send-message', {
           content: this.inputMessage,
-          mentions: this.mentions
+          mentions: mentionUserNos
         });
         this.inputMessage = '';
         this.mentions = [];
@@ -276,46 +282,55 @@ export default {
 /* 자동완성 리스트 */
 .autocomplete-list {
   position: absolute;
-  top: 100%;
-  left: 42%;
-  transform: translateX(-50%);
-  width: calc(100% - 20px);
-  max-width: 400px;
+  bottom: 100%; /* top: 100%에서 bottom: 100%로 변경 - 입력창 위쪽에 표시 */
+  left: 0; /* left: 42%에서 left: 0으로 변경 */
+  transform: none; /* transform 제거 */
+  width: 100%; /* 입력창과 같은 너비 */
+  max-width: 600px; /* textarea와 동일한 max-width */
   border: 1px solid #ccc;
   background: white;
   list-style: none;
   padding: 0;
-  margin: 4px 0 0 0;
+  margin: 0 0 4px 0; /* margin-top을 margin-bottom으로 변경 */
   max-height: 150px;
   overflow-y: auto;
   z-index: 10;
   border-radius: 4px;
   box-shadow: 0 2px 6px rgba(0,0,0,0.15);
 }
-
 .autocomplete-list li {
   padding: 6px 10px;
   cursor: pointer;
 }
-
 .autocomplete-list li.selected {
   background-color: #f0f0f0;
 }
-
 .file-list {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 12px 16px;
   margin-top: 8px;
   font-size: 0.9rem;
 }
-
 .file-item {
-  display: flex;
+  display: inline-flex;
+  justify-content: space-between;
   align-items: center;
-  gap: 6px;
-  padding: 4px 8px;
+  padding: 8px 12px;
   background: #f5f5f5;
   border-radius: 4px;
-  margin-bottom: 4px;
+  max-width: 300px;
+  box-sizing: border-box;
 }
+
+.file-item span {
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  max-width: 220px;
+  margin-right: 12px;
+}
+
 .file-item button {
   background: transparent;
   border: none;
