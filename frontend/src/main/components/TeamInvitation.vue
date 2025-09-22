@@ -2,7 +2,7 @@
     <div class="modal-overlay" @click.self="close">
       <div class="modal" role="dialog" aria-modal="true" aria-labelledby="modalTitle">
         <header class="modal-header">
-          <h2 id="modalTitle">팀만들기</h2>
+          <h2 id="modalTitle">회원초대하기</h2>
           <button class="icon-btn" @click="close()"aria-label="닫기">×</button>
         </header>
         <div v-if="pending" class="busy">

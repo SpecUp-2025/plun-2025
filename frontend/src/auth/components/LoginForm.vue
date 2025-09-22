@@ -21,9 +21,15 @@
         </form>
         <div class="divider"></div>
         <div class="oauth-buttons">
-          <button class="oauth oauth--google"  @click="socialLogin('google')">구글로 로그인</button>
-          <button class="oauth oauth--naver" @click="socialLogin('naver')">네이버로 로그인</button>
-          <button class="oauth oauth--kakao" @click="socialLogin('kakao')">카카오톡으로 로그인</button>
+          <button class="oauth oauth--google"  @click="socialLogin('google')">
+            <span class="oauth__brand">Google</span><span class="oauth__with"> 로그인</span>
+          </button>
+          <button class="oauth oauth--naver" @click="socialLogin('naver')">
+            <span class="oauth__brand">NAVER</span><span class="oauth__with"> 로그인</span>
+          </button>
+          <button class="oauth oauth--kakao" @click="socialLogin('kakao')">
+            <span class="oauth__brand">Kakao</span><span class="oauth__with"> 로그인</span>
+          </button>
         </div>
         <div class="links">
           <RouterLink :to="{name : 'register'}" >회원가입</RouterLink>
@@ -130,18 +136,18 @@ function socialLogin(name) {
   border-color: #d1d5db;  
 }
 .oauth--google:hover { background: #f9fafb; }
+.oauth__brand{ font-weight:700; letter-spacing:.2px; }
+.oauth__with{ opacity:.85; font-weight:500; }
 
 .oauth--naver {
   background: #03C75A;
   color: #1f2937;
-  border-color: #03C75A;
+  border-color: #fff;
 }
 .oauth--naver:hover { filter: brightness(0.95); }
 
-.oauth--kakao {
-  background: #FEE500;
-  color: #191600;            
-  border-color: #F7D600;
+.oauth--kakao{
+  background:#FEE500; border-color:#F7D600; color:#191600;
 }
 
 .links {

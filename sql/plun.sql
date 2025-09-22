@@ -238,3 +238,13 @@ CREATE TABLE TB_CALENDAR_DETAIL_PARTICIPANT (
   CONSTRAINT fk_cdp_cal_detail FOREIGN KEY (cal_detail_no) REFERENCES tb_calendardetail (cal_detail_no) ON DELETE CASCADE ON UPDATE CASCADE,
   CONSTRAINT fk_cdp_user FOREIGN KEY (user_no) REFERENCES tb_member (user_no) ON UPDATE CASCADE
 )
+
+CREATE TABLE `TB_MEMBER_LOGIN` (
+  `login_type_no` int(11) NOT NULL AUTO_INCREMENT,
+  `login_type_name` varchar(100) NOT NULL,
+  PRIMARY KEY (`login_type_no`)
+)
+
+INSERT INTO TB_MEMBER_LOGIN (login_type_name) VALUES
+('local'),
+('social')
