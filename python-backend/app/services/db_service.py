@@ -117,7 +117,7 @@ def update_calendar_contents(room_no: int, contents: str) -> bool:
             
             # 달력 상세 내용 업데이트
             update_query = text("""
-                UPDATE tb_calendardetail 
+                UPDATE tb_calendar_detail 
                 SET contents = :contents,
                     update_dt = NOW()
                 WHERE cal_detail_no = :cal_detail_no
@@ -143,7 +143,7 @@ def get_meeting_info(room_no: int) -> Optional[dict]:
                 SELECT mr.room_no, mr.title, mr.room_code, mr.cal_detail_no,
                        cd.title as calendar_title
                 FROM tb_meeting_room mr
-                LEFT JOIN tb_calendardetail cd ON mr.cal_detail_no = cd.cal_detail_no
+                LEFT JOIN tb_calendar_detail cd ON mr.cal_detail_no = cd.cal_detail_no
                 WHERE mr.room_no = :room_no
             """)
             
