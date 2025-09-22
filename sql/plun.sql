@@ -34,6 +34,11 @@ CREATE TABLE `TB_MEMBER_LOGIN` (
   PRIMARY KEY (`login_type_no`)
 )
 
+INSERT INTO `tb_member_login` (login_type_no, login_type_name)
+VALUES 
+(1, 'local'),
+(2, 'social');
+
 CREATE TABLE `TB_TEAM_MEMBER` (
   `team_no` int(11) NOT NULL,
   `user_no` int(11) NOT NULL,
@@ -225,17 +230,17 @@ CREATE TABLE TB_CALENDAR_DETAIL (
   KEY cal_no (cal_no),
   KEY reg_user_no (reg_user_no),
   KEY update_user_no (update_user_no),
-  CONSTRAINT tb_calendardetail_ibfk_1 FOREIGN KEY (cal_no) REFERENCES tb_calendar (cal_no),
-  CONSTRAINT tb_calendardetail_ibfk_2 FOREIGN KEY (reg_user_no) REFERENCES tb_member (user_no),
-  CONSTRAINT tb_calendardetail_ibfk_3 FOREIGN KEY (update_user_no) REFERENCES tb_member (user_no)
+  CONSTRAINT tb_calendar_detail_ibfk_1 FOREIGN KEY (cal_no) REFERENCES tb_calendar (cal_no),
+  CONSTRAINT tb_calendar_detail_ibfk_2 FOREIGN KEY (reg_user_no) REFERENCES tb_member (user_no),
+  CONSTRAINT tb_calendar_detail_ibfk_3 FOREIGN KEY (update_user_no) REFERENCES tb_member (user_no)
 )
 
 CREATE TABLE TB_CALENDAR_DETAIL_PARTICIPANT (
-  cal_detail_no int(11) NOT NULL COMMENT 'FK → tb_calendardetail.cal_detail_no',
+  cal_detail_no int(11) NOT NULL COMMENT 'FK → tb_calendar_detail.cal_detail_no',
   user_no int(11) NOT NULL COMMENT 'FK → tb_member.user_no',
   PRIMARY KEY (cal_detail_no,user_no),
   KEY idx_cdp_user_no (user_no),
-  CONSTRAINT fk_cdp_cal_detail FOREIGN KEY (cal_detail_no) REFERENCES tb_calendardetail (cal_detail_no) ON DELETE CASCADE ON UPDATE CASCADE,
+  CONSTRAINT fk_cdp_cal_detail FOREIGN KEY (cal_detail_no) REFERENCES tb_calendar_detail (cal_detail_no) ON DELETE CASCADE ON UPDATE CASCADE,
   CONSTRAINT fk_cdp_user FOREIGN KEY (user_no) REFERENCES tb_member (user_no) ON UPDATE CASCADE
 )
 

@@ -124,7 +124,7 @@
 
   <!-- 달력상세 생성 -->
   <insert id="insertCalendarDetail">
-    INSERT INTO tb_calendardetail
+    INSERT INTO tb_calendar_detail
       (cal_no, contents,
        start_date, start_time, end_date, end_time,
        delete_yn, create_date, reg_user_no, title)
@@ -179,7 +179,7 @@
 
   <!-- 달력상세 제목/시간 동기화 (분리 컬럼) -->
   <update id="updateCalendarDetail">
-    UPDATE tb_calendardetail
+    UPDATE tb_calendar_detail
        SET title = #{title},
            start_date = #{startDate},
            start_time = #{startTime},
@@ -230,7 +230,7 @@
 
   <!-- 달력상세/회의방 삭제 (하드 삭제) -->
   <delete id="deleteCalendarDetail">
-    DELETE FROM tb_calendardetail
+    DELETE FROM tb_calendar_detail
     WHERE cal_detail_no = #{calDetailNo}
   </delete>
 
