@@ -10,7 +10,7 @@
     </div>
 
     <div class="header-actions">
-      <button class="invite-button" @click="router.push({name:'teamInvite'})">+</button>
+      <button class="invite-button" @click=move()>+</button>
       <AlarmDropdown @alarmClicked="$emit('alarmClicked', $event)" />&nbsp;
       <div class="user-wrap" ref="userWrap" >
           <button class="user-trigger" @click="menuOpen = !menuOpen">
@@ -23,6 +23,7 @@
         </div>
     </div>
   </header>
+  <RouterView/>
 </template>
 
 <script setup>
@@ -31,7 +32,7 @@ import instance from '@/util/interceptors';
 import AlarmDropdown from '@/components/alarm/AlarmDropdown.vue'
 import { useUserStore } from '@/store/userStore'
 import { computed, ref, onMounted, onBeforeUnmount } from 'vue'
-import { useRouter } from 'vue-router';
+import { RouterView, useRouter } from 'vue-router';
 
 defineEmits([ 'alarmClicked'])
 const router = useRouter()
@@ -40,6 +41,11 @@ const name = computed(() => userStore.user?.name ?? '')
 const menuOpen = ref(false)
 const alarmStore = useAlarmStore()
 const userWrap =ref(false)
+
+const move = () =>{
+  console.log("이동합니다잉")
+  router.push({name:'teamInvite' })
+}
 
 const handleClickOutside = (e) => {
   if (!menuOpen.value) return
@@ -158,5 +164,9 @@ onBeforeUnmount(() => {
 .invite-button:focus-visible{ outline: 2px solid #93c5fd; outline-offset: 2px; }
 
 .header-actions{ display:flex; align-items:center; gap:12px; }
-
+.logo img{
+  height: 40px;
+  width: auto; 
+  display: block;
+}
 </style>
