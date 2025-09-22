@@ -156,13 +156,7 @@ const onAlarmRead = (alarmNo) => {
   alarmStore.markAsRead(alarmNo);
 }
 
-const goToProfile = () => {
-  router.push({ name: 'detail' })
-}
 
-const logout = () => {
-  router.push({ name: 'login' })
-}
 
 const onRoomNameChanged = (data) => {
   console.log('TeamMain에서 채팅방 이름 변경 이벤트 수신:', data);
@@ -189,13 +183,21 @@ const onAlarmClick = (alarm) => {
     console.log('알 수 없는 알림 타입:', alarm.alarmType);
   }
 }
+
+const goToNotifications = () => {
+  // 예를 들어 팀 메인에서 알림 탭으로 이동하거나 알림 페이지가 있으면 이동
+  // 여기선 알림 탭으로 강제 이동하는 예시
+  activeTab.value = 'notifications'  // TeamMain.vue 에 알림 탭이 따로 구현되어 있다면 사용
+  // 만약 알림 페이지가 따로 있다면 router.push({ name: 'alarmPage' }) 등으로 변경
+  console.log('알림 페이지 이동 (미구현 - 필요시 수정)')
+}
+
+
 </script>
 
 <template>
   <DefaultLayout
-    @go-profile="goToProfile"
     @alarmClicked="onAlarmClick"
-    @logout="logout"
   >
     <template #header><strong>{{ teamName }}'s Workspace</strong></template>
 

@@ -6,9 +6,7 @@ import SiteFooter from './SiteFooter.vue'
 <template>
   <div class="wrap">
     <HeaderBar 
-      @go-profile="$emit('go-profile')"
       @alarmClicked="$emit('alarmClicked', $event)"
-      @logout="$emit('logout')" 
       >
     <slot name="header"/></HeaderBar>
     <div class="body">

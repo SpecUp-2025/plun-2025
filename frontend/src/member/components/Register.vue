@@ -62,10 +62,10 @@
 import instance from '@/util/interceptors';
 import { onBeforeUnmount, reactive, ref, computed } from 'vue';
 import { useRouter } from 'vue-router';
-import { REGEX_PATTERN } from '../util/Regex';
 import '@/assets/css/auth.css'
 import '@/assets/css/code.css'
 import Logo from './Logo.vue';
+import { REGEX_PATTERN } from '../util/Regex';
 
 const router = useRouter();
 const loginType =ref(0);

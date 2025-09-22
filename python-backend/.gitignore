@@ -1,15 +1,15 @@
-# --- Python 기본 ---
+# === Python 기본 ===
 __pycache__/
 *.py[cod]
 *$py.class
 
-# 패키지/빌드 산출물
+# 패키지 빌드 산출물
 build/
 dist/
 *.egg-info/
 .eggs/
 
-# 테스트/도구 캐시
+# 테스트 및 도구 캐시
 .pytest_cache/
 .coverage
 .coverage.*
@@ -21,57 +21,124 @@ coverage.xml
 .pytype/
 .ruff_cache/
 
-# IDE/에디터
+# === IDE/에디터 ===
 .vscode/
 .idea/
 *.code-workspace
+*.swp
+*.swo
 
-# OS 잡파일
+# === OS 시스템 파일 ===
 .DS_Store
+.DS_Store?
+._*
+.Spotlight-V100
+.Trashes
+ehthumbs.db
 Thumbs.db
 
-# 가상환경
+# === 가상환경 ===
 .venv/
 venv/
 env/
 whisper-env/
+meeting-env/
+.conda/
 
-# 환경/보안
+# === 환경변수 및 보안 ===
 .env
+.env.local
 .env.*.local
 *.pem
 *.key
+config.local.py
 
-# 로그/임시파일
+# === 로그 및 임시파일 ===
 *.log
 logs/
 tmp/
 temp/
+.temp/
 
-# 업로드/전사 산출물 (서버가 생성)
-_uploads/
-# 위 폴더 구조만 유지하고 싶다면 아래 파일을 따로 추가:
-# _uploads/.gitkeep
+# === 프로젝트별 데이터 ===
+# 오디오 파일 저장소 (실제 녹음 파일들)
+audio_files/
+!audio_files/.gitkeep
 
-# 오디오/미디어 산출물(개발 테스트 파일)
+# 업로드된 파일들
+uploads/
+!uploads/.gitkeep
+
+# === 미디어 파일 (개발/테스트용) ===
 *.wav
 *.mp3
 *.webm
 *.ogg
+*.m4a
+*.flac
 
-# 모델/캐시(용량 큼)
-# - openai-whisper, faster-whisper, ctranslate2, HuggingFace 등
+# === AI 모델 및 캐시 ===
+# Whisper 모델 캐시
 .whisper/
 whisper/
-faster_whisper/
-ctranslate2/
-.huggingface/
-~/.cache/
-.cache/
 
-# Docker(선택)
+# Ollama 모델 저장소 (용량 큼)
+.ollama/
+ollama_models/
+
+# HuggingFace 캐시
+.huggingface/
+.cache/huggingface/
+
+# 기타 ML 라이브러리 캐시
+.cache/
+~/.cache/torch/
+.torch/
+
+# === 데이터베이스 ===
+# 개발용 SQLite 파일
+*.db
+*.sqlite
+*.sqlite3
+!schema.sql
+
+# 데이터베이스 백업
+*.bak
+*.dump
+
+# === Docker (선택적) ===
 docker-data/
 *.tar
+.dockerignore
 
-# Node가 섞일 경우(선택)
+# === 프론트엔드 (혼재 시) ===
 node_modules/
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+
+# === 배포/운영 ===
+# SSL 인증서
+*.crt
+*.cert
+
+# 백업 파일
+*.backup
+*.old
+
+# 문서 빌드 결과물
+docs/_build/
+site/
+
+# === 프로젝트 특화 ===
+# 회의 녹음 세션 메타데이터
+sessions.json
+session_*.json
+
+# FFmpeg 임시 파일
+ffmpeg_*.txt
+file_list.txt
+
+# 테스트용 회의 파일
+test_meeting_*
+sample_audio.*

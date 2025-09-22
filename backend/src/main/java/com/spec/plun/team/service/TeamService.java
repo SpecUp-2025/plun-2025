@@ -11,6 +11,7 @@ import org.springframework.web.server.ResponseStatusException;
 
 import com.spec.plun.email.service.EmailSendInviteService;
 import com.spec.plun.team.dao.TeamDAO;
+import com.spec.plun.team.dto.MemberInviteRequest;
 import com.spec.plun.team.dto.TeamAcceptRequest;
 import com.spec.plun.team.dto.TeamCreateRequest;
 import com.spec.plun.team.dto.TeamCreateResponse;
@@ -64,6 +65,27 @@ public class TeamService {
 		
 		return new TeamCreateResponse(teamCreateRequest.getTeamName(),teamCreateRequest.getTeamNo());
 	}
+	
+	@Transactional
+	public void memberInvite(MemberInviteRequest memberInviteRequest) {
+		for(String inviteEmail : memberInviteRequest.getInvite()) {
+			teamDAO.insertInvite(memberInviteRequest.getTeamNo(),memberInviteRequest.getUserNo(),inviteEmail);
+		}
+		
+		TransactionSynchronizationManager.registerSynchronization((new TransactionSynchronization() {
+			@Override
+			public void afterCommit() {
+				for(String inviteEmail : memberInviteRequest.getInvite() ) {
+					try {
+						emailSendInviteService.sendSimpleMessage(inviteEmail,memberInviteRequest.getEmail(),memberInviteRequest.getUserName());
+					} catch (Exception e) {
+						log.warn("Invite mail failed. teamNo={}, email={}", memberInviteRequest.getTeamNo(), inviteEmail, e);
+					}
+				}
+			}
+		}));
+	}
+	
 
 	public Object istTeam(Integer userNo) {
 		return teamDAO.isTeam(userNo);
@@ -93,4 +115,5 @@ public class TeamService {
 		int u = teamDAO.cancel(invitedId);
 		if (u != 1) throw new ResponseStatusException(HttpStatus.NOT_FOUND, "상태 업데이트 실패");
 	}
+	
 }
