@@ -3,4 +3,5 @@ __MACOSX/
 .vscode/
 ### metadata###
 .metadata/
-
+.env
+*.jar
