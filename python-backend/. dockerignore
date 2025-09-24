@@ -1,0 +1,29 @@
+__pycache__/
+.venv/
+*.pyc
+.mypy_cache/
+.pytest_cache/
+.coverage
+
+# OS/IDE 관련
+.DS_Store
+Thumbs.db
+*.swp
+.idea/
+*.iml
+.vscode/
+
+# Git 관련
+.git
+.gitignore
+
+# Docker-related
+docker-compose.override.yml
+.env
+.env.*  # ex: .env.local, .env.dev 등
+
+# Test/coverage
+coverage/
+*.test.js
+*.spec.js
+__tests__/
