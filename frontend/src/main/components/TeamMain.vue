@@ -204,6 +204,7 @@ const goToNotifications = () => {
     <template #sidebar>
       <SideNav>
         <router-link :to="{ name: 'teamList' }" class="nav-button">← Back</router-link>
+        <MeetingNav :team-no="teamNo" />
         <ChatNav
           :team-no="teamNo"
           :alarms="alarms"
@@ -211,8 +212,7 @@ const goToNotifications = () => {
           @roomSelected="openChatRoom"
           @openCreateForm="toggleChatRoomForm"
         />
-        <MeetingNav :team-no="teamNo" />
-        <button @click="setTab('calendar')">캘린더</button>
+        <button @click="setTab('calendar')" class="calendar-button">캘린더</button>
       </SideNav>
     </template>
 
@@ -234,3 +234,10 @@ const goToNotifications = () => {
     <template #footer>© PLUN</template>
   </DefaultLayout>
 </template>
+
+<style scoped>
+.calendar-button {
+  margin-top: auto;
+}
+</style>
+

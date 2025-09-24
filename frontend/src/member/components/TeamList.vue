@@ -54,7 +54,7 @@
 import HomeHeader from '@/main/HomeHeader.vue';
 import { useUserStore } from '@/store/userStore';
 import instance from '@/util/interceptors';
-import { computed, onMounted, reactive } from 'vue';
+import { computed, onMounted, reactive , onBeforeUnmount } from 'vue';
 import { RouterView, useRouter } from 'vue-router';
 import '@/assets/css/home.css'
 
@@ -67,9 +67,21 @@ const team = reactive({
   list:[],
 })
 const formatDate = (s) => s ? s.replace('T', ' ').slice(0, 16) : '';
-onMounted(async ()=>{
+let updateHandler
+
+onMounted(async () =>  {
   await teamList()
-}) 
+
+  updateHandler = async () => {
+    await teamList()
+  }
+
+  window.addEventListener('teamListUpdate', updateHandler)
+})
+
+onBeforeUnmount(() => {
+  window.removeEventListener('teamListUpdate', updateHandler)
+})
 const teamList = async ()=>{
   try {
     const {status , data} = await instance.get(`/teams/teamList/${userNo.value}`)

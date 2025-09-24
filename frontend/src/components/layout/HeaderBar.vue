@@ -113,7 +113,7 @@ onBeforeUnmount(() => {
   justify-content: space-between;
   background-color: #ffffff;
   padding: 12px 16px;
-  border-bottom: 2px solid #007BFF;
+  border-bottom: 2px solid #D7E2EB;
 }
 
 .page-title {
@@ -150,7 +150,7 @@ onBeforeUnmount(() => {
   justify-content: center;
   border: none;
   border-radius: 10px;
-  background: #3399FF;
+  background: #153E75;
   color: #fff;
   font-size: 20px;
   font-weight: 700;

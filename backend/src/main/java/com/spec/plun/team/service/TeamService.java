@@ -3,6 +3,7 @@ package com.spec.plun.team.service;
 import java.util.List;
 
 import org.springframework.http.HttpStatus;
+import org.springframework.messaging.simp.SimpMessagingTemplate;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.transaction.support.TransactionSynchronization;
@@ -30,6 +31,7 @@ public class TeamService {
 	
 	private final TeamDAO teamDAO;
 	private final EmailSendInviteService emailSendInviteService;
+	private final SimpMessagingTemplate messagingTemplate;
 
 	public List<TeamMemberDTO> listMembersByTeam(Integer teamNo) {
 		return teamDAO.selectByTeam(teamNo);
@@ -77,8 +79,20 @@ public class TeamService {
 			public void afterCommit() {
 				for(String inviteEmail : memberInviteRequest.getInvite() ) {
 					try {
-						emailSendInviteService.sendSimpleMessage(inviteEmail,memberInviteRequest.getEmail(),memberInviteRequest.getUserName());
-					} catch (Exception e) {
+	                    // 이메일 발송
+	                    emailSendInviteService.sendSimpleMessage(
+	                        inviteEmail, 
+	                        memberInviteRequest.getEmail(), 
+	                        memberInviteRequest.getUserName()
+	                    );
+
+	                    // WebSocket 실시간 초대 알림
+	                    messagingTemplate.convertAndSend(
+	                        "/topic/invitation/" + inviteEmail,
+	                        "invited"
+	                    );
+
+	                }  catch (Exception e) {
 						log.warn("Invite mail failed. teamNo={}, email={}", memberInviteRequest.getTeamNo(), inviteEmail, e);
 					}
 				}

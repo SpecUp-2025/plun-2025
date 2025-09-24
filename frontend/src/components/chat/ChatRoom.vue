@@ -7,10 +7,12 @@
                 <button class="cancel-btn" @click="cancelEditRoomName">그대로</button>
             </template>
             <template v-else>
-        <h2 class="room-header">
-        <span @click="startEditRoomName" class="room-name-text">{{ roomName }}</span>
-        <button @click="leaveChatRoom" class="btn btn-exit">❌</button>
-        </h2>
+<div class="room-header-wrapper">
+  <h2 class="room-header">
+    <span class="room-name-text" @click="startEditRoomName">{{ roomName }}</span>
+  </h2>
+  <button @click="leaveChatRoom" class="btn btn-exit">❌</button>
+</div>
     </template>
 </div>
 <div class="chat-date">{{ todayDate }}</div>
@@ -268,6 +270,7 @@ const connectWebSocket = () => {
         }
         return;
       }
+
       // 채팅방 이름 변경 처리
       if (received.type === 'ROOM_NAME_UPDATE') {
         roomName.value = received.roomName;
@@ -320,7 +323,6 @@ const connectWebSocket = () => {
         console.log('채팅방에 있어 알림 무시:', alarm);
       }
     });
-
   }, (error) => {
     console.error('❌ WebSocket 연결 실패:', error);
   });
@@ -339,7 +341,6 @@ onMounted(() => {
   loadChatMembers()
   loadRoomInfo()
 
-  // 메시지 영역 DOM 선택
   nextTick(() => {
     const messageContainer = document.querySelector('.chat-messages')
     if (messageContainer) {
@@ -357,7 +358,6 @@ onMounted(() => {
 </script>
 
 <style scoped>
-
 input {
   height: 40px;
   width: 300px;
@@ -370,7 +370,7 @@ input {
 
 .save-btn,
 .cancel-btn {
-  background-color: #007bff;
+  background-color: #153E75;
   color: white;
   border: none;
   padding: 10px 20px;
@@ -408,20 +408,25 @@ input {
   font-weight: 500;
   text-align: center;
   border: none;
-
   border-radius: 6px;
   display: inline-block;
 }
 
-.room-header {
+.room-header-wrapper {
   display: flex;
-  align-items: center;
-  margin: 0;
-  width: 100%;
   justify-content: space-between;
+  align-items: center;
+  width: 100%;
+}
+
+.room-header {
+  margin: 0;
+  flex: 1;
+  text-align: center;
   font-weight: bold;
   font-size: 1.25rem;
 }
+
 .chat-body {
   flex: 1;
   display: flex;
@@ -442,7 +447,6 @@ input {
   padding: 12px 16px;
   border-bottom: 1px solid #ddd;
   z-index: 10;
-
   display: flex;
   justify-content: space-between;
   align-items: center;
@@ -454,7 +458,6 @@ input {
   min-height: 0;
 }
 
-/* 사이드바 - 참여자 목록 */
 .chat-members {
   width: 200px;
   background-color: #fafafa;
@@ -463,7 +466,6 @@ input {
   overflow-y: auto;
 }
 
-/* 메시지 리스트 영역 */
 .chat-messages {
   flex: 1;
   padding: 12px;
@@ -475,7 +477,6 @@ input {
   min-height: 0;
 }
 
-/* 하단 메시지 입력창 고정 */
 .chat-input {
   position: sticky;
   bottom: 0;
@@ -489,6 +490,7 @@ input {
     border: 1px solid #ddd;
     padding: 10px;
 }
+
 .chat-members {
   margin-top: 10px;
   padding: 10px;
@@ -532,8 +534,6 @@ input {
 }
 
 .btn-exit {
-
-  background: #66B2FF;
   color: white;
   border: none;
   border-radius: 10px;
@@ -544,6 +544,6 @@ input {
 }
 
 .btn-exit:hover {
-  background-color: #007BFF;
+  background-color: #153E75;
 }
 </style>
