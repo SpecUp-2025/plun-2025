@@ -4,6 +4,7 @@ import java.io.IOException;
 import java.net.URLEncoder;
 import java.nio.charset.StandardCharsets;
 
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.RequestMapping;
@@ -30,6 +31,8 @@ public class OauthController {
 	private final OauthService oauthService;
 	private final AuthService authService;
 	private final HttpServletResponse response;
+	@Value("${call.call-url}")
+	private String path;
 	
 	@GetMapping("/{name}/login")
 	public void socialLogin(@PathVariable("name") SocialLoginType socialLoginType){
@@ -44,7 +47,7 @@ public class OauthController {
                            ) throws IOException {
 		
 	    if (error != null || code == null || code.isBlank()) {
-	        String fe = "http://localhost:5173/oauth/callback"
+	        String fe = path
 	                + "#error=" + URLEncoder.encode(error != null ? error : "missing_code", StandardCharsets.UTF_8);
 	        response.sendRedirect(fe);
 	        return;
@@ -54,12 +57,12 @@ public class OauthController {
 	        UserInfo user  = oauthService.userInfo(socialLoginType, code);
 	        log.info(">>  user :: {}", user);
 	        TokenResponse tokens =  authService.socialLogin(user);
-	        String fe = "http://localhost:5173/oauth/callback"
+	        String fe = path
 	                + "#access="  + URLEncoder.encode(tokens.accessToken(), StandardCharsets.UTF_8)
 	                + "&refresh=" + URLEncoder.encode(tokens.refreshToken(), StandardCharsets.UTF_8);
 	        response.sendRedirect(fe);
 		} catch (ResponseStatusException e) {
-			String fe = "http://localhost:5173/oauth/callback"
+			String fe = path
 	                + "#error=" + e.getStatusCode().value();
 	        response.sendRedirect(fe);
 		}
