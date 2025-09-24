@@ -7,8 +7,8 @@
 
   <select id="getTeamNoByRoomNo" parameterType="int" resultType="int">
     SELECT DISTINCT tm.team_no 
-    FROM tb_chat_member cm
-    JOIN tb_team_member tm ON cm.user_no = tm.user_no
+    FROM TB_CHAT_MEMBER cm
+    JOIN TB_TEAM_MEMBER tm ON cm.user_no = tm.user_no
     WHERE cm.room_no = #{roomNo}
     LIMIT 1
   </select>
