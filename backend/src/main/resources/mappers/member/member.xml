@@ -31,7 +31,7 @@
 
 <select id="findEmail">
 	SELECT COUNT(1) 
-	FROM tb_member 
+	FROM TB_MEMBER 
 	WHERE email=#{email} AND delete_yn='N' AND login_type_no = 1;
 </select>
 

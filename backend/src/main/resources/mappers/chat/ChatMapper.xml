@@ -34,8 +34,8 @@
 	  m.content,
 	  m.create_date,
 	  m.message_type
-	FROM tb_chat_message m
-	LEFT JOIN tb_member u ON m.user_no = u.user_no
+	FROM TB_CHAT_MESSAGE m
+	LEFT JOIN TB_MEMBER u ON m.user_no = u.user_no
 	WHERE m.room_no = #{roomNo}
 	ORDER BY m.create_date ASC
   </select>
@@ -63,22 +63,22 @@
   
   <select id="existMember" parameterType="map" resultType="boolean">
 	  SELECT EXISTS (
-	    SELECT 1 FROM tb_chat_member WHERE room_no = #{roomNo} AND user_no = #{userNo}
+	    SELECT 1 FROM TB_CHAT_MEMBER WHERE room_no = #{roomNo} AND user_no = #{userNo}
 	  )
   </select>
 
   <insert id="insertMember" parameterType="map">
-	  INSERT INTO tb_chat_member (room_no, user_no) VALUES (#{roomNo}, #{userNo})
+	  INSERT INTO TB_CHAT_MEMBER (room_no, user_no) VALUES (#{roomNo}, #{userNo})
   </insert>
   
   <delete id="deleteChatMember" parameterType="map">
-    DELETE FROM tb_chat_member 
+    DELETE FROM TB_CHAT_MEMBER 
     WHERE room_no = #{roomNo} 
       AND user_no = #{userNo}
   </delete>
   
   <select id="getUserNameByUserNo" parameterType="int" resultType="string">
-    SELECT name FROM tb_member WHERE user_no = #{userNo}
+    SELECT name FROM TB_MEMBER WHERE user_no = #{userNo}
   </select>
   
 </mapper>
