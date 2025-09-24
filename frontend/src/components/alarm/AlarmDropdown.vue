@@ -76,20 +76,18 @@ const markAllAsRead = async () => {
   margin-left: 20px;
   font-family: 'Segoe UI', sans-serif;
 }
-/* 알림 아이콘 버튼 */
 .icon-button {
   position: relative;
   background: none;
   border: none;
-  font-size: 22px;
-  color: #3399FF;
+  font-size: 28px;
+  color: #153E75;
   cursor: pointer;
   transition: color 0.3s ease;
 }
 .icon-button:hover {
   color: #2678cc;
 }
-/* 알림 배지 */
 .badge {
   position: absolute;
   top: -6px;
@@ -108,7 +106,6 @@ const markAllAsRead = async () => {
   50% { transform: scale(1.2); opacity: 0.7; }
   100% { transform: scale(1); opacity: 1; }
 }
-/* 드롭다운 영역 */
 .dropdown-content {
   position: absolute;
   right: 0;
@@ -134,7 +131,6 @@ const markAllAsRead = async () => {
     opacity: 1;
   }
 }
-/* 알림 목록 */
 .dropdown-content ul {
   list-style: none;
   padding: 0;
@@ -171,7 +167,6 @@ const markAllAsRead = async () => {
   border-bottom: none;
 }
 
-/* 알림 없을 때 */
 .no-alarm {
   text-align: center;
   padding: 25px 10px;
@@ -179,12 +174,11 @@ const markAllAsRead = async () => {
   color: #aaa;
 }
 
-/* 모두 읽음 버튼 */
 .dropdown-content button {
   margin-top: 12px;
   width: 100%;
   padding: 10px;
-  background: linear-gradient(to right, #3399FF, #4facfe);
+  background: linear-gradient(to right, #153E75, #153E75);
   color: white;
   font-size: 14px;
   font-weight: 500;

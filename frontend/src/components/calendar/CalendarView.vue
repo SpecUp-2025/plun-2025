@@ -14,7 +14,6 @@
 
     <FullCalendar ref="fullCalendar" :options="calendarOptions" />
 
-    <!-- 모달 컴포넌트 호출 -->
     <CalendarRegModal
       :showModal="showModal"
       :formData="formData"
@@ -216,7 +215,7 @@ export default {
         this.teamMembers = data.map(member => ({
           ...member,
           userNo: Number(member.userNo),
-          isSelf: member.userNo === userNo  // 본인 여부 표시
+          isSelf: member.userNo === userNo
         }));
           console.log('📋 팀원 목록:', this.teamMembers);
         } catch (error) {
@@ -254,7 +253,7 @@ export default {
     normalizeTime(time) {
         if (!time) return '00:00:00';
         if (time.includes('+')) {
-          return time.split('+')[0]; // 타임존 제거
+          return time.split('+')[0];
         }
         if (time.length === 5) return `${time}:00`; // 'HH:mm'
         if (time.length === 8) return time;  // 'HH:mm:ss' → 'HH:mm'
@@ -263,7 +262,7 @@ export default {
 
       toISODate(dateStr) {
         if (!dateStr) return '';
-        if (dateStr.includes('-')) return dateStr; // 이미 ISO 날짜 형식이면 그대로 리턴
+        if (dateStr.includes('-')) return dateStr;
         if (dateStr.length === 8) {
           return `${dateStr.slice(0, 4)}-${dateStr.slice(4, 6)}-${dateStr.slice(6, 8)}`;
         }
@@ -288,7 +287,7 @@ export default {
           end: `${this.toISODate(item.endDate)}T${item.endTime || '23:59:59'}`,
           extendedProps: {
             ...item,
-            participantUserNos: item.participantUserNos || [],  // 서버에서 받아온 멤버 리스트 필드 이름에 맞게 수정
+            participantUserNos: item.participantUserNos || [],
           },
         }));
 

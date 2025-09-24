@@ -1,16 +1,16 @@
 <template>
-  <div class="side">
-    <ul>
-      <li
-        v-for="room in chatRooms"
-        :key="room.roomNo"
-        @click="enterRoom(room.roomNo)"
-        class="chat-room-item"
-      >
-        {{ room.roomName }}
+  <div class="chatroom-container">
+    <div
+      v-for="room in chatRooms"
+      :key="room.roomNo"
+      @click="enterRoom(room.roomNo)"
+      class="chatroom-item"
+    >
+      <div class="room-content">
+        <span class="room-name">{{ room.roomName }}</span>
         <span v-if="hasUnreadByRoom[room.roomNo]" class="badge-new">New</span>
-      </li>
-    </ul>
+      </div>
+    </div>
   </div>
 </template>
 
@@ -33,9 +33,7 @@ const props = defineProps({
 })
 
 const enterRoom = async (roomNo) => {
-  
   await alarmStore.markAlarmsAsReadByRoom(roomNo)
-
   emit('updateAlarms', alarmStore.alarms)
   emit('roomSelected', Number(roomNo))
 }
@@ -48,6 +46,7 @@ const fetchChatRooms = async () => {
     console.error('채팅방 목록 불러오기 실패:', error)
   }
 }
+
 const hasUnreadByRoom = computed(() => {
   const map = {}
   alarmStore.alarms.forEach(alarm => {
@@ -78,67 +77,112 @@ onMounted(() => {
 </script>
 
 <style scoped>
+.chatroom-container {
+   max-height: calc(100vh - 40px); 
+   overflow-y: auto; 
+  }
 
-.side {
-  background-color: #e9eef5;
-  border-right: 1px solid #c5d4e7;
-  padding: 0px;
-  color: #2c3e50;
-  font-weight: 550;
-  font-size: 16px;
-  overflow: auto;
-}
-
-.side ul {
-  list-style: none;
-  margin: 0;
-  padding: 0;
-}
-
-.side li {
-  padding: 0px 8px;
+.chatroom-item {
+  display: block;
+  width: 100%;
+  padding: 5px 5px;
   margin-bottom: 6px;
+  border: none;
+  background: rgba(255, 255, 255, 0.7);
+  backdrop-filter: blur(10px);
+  color: #2d3748;
+  font-size: 15px;
+  font-weight: normal;
+  border-radius: 10px;
+  transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1);
   cursor: pointer;
-  border-radius: 6px;
-  font-weight: 700;
-  font-size: 18px;
-  color: #2c3e50;
-  transition: background-color 0.2s ease;
-  user-select: none;
+  border: 1px solid rgba(255, 255, 255, 0.8);
+  position: relative;
+  overflow: hidden;
+  text-align: center;
 }
 
-.side li:hover {
-  background-color: #e0efff;
-  color: #4A90E2;
+.chatroom-item::before {
+  content: none;
+}
+
+.chatroom-item:hover {
+  background: rgba(0, 105, 217, 0.05);
+  color: #004080;
+  border-color: rgba(0, 105, 217, 0.1);
+}
+
+.chatroom-item:hover::before {
+  left: 100%;
+}
+
+.chatroom-item:active {
+  transform: scale(0.99);
+  transition-duration: 0.1s;
+}
+
+.room-content {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  width: 100%;
+}
+
+.room-name {
+  flex: 1;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  margin-right: 8px;
 }
 
 .badge-new {
-  display: inline-block;
-  background: linear-gradient(135deg, #ff9a3c, #ff5e62); /* 그라데이션 배경 */
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  background: linear-gradient(135deg, #ff6b6b, #ee5a52);
   color: white;
-  font-weight: bold;
-  font-size: 10px;
-  padding: 2px 6px;
-  border-radius: 999px;
-  margin-left: 8px;
-  user-select: none;
-  font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.15); /* 살짝 떠있는 느낌 */
-  transition: transform 0.2s ease, box-shadow 0.2s ease;
-  animation: pop-badge 0.3s ease-out;
+  font-weight: 700;
+  font-size: 9px;
+  padding: 3px 7px;
+  border-radius: 12px;
+  min-width: 28px;
+  height: 18px;
+  box-shadow: 0 2px 8px rgba(255, 107, 107, 0.3);
+  animation: pulse 2s infinite;
+  flex-shrink: 0;
 }
 
-@keyframes pop-badge {
+@keyframes pulse {
   0% {
-    transform: scale(0.6);
-    opacity: 0;
+    box-shadow: 0 2px 8px rgba(255, 107, 107, 0.3);
   }
-  80% {
-    transform: scale(1.1);
-    opacity: 1;
+  50% {
+    box-shadow: 0 2px 15px rgba(255, 107, 107, 0.5);
   }
   100% {
-    transform: scale(1);
+    box-shadow: 0 2px 8px rgba(255, 107, 107, 0.3);
+  }
+}
+
+/* 읽지 않은 메시지가 있는 채팅방 강조 */
+.chatroom-item:has(.badge-new) {
+  border-left: 3px solid #ff6b6b;
+  background: rgba(255, 107, 107, 0.05);
+}
+
+/* 반응형 */
+@media (max-width: 768px) {
+  .chatroom-item {
+    padding: 10px 14px;
+    font-size: 14px;
+  }
+  
+  .badge-new {
+    font-size: 8px;
+    padding: 2px 5px;
+    min-width: 24px;
+    height: 16px;
   }
 }
 </style>

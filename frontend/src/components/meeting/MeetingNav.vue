@@ -130,6 +130,7 @@ watch(infoOpen, (v) => {
     // selectedRoomCode.value = ''
   }
 })
+
 watch(prejoinOpen, (v) => {
   if (!v) {
     // selectedRoomCode.value = ''
@@ -149,37 +150,31 @@ watch(teamNo, () => {
 
 <template>
   <div>
-    <div style="display:flex;align-items:center;gap:100px;">
-      <button @click="toggleMeet">{{ openMeet ? '▾' : '▸' }} 회의 </button>
-      <button @click.stop="modalOpen = true" title="회의 생성">＋</button>
+    <div style="display: flex; align-items: center; justify-content: space-between; gap: 8px;">
+      <button @click="toggleMeet" class="side-main-button">
+        {{ openMeet ? '▾' : '▸' }} 회의
+      </button>
+      <button @click.stop="modalOpen = true" class="small-icon-button" title="회의 생성">＋</button>
     </div>
 
     <div v-if="openMeet" style="margin-top:8px;">
-      <button @click="modalOpen = true">회의 생성하기</button>
+    <div v-if="error" style="color:red;white-space:pre-line;margin-top:6px">{{ error }}</div>
 
-      <div style="margin-top:8px;">
-        <button @click="toggleSched" :disabled="loading">
-          예정된 회의 {{ openSched ? '▾' : '▸' }} <span v-if="loading">…</span>
+    <ul v-if="rooms.length" style="margin-top:8px;list-style:none;padding:0;">
+      <li v-for="m in rooms" :key="m.roomNo || m.roomCode" style="margin:8px 0;">
+        <button @click="onClickRoom(m)" class="side-main-button">
+          <div style="font-weight:normal;">{{ m.title || '(제목 없음)' }}</div>
+          <div style="font-size:12px;color:#666;">날짜 {{ fmtDate(m.scheduledTime) }}</div>
+          <div style="font-size:12px;color:#666;">
+            시간 {{ fmtTime(m.scheduledTime) }} ~ {{ m.scheduledEndTime ? fmtTime(m.scheduledEndTime) : '(미지정)' }}
+          </div>
         </button>
+      </li>
+    </ul>
 
-        <div v-if="error" style="color:red;white-space:pre-line;margin-top:6px">{{ error }}</div>
-
-        <ul v-if="openSched && rooms.length" style="margin-top:8px;list-style:none;padding:0;">
-          <li v-for="m in rooms" :key="m.roomNo || m.roomCode" style="margin:8px 0;">
-            <button @click="onClickRoom(m)" style="text-align:left;">
-              <div style="font-weight:600;">{{ m.title || '(제목 없음)' }}</div>
-              <div style="font-size:12px;color:#666;">날짜 {{ fmtDate(m.scheduledTime) }}</div>
-              <div style="font-size:12px;color:#666;">
-                시간 {{ fmtTime(m.scheduledTime) }} ~ {{ m.scheduledEndTime ? fmtTime(m.scheduledEndTime) : '(미지정)' }}
-              </div>
-            </button>
-          </li>
-        </ul>
-
-        <div v-else-if="openSched && loaded && !loading" style="margin-top:8px;">
-          표시할 회의가 없습니다.
-        </div>
-      </div>
+    <div v-else-if="loaded && !loading" style="margin-top:8px;">
+      표시할 회의가 없습니다.
+    </div>
     </div>
 
     <!-- 생성 -->

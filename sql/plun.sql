@@ -200,7 +200,7 @@ CREATE TABLE `TB_MEETING_TRANSCRIPT` (
   `updated_at` datetime NOT NULL DEFAULT current_timestamp() ON UPDATE current_timestamp(),
   PRIMARY KEY (`room_no`),
   CONSTRAINT `fk_mt_room` FOREIGN KEY (`room_no`) REFERENCES `tb_meeting_room` (`room_no`) ON DELETE CASCADE ON UPDATE CASCADE
-
+)
 CREATE TABLE TB_CALENDAR (
   cal_no int(11) NOT NULL AUTO_INCREMENT COMMENT '자동증가',
   team_no int(11) NOT NULL COMMENT '팀 번호 (FK)',

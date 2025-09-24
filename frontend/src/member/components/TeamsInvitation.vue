@@ -42,24 +42,53 @@ import instance from '@/util/interceptors';
 import { computed, onBeforeUnmount, onMounted, reactive } from 'vue';
 import { useRouter } from 'vue-router';
 
+import SockJS from 'sockjs-client'
+import Stomp from 'stompjs'
+
 const router = useRouter()
 const userStore = useUserStore()
 const userNo = computed(() => userStore.user?.userNo ?? '')
+const userEmail = computed(() => userStore.user?.email ?? '');
 const form = reactive({
     list : [],
 })
 const formatDate = (s) => s ? s.replace('T', ' ').slice(0, 16) : '';
-const close = () => router.back()
+const close = () =>{
+    window.dispatchEvent(new CustomEvent('teamListUpdate'))
+    router.back()
+} 
 const onEsc = e => { if (e.key === 'Escape') close() }
+
+let stompClient = null;
+
+const connectWebSocket = () => {
+    const socket = new SockJS('/ws-chat');
+    stompClient = Stomp.over(socket);
+    stompClient.connect({}, () => {
+        stompClient.subscribe(`/topic/invitation/${userEmail.value}`, (message) => {
+            invitation();
+        });
+    });
+};
+
+const disconnectWebSocket = () => {
+    if (stompClient) {
+        stompClient.disconnect(() => {
+            console.log('WebSocket disconnected');
+        });
+    }
+};
 
 onMounted(async () => {
     await invitation()
+    connectWebSocket();
     const prev = document.body.style.overflow
     document.body.dataset.prevOverflow = prev
     document.body.style.overflow = 'hidden'
     window.addEventListener('keydown', onEsc)
 })
 onBeforeUnmount(() => {
+    disconnectWebSocket();
     document.body.style.overflow = document.body.dataset.prevOverflow || ''
     window.removeEventListener('keydown', onEsc)
 })
