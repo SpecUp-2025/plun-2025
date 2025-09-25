@@ -6,7 +6,7 @@
 <mapper namespace="com.spec.plun.calendar.dao.CalendarDAO">
 
   <insert id="insertParticipants" parameterType="map">
-	  INSERT INTO tb_calendar_detail_participant (cal_detail_no, user_no)
+	  INSERT INTO TB_CALENDAR_DETAIL_PARTICIPANT (cal_detail_no, user_no)
 	  VALUES
 	  <foreach collection="userNos" item="userNo" separator=",">
 	    (#{calDetailNo}, #{userNo})
@@ -14,11 +14,11 @@
   </insert>
 	
   <select id="getParticipantsByCalDetailNo" resultType="int">
-	SELECT user_no FROM tb_calendar_detail_participant WHERE cal_detail_no = #{calDetailNo}
+	SELECT user_no FROM TB_CALENDAR_DETAIL_PARTICIPANT WHERE cal_detail_no = #{calDetailNo}
   </select>
   
   <insert id="insertParticipant">
-	INSERT INTO tb_calendar_detail_participant (cal_detail_no, user_no)
+	INSERT INTO TB_CALENDAR_DETAIL_PARTICIPANT (cal_detail_no, user_no)
 	VALUES (#{calDetailNo}, #{userNo})
   </insert>
 
@@ -53,7 +53,7 @@
     UNION
     (
       SELECT cd.*
-      FROM tb_calendar_detail_participant p
+      FROM TB_CALENDAR_DETAIL_PARTICIPANT p
       JOIN TB_CALENDAR_DETAIL cd ON p.cal_detail_no = cd.cal_detail_no
       WHERE p.user_no = #{userNo}
         AND cd.start_date &lt;= #{end}
@@ -106,7 +106,7 @@
   </update>
   <!-- 참가자 정보 삭제 -->
   <delete id="deleteParticipantsByCalDetailNo">
-	DELETE FROM tb_calendar_detail_participant
+	DELETE FROM TB_CALENDAR_DETAIL_PARTICIPANT
 	WHERE cal_detail_no = #{calDetailNo}
   </delete>
 

@@ -10,8 +10,8 @@
         SELECT 
             m.user_no   AS userNo,
             m.name      AS name
-        FROM tb_team_member tm
-        JOIN tb_member m 
+        FROM TB_TEAM_MEMBER tm
+        JOIN TB_MEMBER m 
           ON tm.user_no = m.user_no
         WHERE tm.team_no = #{teamNo}
           AND m.delete_yn = 'N'   <!-- 삭제된 회원은 제외 -->
@@ -107,6 +107,5 @@
 		SET group_no = 'F003'
 		WHERE invited_id = #{invitedId}
 	</update>
-	
 
 </mapper>

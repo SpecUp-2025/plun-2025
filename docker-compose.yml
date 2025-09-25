@@ -1,0 +1,72 @@
+version: "3"
+
+volumes:
+  mariadb-data:
+  backend-image:
+
+services:
+  mariadb:
+    image: ${MARIA_DB_IMAGE}
+    container_name: plun-mariadb
+    env_file:
+      .env
+    volumes:
+      - ./sql:/docker-entrypoint-initdb.d/
+      - mariadb-data:/var/lib/mysql
+    ports:
+      - "3307:3306"
+    restart: always
+
+  redis:
+    image: ${REDIS_IMAGE}
+    container_name: plun-redis
+    volumes:
+      - ./redis/redis.conf:/etc/redis/redis.conf
+    command: ["redis-server", "/etc/redis/redis.conf"]
+    restart: always
+
+  backend:
+    build:
+      context: ./backend
+    image: ${USERNAME}/plun-backend
+    container_name: plun-backend
+    env_file:
+      .env
+    volumes:
+      - backend-image:${FILE_UPLOAD_DIR}
+    depends_on:
+      - redis
+      - mariadb
+    restart: always
+
+  frontend:
+    build: 
+      context: ./frontend
+    image: ${USERNAME}/plun-frontend
+    container_name: plun-frontend
+    ports:
+      - ${FRONTEND_PORT}
+    depends_on:
+      - backend
+      - sfu-server
+      - python-backend
+    restart: always
+
+  sfu-server:
+    build: 
+      context: ./sfu-server
+    image: ${USERNAME}/plun-sfu-server
+    container_name: plun-sfu-server
+    depends_on:
+      - mariadb
+    restart: always
+
+
+  python-backend:
+    build: 
+      context: ./python-backend
+    image: ${USERNAME}/plun-python-backend
+    container_name: plun-python-backend
+    depends_on:
+      - mariadb
+    restart: always
