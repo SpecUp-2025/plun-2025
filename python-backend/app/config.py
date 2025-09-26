@@ -28,7 +28,7 @@ CPU_THREADS = int(os.getenv("CPU_THREADS", str(os.cpu_count() or 4)))
 # AI 요약 설정 (OpenAI 또는 Ollama)
 AI_PROVIDER = "ollama"  # 더 이상 사용 안 함 (ollama 고정)
 # OLLAMA_HOST = "http://localhost:11434"
-OLLAMA_HOST = "http://127.0.0.1:11434"
+OLLAMA_HOST = os.getenv("OLLAMA_HOST","http://127.0.0.1:11434")
 OLLAMA_MODEL = "llama3.2:3b"  # 또는 "qwen2.5:7b"
 
 # 파일 업로드 제한

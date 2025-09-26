@@ -1,5 +1,5 @@
 # Node.js
-node_modules
+node_modules/
 npm-debug.log
 yarn.lock
 
@@ -25,3 +25,5 @@ coverage/
 *.test.js
 *.spec.js
 __tests__/
+*.log
+Dockerfile

@@ -3,13 +3,13 @@ version: "3"
 volumes:
   mariadb-data:
   backend-image:
+  ollama-data:
 
 services:
   mariadb:
     image: ${MARIA_DB_IMAGE}
     container_name: plun-mariadb
-    env_file:
-      .env
+    env_file: .env
     volumes:
       - ./sql:/docker-entrypoint-initdb.d/
       - mariadb-data:/var/lib/mysql
@@ -30,8 +30,7 @@ services:
       context: ./backend
     image: ${USERNAME}/plun-backend
     container_name: plun-backend
-    env_file:
-      .env
+    env_file: .env
     volumes:
       - backend-image:${FILE_UPLOAD_DIR}
     depends_on:
@@ -40,33 +39,49 @@ services:
     restart: always
 
   frontend:
-    build: 
+    build:
       context: ./frontend
     image: ${USERNAME}/plun-frontend
     container_name: plun-frontend
     ports:
-      - ${FRONTEND_PORT}
+      - "${FRONTEND_PORT}"
     depends_on:
       - backend
       - sfu-server
       - python-backend
     restart: always
 
+  
   sfu-server:
-    build: 
+    build:
       context: ./sfu-server
     image: ${USERNAME}/plun-sfu-server
     container_name: plun-sfu-server
+    env_file: .env             # ← 여기에만 값을 둠 (environment 제거)
+    ports:
+      - "127.0.0.1:4000:4000"          # signaling (HTTP/WS)
+      - "127.0.0.1:4443:4443/udp"      # media (단일 포트, UDP만 최소)
+      # - "127.0.0.1:4443:4443/tcp"    # 필요하면 TCP fallback 한 줄 추가
     depends_on:
       - mariadb
     restart: always
 
 
   python-backend:
-    build: 
+    build:
       context: ./python-backend
     image: ${USERNAME}/plun-python-backend
     container_name: plun-python-backend
+    env_file: .env
     depends_on:
       - mariadb
+    restart: always
+
+  ollama:
+    image: ollama/ollama:latest
+    container_name: plun-ollama
+    ports:
+      - "11434:11434"
+    volumes:
+      - ollama-data:/root/.ollama
     restart: always
