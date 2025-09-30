@@ -3,7 +3,7 @@
     href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.4/css/all.min.css"/>
 
     <div class="alarm-dropdown">
-    <div class="icon-button " @click="toggleDropdown">
+    <div class="icon-button " @click="toggleDropdown($event)">
       <i class="fas fa-bell"></i>
       <span v-if="alarmStore.unreadCount > 0" class="badge">{{ alarmStore.unreadCount }}</span>
     </div>
@@ -18,9 +18,7 @@
           @click="goToChatRoom(alarm)"
           class="alarm-item"
         >
-        💬 
-        <span v-if="alarm.alarmType === 'CHAT'">새 메시지가 도착했습니다.</span>
-        <span v-else>{{ alarm.content }}</span>
+          {{ getDisplayMessage(alarm) }}
         </li>
       </ul>
 
@@ -31,29 +29,64 @@
 
 <script setup>
 import { useAlarmStore } from '@/store/useAlarmStore'
-import { ref } from 'vue'
-import { useRouter } from 'vue-router'
+import { ref,onMounted,onUnmounted } from 'vue'
 
 const emit = defineEmits(['alarmClicked'])
-const router = useRouter()
+
 const alarmStore = useAlarmStore()
 
-const toggleDropdown = () => {
+const toggleDropdown = (event) => {
+  event.stopPropagation()
   showDropdown.value = !showDropdown.value
 }
+
+const handleClickOutside = (event) => {
+  const dropdown = event.target.closest('.alarm-dropdown')
+  if (!dropdown && showDropdown.value) {
+    showDropdown.value = false
+  }
+}
+
+onMounted(() => {
+  document.addEventListener('click', handleClickOutside)
+})
+
+onUnmounted(() => {
+  document.removeEventListener('click', handleClickOutside)
+})
 
 const showDropdown = ref(false)
 
 const goToChatRoom = async (alarm) => {
   try {
     await alarmStore.markAsRead(alarm.alarmNo)
-    // 읽음 처리 후 라우팅
     alarm.isRead = 'Y'
-    emit('alarmClicked', alarm.referenceNo)
+
     showDropdown.value = false
+    emit('alarmClicked', alarm)
+    
   } catch (error) {
     console.error('❌ 알림 읽음 처리 실패', error)
   }
+}
+
+const getDisplayMessage = (alarm) => {
+  const iconMap = {
+    'CHAT': '💬 ',
+    'CHAT_MENTION': '🔔 ',
+    'CALENDAR_INVITE': '📅 ',
+    'CALENDAR_UPDATE': '📝 ',
+    'CALENDAR_DELETE': '🗑️ '
+  };
+
+  const icon = iconMap[alarm.alarmType] || '💬 ';
+  let message;
+  if (alarm.alarmType === 'CHAT') {
+    message = alarmStore.getDefaultMessage(alarm.alarmType);
+  } else {
+    message = alarm.content || alarmStore.getDefaultMessage(alarm.alarmType);
+  }
+  return icon + message;
 }
 
 const markAllAsRead = async () => {
@@ -61,11 +94,12 @@ const markAllAsRead = async () => {
   for (const alarm of unreadAlarms) {
     try {
       await alarmStore.markAsRead(alarm.alarmNo)
-      alarm.isRead = 'Y'
     } catch (e) {
       console.error('❌ 알림 읽음 처리 실패', e)
     }
   }
+
+  showDropdown.value = false
 }
 </script>
 

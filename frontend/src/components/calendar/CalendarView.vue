@@ -1,3 +1,4 @@
+<style src="@/styles/components/calendar.css"></style>
 <template>
   <div>
 
@@ -38,7 +39,7 @@ import CalendarRegModal from './CalendarRegModal.vue';
 import { useAlarmStore } from '@/store/useAlarmStore';
 
 export default {
-  components: { FullCalendar, CalendarRegModal, },
+  components: { FullCalendar, CalendarRegModal },
   data() {
     return {
       notifications: [],
@@ -73,6 +74,19 @@ export default {
           minute: '2-digit',
           hour12: true,
         },
+      eventContent: function (arg) {
+        const timeText = arg.timeText;
+        const title = arg.event.title;
+
+        return {
+          html: `
+            <div class="custom-event">
+              <div class="event-time">${timeText}</div>
+              <div class="event-title">${title}</div>
+            </div>
+          `,
+        };
+      },
         dateClick: this.handleDateClick,
         eventClick: this.handleEventClick,
         eventDrop: this.handleEventDrop,
@@ -108,62 +122,80 @@ export default {
       }
     },
     connectWebSocket() {
+        if (this.stompClient && this.isConnected) {
+          console.log('⚠️ 이미 WebSocket 연결됨 - 중복 방지');
+          return;
+        }
 
-      // 중복 방지: 이미 연결되어 있으면 return
-      if (this.stompClient && this.isConnected) {
-        console.log('⚠️ 이미 WebSocket 연결됨 - 중복 방지');
-        return;
+        const socket = new SockJS('/ws-chat');
+        this.stompClient = Stomp.over(socket);
+
+        this.stompClient.connect({}, () => {
+          const userNo = this.userStore.user?.userNo;
+
+          if (userNo) {
+            this.stompClient.subscribe(`/topic/calendar/refresh/${userNo}`, (message) => {
+              const body = message.body;
+              // ✅ 자기 자신이 보낸 메시지는 무시
+              if (body.senderUserNo === this.userStore.user?.userNo) {
+                console.log('🔁 자기 자신이 보낸 메시지, 무시함');
+                return;
+              }
+              console.log('📨 [WebSocket] 메시지 수신:', body);
+              this.handleNotificationMessage(body);
+            });
+              this.stompClient.subscribe(`/topic/notifications/${userNo}`, (message) => {
+                  console.log('🔔 [WebSocket] 알림 수신:', message.body);
+                  const alarm = JSON.parse(message.body);
+                  
+                  
+                  this.alarmStore.addAlarm(alarm);
+                  console.log('✅ 알림이 alarmStore에 추가됨:', alarm);
+              });
+            this.isConnected = true;
+          }
+        }, (error) => {
+          console.error('WebSocket 연결 실패:', error);
+        });
+    },
+    handleNotificationMessage(body) {
+      let message = '';
+      let type = '';
+
+      if (body.startsWith('eventDeleted:')) {
+        message = '🗑️ 일정이 삭제되었습니다.';
+        type = 'delete';
+      } else if (body.startsWith('eventCreated')) {
+        message = '🔔 새로운 일정이 등록되었습니다.';
+        type = 'new';
+      } else if (body.startsWith('eventUpdated')) {
+        message = '✏️ 일정이 수정되었습니다.';
+        type = 'update';
       }
 
-      const socket = new SockJS('/ws-chat'); // 실제 서버 엔드포인트로 변경
-      this.stompClient = Stomp.over(socket);
+      if (message && !this.notifications.some(n => n.message === message)) {
+        const notification = { 
+          id: Date.now() + Math.random(),
+          type, 
+          message 
+        };
+        this.notifications.push(notification);
 
-      this.stompClient.connect({}, () => {
-        const userNo = this.userStore.user?.userNo;
+        setTimeout(() => {
+          const index = this.notifications.findIndex(n => n.id === notification.id);
+          if (index > -1) {
+            this.notifications.splice(index, 1);
+          }
+        }, 3000);
+      }
 
-        if (userNo) {
-          // 사용자별 캘린더 갱신 구독
-          this.stompClient.subscribe(`/topic/calendar/refresh/${userNo}`, (message) => {
-            console.log('📨 [WebSocket] 메시지 수신:', message.body);
-
-            if (message.body.startsWith('eventDeleted:')) {
-              const deletedId = message.body.split(':')[1];
-              console.log('🗑️ 삭제 이벤트 감지, 삭제할 ID:', deletedId);
-              this.handleEventDeleted(deletedId);
-
-              // 🔔 삭제 알림 중복 방지 후 추가
-              if (!this.notifications.some(n => n.message === '🗑️ 일정이 삭제되었습니다.')) {
-                this.notifications.push({ type: 'delete', message: '🗑️ 일정이 삭제되었습니다.' });
-              }
-            } else {
-              console.log('📅 일반 이벤트 수신 - fetchUserEvents 호출');
-              this.fetchUserEvents();
-
-              // 🔔 등록 알림 중복 방지 후 추가
-              if (!this.notifications.some(n => n.message === '🔔 새로운 일정이 등록되었습니다.')) {
-                this.notifications.push({ type: 'new', message: '🔔 새로운 일정이 등록되었습니다.' });
-              }
-            }
-
-            // ⏱️ 알림 3초 후 자동 제거
-            setTimeout(() => {
-              if (this.notifications.length > 0) {
-                this.notifications.shift();
-              }
-            }, 3000);
-          });
-        }
-      }, (error) => {
-        console.error('WebSocket 연결 실패:', error);
-      });
+      this.fetchUserEvents();
     },
     handleEventDeleted(calDetailNo) {
       console.log('🔧 handleEventDeleted 호출됨, 삭제할 ID:', calDetailNo);
 
-      // 현재 이벤트 목록 출력
       console.log('🔎 현재 calendarEvents:', this.calendarEvents);
 
-      // 삭제 필터링 전후 비교
       const beforeLength = this.calendarEvents.length;
       this.calendarEvents = this.calendarEvents.filter(
         (event) => String(event.id) !== String(calDetailNo)
@@ -172,13 +204,11 @@ export default {
 
       console.log(`🧹 삭제 전 이벤트 수: ${beforeLength}, 삭제 후: ${afterLength}`);
 
-      // FullCalendar 리렌더링
       this.$nextTick(() => {
         this.$refs.fullCalendar?.getApi().refetchEvents();
       });
     },
 
-    // 캘린더 존재하지 않으면 생성
     async checkOrCreateCalendar() {
       const teamNo = this.$route.params.teamNo;
       const userNo = this.userStore.user?.userNo;
@@ -190,18 +220,18 @@ export default {
 
         if (!existingCalNo) {
           await instance.post('/calendar/create', { teamNo, userNo });
-          // 캘린더 생성 후 다시 조회
+
           const { data: newCalNo } = await instance.get('/calendar/calno', {
             params: { teamNo, userNo }
           });
           this.calendarNo = newCalNo;
-          console.log('📅 캘린더 자동 생성 완료, calendarNo:', this.calendarNo);
+          console.log(' 캘린더 자동 생성 완료, calendarNo:', this.calendarNo);
         } else {
           this.calendarNo = existingCalNo;
-          console.log('✅ 이미 캘린더 존재함:', this.calendarNo);
+          console.log(' 이미 캘린더 존재함:', this.calendarNo);
         }
       } catch (error) {
-        console.error('⚠️ 캘린더 확인/생성 중 오류 발생:', error);
+        console.error(' 캘린더 확인/생성 중 오류 발생:', error);
       }
     },
 
@@ -211,7 +241,6 @@ export default {
 
       try {
         const { data } = await instance.get(`/teams/${teamNo}/members`);
-        // 본인(userNo)을 제외한 팀원 목록만 저장
         this.teamMembers = data.map(member => ({
           ...member,
           userNo: Number(member.userNo),
@@ -234,10 +263,12 @@ export default {
           params: { calDetailNo: this.formData.calDetailNo },
         });
 
-        alert('일정이 삭제되었습니다.');
+        alert('일정이 삭제되었습니다.'); 
         this.showModal = false;
         this.fetchUserEvents();
+
         this.sendWebSocketMessage(`eventDeleted:${this.formData.calDetailNo}`);
+
       } catch (error) {
         console.error('일정 삭제 실패:', error);
         alert('삭제에 실패했습니다.');
@@ -255,8 +286,8 @@ export default {
         if (time.includes('+')) {
           return time.split('+')[0];
         }
-        if (time.length === 5) return `${time}:00`; // 'HH:mm'
-        if (time.length === 8) return time;  // 'HH:mm:ss' → 'HH:mm'
+        if (time.length === 5) return `${time}:00`;
+        if (time.length === 8) return time;
         return '00:00:00';  
       },
 
@@ -330,6 +361,7 @@ export default {
 
         console.log('변환된 이벤트 배열:', events);
         this.calendarEvents = events;
+        console.log('calendarEvents 업데이트됨:', this.calendarEvents);
         this.$nextTick(() => {
           this.$refs.fullCalendar?.getApi().refetchEvents();
         });
@@ -377,63 +409,73 @@ export default {
       this.showModal = true;
     },
 
-    async saveEvent() {
-      if (this.isSaving) {
-        console.log('저장 중복 호출 방지');
-        return;
-      }
-      this.isSaving = true;
-      try{
-        console.log('saveEvent 호출됨', new Date().toISOString());
-        console.log('saveEvent 호출 - calDetailNo:', this.formData.calDetailNo);
-        
-        const formatTime = (timeStr) => {
-          if (!timeStr || !timeStr.includes(':')) return '00:00:00';
-          if (timeStr.length === 5) return `${timeStr}:00`;
-          if (timeStr.includes('+')) return timeStr.split('+')[0];
-          return timeStr;
-        };
+async saveEvent() {
+  if (this.isSaving) {
+    console.log('저장 중복 호출 방지');
+    return;
+  }
+  this.isSaving = true;
+  try {
+    console.log('saveEvent 호출됨', new Date().toISOString());
+    console.log('saveEvent 호출 - calDetailNo:', this.formData.calDetailNo);
 
-        // 강제로 일정만든이, 나를 participantUserNos에 추가
-        const participantSet = new Set(this.formData.participantUserNos || []);
-        const creatorNo = this.formData.regUserNo;
-        const myUserNo = this.userStore.user?.userNo;
+    const formatTime = (timeStr) => {
+      if (!timeStr || !timeStr.includes(':')) return '00:00:00';
+      if (timeStr.length === 5) return `${timeStr}:00`;
+      if (timeStr.includes('+')) return timeStr.split('+')[0];
+      return timeStr;
+    };
 
-        if (creatorNo) participantSet.add(Number(creatorNo));
-        if (myUserNo) participantSet.add(Number(myUserNo));
+    const participantSet = new Set(this.formData.participantUserNos || []);
+    const creatorNo = this.formData.regUserNo;
+    const myUserNo = this.userStore.user?.userNo;
 
-        const payload = {
-          detail: {
-            ...this.formData,
-            calNo: this.calendarNo,
-            regUserNo: this.userStore.user?.userNo,
-            startTime: formatTime(this.formData.startTime),
-            endTime: formatTime(this.formData.endTime),
-          },
-          participantUserNos: [...participantSet],
-        };
+    if (creatorNo) participantSet.add(Number(creatorNo));
+    if (myUserNo) participantSet.add(Number(myUserNo));
 
-        console.log('팀원 리스트:', this.formData.participantUserNos);
-        console.log('저장할 payload:', payload);
+    const payload = {
+      detail: {
+        ...this.formData,
+        calNo: this.calendarNo,
+        regUserNo: this.userStore.user?.userNo,
+        startTime: formatTime(this.formData.startTime),
+        endTime: formatTime(this.formData.endTime),
+      },
+      participantUserNos: [...participantSet],
+    };
 
-        // 서버에 저장 (백엔드에서 자동으로 초대 알림 생성)
-        if (payload.detail.calDetailNo) {
-          await instance.put('/calendar/event', payload);
-          console.log('PUT 응답:', payload);
-        } else {
-          await instance.post('/calendar/event', payload);
-          console.log('POST 응답:', payload);
-        }
-        
-        this.showModal = false;
-        await this.fetchUserEvents();
-        this.sendWebSocketMessage('eventUpdated');
+    console.log('팀원 리스트:', this.formData.participantUserNos);
+    console.log('저장할 payload:', payload);
 
-      } catch (error) {
-        console.error('일정 저장 실패:', error);
-      } finally {
-        this.isSaving = false;
-      }
+    const isUpdate = !!payload.detail.calDetailNo;
+
+    let referenceNo = null;
+
+    if (isUpdate) {
+      await instance.put('/calendar/event', payload);
+      this.sendWebSocketMessage('eventUpdated');
+      console.log('PUT 응답:', payload);
+      referenceNo = this.formData.calDetailNo;
+    } else {
+      await instance.post('/calendar/event', payload);
+      this.sendWebSocketMessage('eventCreated');
+      console.log('POST 응답:', payload);
+    }
+
+    const alarmType = isUpdate ? 'CALENDAR_UPDATE' : 'CALENDAR_CREATE';
+    const title = this.formData.title;
+    const teamNo = this.$route.params.teamNo;
+    const senderName = this.userStore.user?.name || '시스템';
+    const participants = [...participantSet];
+
+    this.showModal = false;
+    await this.fetchUserEvents();
+
+  } catch (error) {
+    console.error('일정 저장 실패:', error);
+  } finally {
+    this.isSaving = false;
+  }
     },
       async handleEventDrop(info) {
         const getTime = (datetimeStr, defaultTime) => {
@@ -441,6 +483,15 @@ export default {
           const timePart = datetimeStr.split('T')[1];
           return this.normalizeTime(timePart?.split('+')[0] || defaultTime);
         };
+
+          const regUserNo = info.event.extendedProps?.regUserNo;
+          const currentUserNo = this.userStore.user?.userNo;
+
+          if (Number(regUserNo) !== Number(currentUserNo)) {
+            alert('⚠️ 다른 사용자가 등록한 일정은 이동할 수 없습니다.');
+            info.revert();
+            return;
+          }
 
         const detailPayload = {
           calDetailNo: info.event.id,
@@ -476,52 +527,3 @@ export default {
       },
     };
 </script>
-
-<style>
-
-.fc-event-title {
-  white-space: normal;
-  word-wrap: break-word;
-  overflow: visible;
-}
-
-.member-selector {
-  border: 1px solid #ccc;
-  padding: 8px;
-  margin-top: 8px;
-  max-height: 150px;
-  overflow-y: auto;
-}
-.notification-area {
-  position: fixed;
-  top: 20px;
-  right: 20px;
-  z-index: 1000;
-}
-.notification {
-  padding: 10px 16px;
-  margin-bottom: 10px;
-  border-radius: 6px;
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
-  color: #333;
-  background-color: #f0f0f0;
-  transition: all 0.3s ease;
-}
-.notification.new {
-  background-color: #e0f7fa;
-  color: #00796b;
-}
-.notification.delete {
-  background-color: #ffebee;
-  color: #c62828;
-}
-
-.time-input {
-  width: 100%;
-  padding: 10px 12px;
-  font-size: 18px;
-  border-radius: 6px;
-  border: 1px solid #ccc;
-  box-sizing: border-box;
-}
-</style>

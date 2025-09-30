@@ -8,11 +8,10 @@
     <div class="page-title">
       <slot>페이지 제목</slot>
     </div>
-
-    <div class="header-actions">
-      <button class="invite-button" @click=move()>+</button>
-      <AlarmDropdown @alarmClicked="$emit('alarmClicked', $event)" />&nbsp;
-      <div class="user-wrap" ref="userWrap" >
+        <div class="header-actions">
+          <button class="invite-button" @click=move()>+</button>
+          <AlarmDropdown @alarmClicked="$emit('alarmClicked', $event)" />
+          <div class="user-wrap" ref="userWrap" >
           <button class="user-trigger" @click="menuOpen = !menuOpen">
             <span class="name">{{ name }}</span>
           </button>
@@ -80,7 +79,6 @@ onMounted(()=>{
 onBeforeUnmount(() => {
   document.removeEventListener('click', handleClickOutside,true)
 })
-
 </script>
 
 <style scoped>
@@ -125,7 +123,7 @@ onBeforeUnmount(() => {
 .header-actions {
   display: flex;
   align-items: center;
-  gap: 20px;
+  gap: 10px;
 }
 
 .icon-button {

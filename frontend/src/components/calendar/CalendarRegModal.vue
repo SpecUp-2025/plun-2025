@@ -7,7 +7,6 @@
     <div class="left-panel">
       <label>제목</label>
       <input v-model="formData.title" type="text" :disabled="formData.calDetailNo && !isEditMode" />
-
       <label>내용</label>
       <textarea v-model="formData.contents" :disabled="formData.calDetailNo && !isEditMode"></textarea>
     </div>

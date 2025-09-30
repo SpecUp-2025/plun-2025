@@ -1,0 +1,70 @@
+.fc-event-title {
+  white-space: normal;
+  word-wrap: break-word;
+  overflow: visible;
+}
+
+.custom-event {
+  display: flex;
+  flex-direction: column;
+  padding: 2px 4px;
+  font-size: 12px;
+  line-height: 1.2;
+  white-space: normal;
+  word-break: break-word;
+}
+
+.custom-event .event-time {
+  font-size: 11px;
+  color: #111;
+}
+
+.custom-event .event-title {
+  font-weight: 600;
+  color: #111;
+  margin-top: 2px;
+}
+
+.notification-area {
+  position: fixed;
+  top: 20px;
+  right: 20px;
+  z-index: 1000;
+}
+
+.notification {
+  padding: 10px 16px;
+  margin-bottom: 10px;
+  border-radius: 6px;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+  color: #333;
+  background-color: #f0f0f0;
+  transition: all 0.3s ease;
+}
+
+.notification.new {
+  background-color: #e0f7fa;
+  color: #00796b;
+}
+
+.notification.delete {
+  background-color: #ffebee;
+  color: #c62828;
+}
+
+.time-input {
+  width: 100%;
+  padding: 10px 12px;
+  font-size: 18px;
+  border-radius: 6px;
+  border: 1px solid #ccc;
+  box-sizing: border-box;
+}
+
+.member-selector {
+  border: 1px solid #ccc;
+  padding: 8px;
+  margin-top: 8px;
+  max-height: 150px;
+  overflow-y: auto;
+}

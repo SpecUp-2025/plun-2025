@@ -35,7 +35,7 @@
   width: 100%;
   text-align: center;
   padding: 5px 5px;
-  margin-bottom: 6px;
+  margin-bottom: 30px;
   border: none;
   background: rgba(255, 255, 255, 0.7);
   backdrop-filter: blur(10px);
@@ -136,7 +136,7 @@
   text-align: left;
   transition: all 0.25s ease;
   white-space: nowrap;
-  margin-bottom: 8px;
+  margin-bottom: 10px;
   text-align: center;
 }
 
@@ -153,7 +153,7 @@
   color: #153E75;
   border: 1px solid rgba(255, 255, 255, 0.8);
   cursor: pointer;
-  margin-bottom: 8px;
+  margin-bottom: 10px;
   text-align: center;
 }
 
