@@ -121,7 +121,8 @@ export const useAlarmStore = defineStore('alarm', {
         'CHAT_MENTION': '새로운 멘션이 도착했습니다.',
         'CALENDAR_INVITE': '새로운 일정에 초대되었습니다.',
         'CALENDAR_UPDATE': '일정이 수정되었습니다.',
-        'CALENDAR_DELETE': '일정이 삭제되었습니다.'
+        'CALENDAR_DELETE': '일정이 삭제되었습니다.',
+        'MEETING_COMPLETE': '회의록이 생성되었습니다.'
       };
       return messageMap[alarmType] || '새로운 알림이 도착했습니다.';
     },

@@ -204,6 +204,10 @@ async def process_complete_recording(session_data: Dict[str, Any]) -> Dict[str, 
             for step in critical_steps
         )
 
+        results["ai_summary_failed"] = not results["steps"].get("ai_summary", {}).get("success", False)
+        if results["ai_summary_failed"]:
+            print(f"[RECORDING] WARNING: AI 요약 실패했지만 오디오 파일은 보존됨")
+
         results["total_time"] = time.time() - start_time
 
         print(

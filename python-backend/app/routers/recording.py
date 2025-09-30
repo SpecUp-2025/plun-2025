@@ -75,19 +75,51 @@ class RecordingSession:
 
 @router.post("/stt/start-recording", response_model=RecordingResponse)
 async def start_recording(request: RecordingRequest):
-    """녹음 세션 시작"""
+    """녹음 세션 시작 - 기존 데이터 확인 후 진행"""
     try:
         room_code = request.roomCode
         room_no = request.roomNo
 
         print(f"[RECORDING] 녹음 시작 요청: {room_code}, roomNo: {room_no}")
 
+        # 1. 현재 진행 중인 녹음 세션 확인
         if room_code in recording_sessions:
-            return RecordingResponse(
-                success=False, message="이미 녹음이 진행 중입니다."
-            )
+            current_session = recording_sessions[room_code]
+            if current_session.status in ['recording', 'paused']:
+                return RecordingResponse(
+                    success=False, 
+                    message="이미 녹음이 진행 중입니다.",
+                    data={
+                        "current_status": current_session.status,
+                        "chunk_count": current_session.chunk_count
+                    }
+                )
+            elif current_session.status == 'processing':
+                return RecordingResponse(
+                    success=False,
+                    message="이전 녹음이 아직 처리 중입니다. 잠시 후 다시 시도해주세요."
+                )
 
-        # 새 세션 생성
+        # 2. 기존 회의록 데이터 확인
+        existing_data = check_existing_meeting_data(room_code)
+        
+        if existing_data.get("has_data"):
+            if existing_data.get("status") == "processing":
+                return RecordingResponse(
+                    success=False,
+                    message=existing_data.get("message", "이전 녹음이 처리 중입니다.")
+                )
+            elif existing_data.get("has_transcript"):
+                return RecordingResponse(
+                    success=False,
+                    message="이미 회의록이 생성된 방입니다. 새로운 녹음을 시작할 수 없습니다.",
+                    data={
+                        "has_existing_data": True,
+                        "room_no": existing_data.get("room_no")
+                    }
+                )
+
+        # 3. 모든 검증을 통과한 경우 새 세션 생성
         session = RecordingSession(room_code, room_no)
         recording_sessions[room_code] = session
         session.save_metadata()
@@ -101,13 +133,13 @@ async def start_recording(request: RecordingRequest):
                 "roomCode": room_code,
                 "status": "recording",
                 "sessionDir": str(session.session_dir),
+                "room_no": room_no
             },
         )
 
     except Exception as e:
         print(f"[RECORDING] 시작 실패: {e}")
         import traceback
-
         traceback.print_exc()
         raise HTTPException(status_code=500, detail=str(e))
 
@@ -268,6 +300,13 @@ async def process_recording_background(session_data: Dict[str, Any]):
         # 완전 처리 실행 (병합 → STT → 요약 → DB 저장)
         results = await process_complete_recording(session_data)
 
+        # 처리 성공 시 알림 전송
+        if results["success"]:
+            await send_meeting_complete_notification(
+                room_no=session_data["room_no"],
+                room_code=room_code
+            )
+
         # 세션 상태 업데이트
         if room_code in recording_sessions:
             session = recording_sessions[room_code]
@@ -279,9 +318,7 @@ async def process_recording_background(session_data: Dict[str, Any]):
         )
 
         # 파일 정리
-        cleanup_session_files(
-            Path(session_data["session_dir"]), keep_merged=not results["success"]
-        )
+        cleanup_session_files(Path(session_data["session_dir"]), keep_merged=True)
 
         # 메모리 세션 정리
         if room_code in recording_sessions:
@@ -299,4 +336,104 @@ async def process_recording_background(session_data: Dict[str, Any]):
 
         import traceback
 
+        traceback.print_exc()
+
+def check_existing_meeting_data(room_code: str) -> Dict:
+    """기존 회의록 데이터 확인"""
+    try:
+        # 1. 진행 중인 세션 확인 (메모리)
+        if room_code in recording_sessions:
+            session = recording_sessions[room_code]
+            if session.status in ['processing', 'completed']:
+                return {
+                    "has_data": True,
+                    "status": "processing",
+                    "message": "이전 녹음이 아직 처리 중입니다"
+                }
+        
+        # 2. DB에 저장된 데이터 확인
+        from app.services.db_service import engine
+        from sqlalchemy import text
+        
+        with engine.connect() as conn:
+            # room_no 조회
+            room_query = text("SELECT room_no FROM tb_meeting_room WHERE room_code = :room_code")
+            room_result = conn.execute(room_query, {"room_code": room_code})
+            room_row = room_result.fetchone()
+            
+            if not room_row:
+                return {"has_data": False}
+            
+            room_no = room_row[0]
+            
+            # 전사 데이터 확인
+            transcript_query = text("SELECT transcript FROM tb_meeting_transcript WHERE room_no = :room_no")
+            transcript_result = conn.execute(transcript_query, {"room_no": room_no})
+            transcript_row = transcript_result.fetchone()
+            
+            has_transcript = transcript_row and transcript_row[0]
+            
+            return {
+                "has_data": has_transcript,
+                "has_transcript": has_transcript,
+                "room_no": room_no
+            }
+            
+    except Exception as e:
+        print(f"[RECORDING] 기존 데이터 확인 실패: {e}")
+        return {"has_data": False}
+
+async def send_meeting_complete_notification(room_no: int, room_code: str):
+    """Spring 백엔드로 회의록 완료 알림 전송"""
+    try:
+        import httpx
+        from app.config import SPRING_API_BASE_URL
+        from app.services.db_service import engine
+        from sqlalchemy import text
+
+        print(f"[NOTIFICATION] 알림 전송 시작: room_no={room_no}, room_code={room_code}")
+
+        # 1. 회의 제목 조회
+        with engine.connect() as conn:
+            query = text("SELECT title FROM tb_meeting_room WHERE room_no = :room_no")
+            result = conn.execute(query, {"room_no": room_no})
+            row = result.fetchone()
+            meeting_title = row[0] if row else "회의"
+
+        print(f"[NOTIFICATION] 회의 제목: {meeting_title}")
+
+        # 2. 참가자 목록 조회
+        with engine.connect() as conn:
+            query = text("""
+                SELECT user_no
+                FROM tb_meeting_participant
+                WHERE room_no = :room_no
+            """)
+            result = conn.execute(query, {"room_no": room_no})
+            participant_user_nos = [row[0] for row in result.fetchall()]
+        
+        print(f"[NOTIFICATION] 참가자 수: {len(participant_user_nos)}")
+
+        # 3. Spring API 호출
+        async with httpx.AsyncClient() as client:
+            url = f"{SPRING_API_BASE_URL}/alarms/meeting-complete"
+            payload = {
+                "roomNo": room_no,
+                "participantUserNos": participant_user_nos,
+                "meetingTitle": meeting_title
+            }
+
+            print(f"[NOTIFICATION] Spring API 호출: {url}")
+            print(f"[NOTIFICATION] Payload: {payload}")
+
+            response = await client.post(url, json=payload, timeout=10.0)
+
+            if response.status_code == 200:
+                print(f"[NOTIFICATION] 알림 전송 성공: {room_code}")
+            else:
+                print(f"[NOTIFICATION] 알림 전송 실패: status={response.status_code}")
+    
+    except Exception as e:
+        print(f"[NOTIFICATION] 알림 전송 중 오류: {e}")
+        import traceback
         traceback.print_exc()

@@ -34,6 +34,9 @@ OLLAMA_MODEL = "llama3.2:3b"  # 또는 "qwen2.5:7b"
 # 파일 업로드 제한
 MAX_UPLOAD_BYTES = int(os.getenv("MAX_UPLOAD_BYTES", 10 * 1024 * 1024))  # 10MB
 
+# SPRING
+SPRING_API_BASE_URL = os.getenv("SPRING_API_BASE_URL", "http://localhost:8080")
+
 # 로그 설정
 LOG_LEVEL = os.getenv("LOG_LEVEL", "INFO")
 

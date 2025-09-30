@@ -1,9 +1,12 @@
 package com.spec.plun.meeting.room;
 
 import java.time.LocalDateTime;
+import java.util.HashMap;
 import java.util.LinkedHashSet;
 import java.util.List;
+import java.util.Map;
 
+import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
@@ -111,9 +114,28 @@ public class MeetingRoomController {
 		return ResponseEntity.noContent().build();
 	}
 
+	@GetMapping("/{roomNo}/calendar")
+	public ResponseEntity<Map<String, Object>> getCalendarByRoomNo(@PathVariable("roomNo") Integer roomNo) {
+		MeetingRoom meeting = service.findByRoomNo(roomNo);
+
+		if (meeting == null) {
+			return ResponseEntity.status(HttpStatus.NOT_FOUND).body(Map.of("error", "회의를 찾을 수 없습니다."));
+		}
+
+		if (meeting.getCalDetailNo() == null) {
+			return ResponseEntity.status(HttpStatus.NOT_FOUND).body(Map.of("error", "연결된 캘린더 일정이 없습니다."));
+		}
+
+		Map<String, Object> result = new HashMap<>();
+		result.put("calDetailNo", meeting.getCalDetailNo());
+		result.put("title", meeting.getTitle());
+
+		return ResponseEntity.ok(result);
+	}
+
 	/* ---------- DTOs ---------- */
 
-	public static record AuthzRes(String title, String role, boolean authorized) {
+	public static record AuthzRes(String title, String role, boolean authorized, Integer roomNo) {
 	}
 
 	public static record CreateRes(Integer roomNo, String roomCode, Integer calDetailNo, String message) {

@@ -1,5 +1,5 @@
 <script setup>
-import { ref, computed, onMounted, onBeforeUnmount, watch } from 'vue'
+import { ref, computed, onMounted, onBeforeUnmount, watch, provide } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import { useUserStore } from '@/store/userStore'
 import DefaultLayout from '@/components/layout/DefaultLayout.vue'
@@ -12,6 +12,12 @@ import instance from '@/util/interceptors'
 import SockJS from 'sockjs-client'
 import Stomp from 'stompjs'
 import { useAlarmStore } from '@/store/useAlarmStore';
+
+const calendarEventBus = ref({
+  openEventModal: null
+})
+
+provide('calendarEventBus', calendarEventBus)
 
 const route = useRoute()
 const router = useRouter()
@@ -188,9 +194,42 @@ const onAlarmClick = (alarm) => {
   } else if (alarm.alarmType === 'CHAT' || alarm.alarmType === 'CHAT_MENTION') {
     console.log('채팅 알림 클릭 - 채팅방으로 이동:', alarm.referenceNo);
     openChatRoom(alarm.referenceNo);
+
+  } else if (alarm.alarmType === 'MEETING_COMPLETE') {
+    console.log('회의록 완료 알림 - roomNo:', alarm.referenceNo);
+    alarmStore.markAsRead(alarm.alarmNo);
+    openMeetingCalendar(alarm.referenceNo);
     
   } else {
     console.log('알 수 없는 알림 타입:', alarm.alarmType);
+  }
+}
+
+const openMeetingCalendar = async (roomNo) => {
+  try {
+    const { data } = await instance.get(`/meeting-rooms/${roomNo}/calendar`)
+    
+    if (data && data.calDetailNo) {
+      console.log('연결된 calDetailNo:', data.calDetailNo);
+      
+      // CalendarView에 이벤트 열기 신호 전달
+      if (calendarEventBus.value.openEventModal) {
+        calendarEventBus.value.openEventModal(data.calDetailNo)
+      } else {
+        // CalendarView가 아직 준비 안 됨
+        activeTab.value = 'calendar'
+        setTimeout(() => {
+          if (calendarEventBus.value.openEventModal) {
+            calendarEventBus.value.openEventModal(data.calDetailNo)
+          }
+        }, 500)
+      }
+    } else {
+      alert('연결된 캘린더 일정을 찾을 수 없습니다.');
+    }
+  } catch (error) {
+    console.error('캘린더 일정 조회 실패:', error);
+    alert('캘린더 일정을 불러올 수 없습니다.');
   }
 }
 
