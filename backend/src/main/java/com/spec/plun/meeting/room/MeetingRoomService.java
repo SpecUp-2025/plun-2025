@@ -7,8 +7,10 @@ import java.time.LocalTime;
 import java.time.OffsetDateTime;
 import java.time.ZoneId;
 import java.time.format.DateTimeParseException;
+import java.util.HashMap;
 import java.util.LinkedHashSet;
 import java.util.List;
+import java.util.Map;
 
 import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.http.HttpStatus;
@@ -116,12 +118,12 @@ public class MeetingRoomService {
 	}
 
 	public AuthzRes checkAuthz(String roomCode, Integer userNo) {
-		var room = meetingRoomDAO.findByCode(roomCode);
-		if (room == null)
-			return new AuthzRes(null, null, false);
-		String role = meetingRoomDAO.findRole(room.getRoomNo(), userNo);
-		boolean ok = (role != null);
-		return new AuthzRes(room.getTitle(), role, ok);
+	    var room = meetingRoomDAO.findByCode(roomCode);
+	    if (room == null)
+	        return new AuthzRes(null, null, false, null);
+	    String role = meetingRoomDAO.findRole(room.getRoomNo(), userNo);
+	    boolean ok = (role != null);
+	    return new AuthzRes(room.getTitle(), role, ok, room.getRoomNo());
 	}
 
 	public void updateRoomAndCalendar(Integer roomNo, Integer editorUserNo, String title,
@@ -315,5 +317,9 @@ public class MeetingRoomService {
 
 	/* 응답 DTO (컨트롤러 호환 유지) */
 	public record CreateResult(Integer roomNo, String roomCode, Integer calDetailNo) {
+	}
+
+	public MeetingRoom findByRoomNo(Integer roomNo) {
+	    return meetingRoomDAO.findByRoomNo(roomNo);
 	}
 }

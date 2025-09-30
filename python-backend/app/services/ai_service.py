@@ -58,7 +58,7 @@ def generate_summary_ollama(transcript_text: str) -> Tuple[str, str, str]:
             url,
             json=payload,
             headers={"Content-Type": "application/json"},
-            timeout=(5, 120),  # 연결 5초, 읽기 120초
+            timeout=(30, 1800),  # 연결 5초, 읽기 120초
         )
 
         response.raise_for_status()

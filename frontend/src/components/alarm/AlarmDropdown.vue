@@ -76,7 +76,8 @@ const getDisplayMessage = (alarm) => {
     'CHAT_MENTION': '🔔 ',
     'CALENDAR_INVITE': '📅 ',
     'CALENDAR_UPDATE': '📝 ',
-    'CALENDAR_DELETE': '🗑️ '
+    'CALENDAR_DELETE': '🗑️ ',
+    'MEETING_COMPLETE': '📝 '
   };
 
   const icon = iconMap[alarm.alarmType] || '💬 ';

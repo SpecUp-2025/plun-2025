@@ -14,6 +14,7 @@ import org.springframework.web.bind.annotation.RestController;
 import com.spec.plun.alarm.entity.Alarm;
 import com.spec.plun.alarm.service.AlarmService;
 
+import lombok.Data;
 import lombok.RequiredArgsConstructor;
 
 @RestController
@@ -38,6 +39,27 @@ public class AlarmController {
         alarmService.insertAlarm(alarm);
         System.out.println("DB 삽입 후 생성된 alarmNo: " + alarm.getAlarmNo());
         return ResponseEntity.ok().build();
+    }
+    
+    @PostMapping("/meeting-complete")
+    public ResponseEntity<Void> notifyMeetingComplete(
+            @RequestBody MeetingCompleteRequest request) {
+        
+        alarmService.createMeetingCompleteAlarm(
+            request.getRoomNo(),
+            request.getParticipantUserNos(),
+            request.getMeetingTitle()
+        );
+        
+        return ResponseEntity.ok().build();
+    }
+
+    // 요청 DTO
+    @Data
+    public static class MeetingCompleteRequest {
+        private Integer roomNo;
+        private List<Integer> participantUserNos;
+        private String meetingTitle;
     }
 }
 

@@ -114,4 +114,34 @@ public class AlarmService {
             messagingTemplate.convertAndSend("/topic/notifications/" + userNo, alarm);
         }
     }
+    
+    public void createMeetingCompleteAlarm(Integer roomNo, 
+            List<Integer> participantUserNos, String meetingTitle) {
+        
+        System.out.println("[AlarmService] 회의록 완료 알림 생성 시작");
+        System.out.println("  - roomNo: " + roomNo);
+        System.out.println("  - 참가자 수: " + participantUserNos.size());
+        System.out.println("  - 회의 제목: " + meetingTitle);
+        
+        for (Integer userNo : participantUserNos) {
+            Alarm alarm = new Alarm();
+            alarm.setUserNo(userNo);
+            alarm.setAlarmType("MEETING_COMPLETE");
+            alarm.setReferenceNo(roomNo);
+            alarm.setContent("'" + meetingTitle + "' 회의록이 생성되었습니다.");
+            alarm.setIsRead("N");
+            
+            alarmDAO.insertAlarm(alarm);
+            
+            // WebSocket으로 실시간 전송
+            messagingTemplate.convertAndSend(
+                "/topic/notifications/" + userNo, 
+                alarm
+            );
+            
+            System.out.println("[AlarmService] 알림 전송 완료 - userNo: " + userNo);
+        }
+        
+        System.out.println("[AlarmService] 총 " + participantUserNos.size() + "명에게 알림 전송 완료");
+    }
 }

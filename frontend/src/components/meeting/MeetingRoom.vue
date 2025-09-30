@@ -174,6 +174,39 @@ function handleToggleCam() {
   }, 100)
 }
 
+/* ===== 녹음 제어 (에러 처리 추가) ===== */
+async function handleStartRecording() {
+  const result = await startRecording()
+  
+  if (!result.success) {
+    // 에러 메시지별 처리
+    if (result.data?.has_existing_data) {
+      // 이미 회의록이 생성된 경우
+      alert(
+        '⚠️ 이미 회의록이 생성된 방입니다.\n\n' +
+        '이 회의는 이미 녹음 및 회의록이 생성되었습니다.\n' +
+        '새로운 녹음을 시작할 수 없습니다.'
+      )
+    } else if (result.message.includes('처리 중')) {
+      // 이전 녹음이 처리 중인 경우
+      alert(
+        '⏳ 이전 녹음 처리 중\n\n' +
+        '이전 녹음이 아직 처리되고 있습니다.\n' +
+        '잠시 후 다시 시도해주세요.'
+      )
+    } else if (result.message.includes('진행 중')) {
+      // 이미 녹음 중인 경우
+      alert(
+        '🔴 녹음이 이미 진행 중입니다.\n\n' +
+        '현재 녹음을 먼저 종료한 후 다시 시작해주세요.'
+      )
+    } else {
+      // 기타 에러
+      alert(`녹음 시작 실패\n\n${result.message}`)
+    }
+  }
+}
+
 /* ===== 회의 종료 ===== */
 function leaveRoom() {
   cleanupRecording() // 녹음 중이면 먼저 정리
@@ -288,7 +321,7 @@ onBeforeUnmount(() => {
       @toggle-mic="handleToggleMic"
       @toggle-cam="handleToggleCam"
       @toggle-speaker="handleToggleSpeaker"
-      @start-recording="startRecording"
+      @start-recording="handleStartRecording"
       @pause-recording="pauseRecording"
       @resume-recording="resumeRecording"
       @stop-recording="stopRecording"

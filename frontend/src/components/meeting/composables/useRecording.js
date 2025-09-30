@@ -22,22 +22,45 @@ export function useRecording(roomCode, roomInfo, peers, localStream) {
    */
   async function startRecording() {
     try {
-      recordingStream = await getRecordingStream()
-
       const response = await axios.post('/stt/start-recording', {
         roomCode: roomCode.value,
         roomNo: roomInfo.value?.roomNo
       })
 
+      // 성공 시 녹음 시작
       if (response.data.success) {
+        recordingStream = await getRecordingStream()
         recordingState.value = 'recording'
         chunkCounter = 0
         startRecordingTimer()
         startMediaRecorder()
+        return { success: true }
+      } 
+      // 실패 시 에러 정보 반환
+      else {
+        return {
+          success: false,
+          message: response.data.message,
+          data: response.data.data
+        }
       }
     } catch (error) {
       console.error('Failed to start recording:', error)
-      alert('녹음 시작에 실패했습니다.')
+      
+      // 서버 에러 응답 처리
+      if (error.response?.data) {
+        return {
+          success: false,
+          message: error.response.data.message || '녹음 시작에 실패했습니다.',
+          data: error.response.data.data
+        }
+      }
+      
+      // 네트워크 에러 등
+      return {
+        success: false,
+        message: '서버와 연결할 수 없습니다. 다시 시도해주세요.'
+      }
     }
   }
 

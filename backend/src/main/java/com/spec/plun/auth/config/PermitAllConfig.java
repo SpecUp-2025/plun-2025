@@ -8,7 +8,8 @@ public class PermitAllConfig {
 			"/v3/api-docs/**",
 			"/ws-chat/**","/error",
 			"/attachments/**",
-			"/oauth/**"
+			"/oauth/**",
+			"/alarms/meeting-complete"
 	};
 
 }
