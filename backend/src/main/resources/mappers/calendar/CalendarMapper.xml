@@ -5,6 +5,13 @@
 
 <mapper namespace="com.spec.plun.calendar.dao.CalendarDAO">
 
+
+  <select id="getEventByCalDetailNo" parameterType="int" resultType="com.spec.plun.calendar.entity.CalendarDetail">
+    SELECT *
+    FROM TB_CALENDAR_DETAIL
+    WHERE cal_detail_no = #{calDetailNo}
+  </select>
+
   <insert id="insertParticipants" parameterType="map">
 	  INSERT INTO TB_CALENDAR_DETAIL_PARTICIPANT (cal_detail_no, user_no)
 	  VALUES

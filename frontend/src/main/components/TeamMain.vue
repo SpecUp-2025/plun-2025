@@ -168,11 +168,21 @@ const onAlarmClick = (alarm) => {
   console.log('알림 클릭:', alarm);
   
   if (alarm.alarmType === 'CALENDAR_INVITE') {
-
     console.log('캘린더 초대 알림 클릭 - 캘린더 탭으로 이동');
     activeTab.value = 'calendar';
     selectedRoomNo.value = null;
+    alarmStore.markAsRead(alarm.alarmNo);
     
+  } else if (alarm.alarmType === 'CALENDAR_UPDATE') {
+    console.log('캘린더 수정 알림 클릭 - 캘린더 탭으로 이동');
+    activeTab.value = 'calendar';
+    selectedRoomNo.value = null;
+    alarmStore.markAsRead(alarm.alarmNo);
+    
+  } else if (alarm.alarmType === 'CALENDAR_DELETE') {
+    console.log('캘린더 삭제 알림 클릭 - 캘린더 탭으로 이동');
+    activeTab.value = 'calendar';
+    selectedRoomNo.value = null;
     alarmStore.markAsRead(alarm.alarmNo);
     
   } else if (alarm.alarmType === 'CHAT' || alarm.alarmType === 'CHAT_MENTION') {
@@ -184,15 +194,6 @@ const onAlarmClick = (alarm) => {
   }
 }
 
-const goToNotifications = () => {
-  // 예를 들어 팀 메인에서 알림 탭으로 이동하거나 알림 페이지가 있으면 이동
-  // 여기선 알림 탭으로 강제 이동하는 예시
-  activeTab.value = 'notifications'  // TeamMain.vue 에 알림 탭이 따로 구현되어 있다면 사용
-  // 만약 알림 페이지가 따로 있다면 router.push({ name: 'alarmPage' }) 등으로 변경
-  console.log('알림 페이지 이동 (미구현 - 필요시 수정)')
-}
-
-
 </script>
 
 <template>
@@ -200,7 +201,6 @@ const goToNotifications = () => {
     @alarmClicked="onAlarmClick"
   >
     <template #header><strong>{{ teamName }}'s Workspace</strong></template>
-
     <template #sidebar>
       <SideNav>
         <router-link :to="{ name: 'teamList' }" class="nav-button">← Back</router-link>

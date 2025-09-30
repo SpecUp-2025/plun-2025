@@ -5,18 +5,16 @@
 
 <mapper namespace="com.spec.plun.alarm.dao.AlarmDAO" >
 
-  <insert id="insertAlarm" parameterType="com.spec.plun.alarm.entity.Alarm" useGeneratedKeys="true" keyProperty="alarmNo">
+  <select id="selectUserNosByTeamNo" parameterType="int" resultType="int">
+    SELECT user_no
+    FROM TB_TEAM_MEMBER
+    WHERE team_no = #{teamNo}
+  </select>
+
+  <insert id="insertAlarm" parameterType="com.spec.plun.alarm.entity.Alarm" useGeneratedKeys="true" keyProperty="alarmNo" keyColumn="alarm_no">
     INSERT INTO TB_ALARM (user_no, sender_no, alarm_type, reference_no, content, is_read, create_date)
     VALUES (#{userNo}, #{senderNo}, #{alarmType}, #{referenceNo}, #{content}, 'N', NOW())
   </insert>
-
-<!--   <insert id="insertAlarm" parameterType="com.spec.plun.alarm.entity.Alarm">
-	<selectKey keyProperty="createDate" resultType="java.time.LocalDateTime" order="AFTER">
-	  SELECT create_date FROM TB_ALARM WHERE alarm_no = LAST_INSERT_ID()
-	</selectKey>
-	INSERT INTO TB_ALARM (user_no, sender_no, alarm_type, reference_no, content, is_read, create_date)
-	VALUES (#{userNo}, #{senderNo}, #{alarmType}, #{referenceNo}, #{content}, 'N', NOW())
-  </insert> -->
 
   <select id="selectAlarmsByUserNo" resultType="com.spec.plun.alarm.entity.Alarm">
 	SELECT 
@@ -28,7 +26,6 @@
 	ORDER BY a.create_date DESC
   </select>
 
-  
   <select id="selectUserNameByUserNo">
 	SELECT name FROM TB_MEMBER WHERE user_no = #{userNo}
   </select>

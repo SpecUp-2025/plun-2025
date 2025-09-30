@@ -66,7 +66,7 @@ public class ChatService {
 	    if (dto.getMentions() != null && !dto.getMentions().isEmpty()) {
 	        for (Integer mentionedUserNo : dto.getMentions()) {
 	            if (mentionedUserNo != dto.getUserNo()) {
-	                alarmService.createChatAlarm(
+	                alarmService.createMentionAlarm(
 	                    dto.getUserNo(),
 	                    mentionedUserNo,
 	                    dto.getRoomNo(),
@@ -140,15 +140,34 @@ public class ChatService {
 	    // userNo -> name 변환 후 세팅
 	    String name = chatDAO.getUserNameByUserNo(message.getUserNo());
 	    message.setName(name);
+	    
 		System.out.println("[ChatService] 메시지 저장 완료: messageNo=" + message.getMessageNo());
 		
-        // 상대방 userNo 조회 (간단한 예)
-        int toUserNo = findOtherUserInRoom(message.getRoomNo(), message.getUserNo());
-        if (toUserNo != -1) {
-            alarmService.createChatAlarm(message.getUserNo(),toUserNo, message.getRoomNo(), message.getContent());
-        }
-    }
-
+		//  Mentions 알림 처리 추가
+	    if (message.getMentions() != null && !message.getMentions().isEmpty()) {
+	        for (Integer mentionedUserNo : message.getMentions()) {
+	            if (!mentionedUserNo.equals(message.getUserNo())) {
+	                alarmService.createMentionAlarm(
+	                    message.getUserNo(),
+	                    mentionedUserNo,
+	                    message.getRoomNo(),
+	                    name + "님이 당신을 멘션했습니다: " + message.getContent()
+	                );
+	            }
+	        }
+	    } else {
+	        // 📌 mentions 없을 때 일반 알림 처리
+	        int toUserNo = findOtherUserInRoom(message.getRoomNo(), message.getUserNo());
+	        if (toUserNo != -1) {
+	            alarmService.createChatAlarm(
+	                message.getUserNo(),
+	                toUserNo,
+	                message.getRoomNo(),
+	                message.getContent()
+	            );
+	        }
+	    }
+	}
     // 상대방 userNo 찾는 헬퍼 메서드
     public int findOtherUserInRoom(Integer roomNo, Integer senderUserNo) {
         List<ChatMember> members = getChatMembers(roomNo);

@@ -17,4 +17,6 @@ public interface AlarmDAO {
     String selectUserNameByUserNo(Integer userNo);
 
     void updateAlarmIsRead(@Param("alarmNo") Integer alarmNo);
+
+    List<Integer> selectUserNosByTeamNo(Integer teamNo);
 }
