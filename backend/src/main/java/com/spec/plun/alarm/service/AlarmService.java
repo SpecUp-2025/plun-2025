@@ -44,6 +44,9 @@ public class AlarmService {
     public void markAsRead(Integer alarmNo) {
         alarmDAO.updateAlarmIsRead(alarmNo);
     }
+    public void insertAlarm(Alarm alarm) {
+        alarmDAO.insertAlarm(alarm);
+    }
     public void createMentionAlarm(Integer senderNo, Integer userNo, Integer roomNo, String content) {
         Alarm alarm = new Alarm();
         alarm.setUserNo(userNo);
@@ -57,18 +60,12 @@ public class AlarmService {
         alarm.setSenderName(senderName);
 
         alarmDAO.insertAlarm(alarm);
-
         messagingTemplate.convertAndSend("/topic/notifications/" + userNo, alarm);
     }
+    
     public void createCalendarInviteAlarm(Integer senderNo, Integer userNo, 
             Integer calDetailNo, String content, 
             String eventStartTime, Integer teamNo) {
-
-		System.out.println("[AlarmService] 캘린더 초대 알림 생성 시작");
-		System.out.println("  - inviterNo: " + senderNo);
-		System.out.println("  - invitedUserNo: " + userNo);
-		System.out.println("  - calDetailNo: " + calDetailNo);
-		System.out.println("  - content: " + content);
 		
 		Alarm alarm = new Alarm();
 		alarm.setUserNo(userNo);
@@ -85,7 +82,6 @@ public class AlarmService {
 		String invitedName = alarmDAO.selectUserNameByUserNo(userNo);
 		alarm.setName(invitedName);
 		
-		
 		// 알림 내용 생성
 		String calContent1 = inviterName + "님이 \"" + invitedName + "\"을 일정에 초대했습니다.";
 		alarm.setContent(calContent1);
@@ -93,8 +89,29 @@ public class AlarmService {
 		System.out.println("[AlarmService] 캘린더 초대 알림 생성: " + alarm);
 		alarmDAO.insertAlarm(alarm);
 		
-		// WebSocket으로 실시간 전송
 		messagingTemplate.convertAndSend("/topic/notifications/" + userNo, alarm);
 		System.out.println("[AlarmService] 캘린더 초대 알림 전송 완료 - userNo: " + userNo);
 	}
+    public String getUserNameByUserNo(Integer userNo) {
+        return alarmDAO.selectUserNameByUserNo(userNo);
+    }
+    public void createCalendarAlarm(String type, Integer calDetailNo, String title, Integer teamNo, String senderName, Integer senderNo) {
+        List<Integer> userNos = alarmDAO.selectUserNosByTeamNo(teamNo);
+        for (Integer userNo : userNos) {
+            Alarm alarm = new Alarm();
+            alarm.setAlarmType(type);
+            alarm.setReferenceNo(calDetailNo);
+            alarm.setContent(title != null ? title : "일정 알림");
+            alarm.setIsRead("N");
+            alarm.setSenderName(senderName);
+            alarm.setUserNo(userNo);
+            
+            alarm.setSenderNo(senderNo);
+
+            alarmDAO.insertAlarm(alarm);
+            System.out.println("[AlarmService] DB 저장 후 alarmNo: " + alarm.getAlarmNo());
+            System.out.println("💡 생성된 alarmNo: " + alarm.getAlarmNo());
+            messagingTemplate.convertAndSend("/topic/notifications/" + userNo, alarm);
+        }
+    }
 }
