@@ -84,7 +84,7 @@ def health_check():
             "status": "healthy",
             "services": {
                 "database": {"status": "connected", "version": db_version},
-                "stt": {"status": "ready", "engine": "whisper"},
+                "stt": {"status": "ready", "engine": "faster-whisper"},
             },
         }
     except Exception as e:
@@ -104,11 +104,16 @@ def server_info():
             "version": "2.0.0",
             "audio_storage": str(AUDIO_DIR),
         },
-        "stt": {"engine": "OpenAI Whisper", "model": "medium"},
+        "stt": {"engine": "faster-whisper", "model": "medium"},
         "ai": {"provider": "Ollama", "model": "llama3.1:8b"},
     }
 
 
 if __name__ == "__main__":
     print("서버 시작 중...")
-    uvicorn.run(app, host="0.0.0.0", port=8000)
+    uvicorn.run(
+        app, 
+        host="127.0.0.1",  # 0.0.0.0 → 127.0.0.1
+        port=8000,
+        loop="asyncio"  # 추가
+    )

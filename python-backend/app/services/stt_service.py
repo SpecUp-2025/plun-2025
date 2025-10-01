@@ -1,44 +1,63 @@
 # app/services/stt_service.py
 import os
 import time
-import torch
-import whisper
 from pathlib import Path
-from typing import Optional, Tuple
+from typing import Tuple
+from faster_whisper import WhisperModel
+
 from app.config import WHISPER_MODEL, WHISPER_DEVICE, CPU_THREADS
 
 # CPU 성능 최적화 설정
 os.environ.setdefault("OMP_NUM_THREADS", str(CPU_THREADS))
 os.environ.setdefault("MKL_NUM_THREADS", str(CPU_THREADS))
 
-try:
-    torch.set_num_threads(CPU_THREADS)
-    torch.set_num_interop_threads(min(4, CPU_THREADS))
-except:
-    pass
-
 # 전역 모델 인스턴스 (지연 로딩)
 _whisper_model = None
 
 
 def load_whisper_model():
-    """Whisper 모델 지연 로딩"""
+    """Faster-Whisper 모델 지연 로딩"""
     global _whisper_model
 
     if _whisper_model is None:
-        print(f"[STT] Whisper 모델 로딩 시작: {WHISPER_MODEL}")
-        start_time = time.time()
-
         try:
-            _whisper_model = whisper.load_model(
-                name=WHISPER_MODEL, device=WHISPER_DEVICE
+            print(f"[STT] Faster-Whisper 모델 로딩 시작: {WHISPER_MODEL}")
+            print(f"[STT] 디바이스: {WHISPER_DEVICE}")
+            
+            # 메모리 확인 (선택사항)
+            try:
+                import psutil
+                mem = psutil.virtual_memory()
+                print(f"[STT] 로딩 전 메모리 - 사용가능: {mem.available / (1024**3):.2f}GB, 사용률: {mem.percent}%")
+            except ImportError:
+                pass
+            
+            start_time = time.time()
+
+            # faster-whisper 모델 로드
+            _whisper_model = WhisperModel(
+                WHISPER_MODEL,
+                device=WHISPER_DEVICE,
+                compute_type="int8" if WHISPER_DEVICE == "cpu" else "float16",
+                cpu_threads=CPU_THREADS,
+                num_workers=1
             )
 
             load_time = time.time() - start_time
-            print(f"[STT] Whisper 모델 로딩 완료: {load_time:.2f}초")
+            print(f"[STT] Faster-Whisper 모델 로딩 완료: {load_time:.2f}초")
+            
+            # 로딩 후 메모리 (선택사항)
+            try:
+                import psutil
+                mem = psutil.virtual_memory()
+                print(f"[STT] 로딩 후 메모리 - 사용가능: {mem.available / (1024**3):.2f}GB, 사용률: {mem.percent}%")
+            except ImportError:
+                pass
 
         except Exception as e:
-            print(f"[STT] Whisper 모델 로딩 실패: {e}")
+            print(f"[STT] ❌ Whisper 모델 로딩 실패: {type(e).__name__}: {e}")
+            import traceback
+            traceback.print_exc()
             raise e
 
     return _whisper_model
@@ -68,27 +87,25 @@ def transcribe_audio(audio_path: Path, language: str = "ko") -> Tuple[str, float
         model = load_whisper_model()
         start_time = time.time()
 
-        # Whisper 최적화 설정
-        options = {
-            "language": language,
-            "fp16": False,  # CPU 안정성을 위해 비활성화
-            "verbose": False,
-            "temperature": 0.0,  # 일관된 결과를 위한 결정적 출력
-            "compression_ratio_threshold": 2.4,
-            "logprob_threshold": -1.0,
-            "no_speech_threshold": 0.6,
-        }
+        # faster-whisper 전사 실행
+        segments, info = model.transcribe(
+            str(audio_path),
+            language=language,
+            beam_size=5,
+            vad_filter=True,  # 음성 구간만 전사
+            vad_parameters=dict(min_silence_duration_ms=500)
+        )
 
-        # 전사 실행
-        result = model.transcribe(str(audio_path), **options)
+        # 세그먼트에서 텍스트 추출
+        text_parts = []
+        for segment in segments:
+            text_parts.append(segment.text)
+
+        text = " ".join(text_parts).strip()
         processing_time = time.time() - start_time
 
-        # 결과 처리
-        text = (result.get("text", "") or "").strip()
-        detected_language = result.get("language", "unknown")
-
         print(f"[STT] 전사 완료: {processing_time:.2f}초, {len(text)}자")
-        print(f"[STT] 감지 언어: {detected_language}")
+        print(f"[STT] 감지 언어: {info.language}")
         print(f"[STT] 미리보기: {text[:100]}...")
 
         if not text:
@@ -100,7 +117,6 @@ def transcribe_audio(audio_path: Path, language: str = "ko") -> Tuple[str, float
     except Exception as e:
         print(f"[STT] 전사 실패: {type(e).__name__}: {e}")
         import traceback
-
         traceback.print_exc()
         raise e
 
@@ -121,32 +137,31 @@ def transcribe_audio_segments(audio_path: Path, language: str = "ko") -> dict:
     try:
         model = load_whisper_model()
 
-        options = {
-            "language": language,
-            "fp16": False,
-            "verbose": False,
-            "word_timestamps": True,  # 단어별 타임스탬프 활성화
-        }
-
-        result = model.transcribe(str(audio_path), **options)
+        segments, info = model.transcribe(
+            str(audio_path),
+            language=language,
+            beam_size=5,
+            word_timestamps=True
+        )
 
         # 세그먼트 정보 추출
-        segments = []
-        for segment in result.get("segments", []):
-            segments.append(
-                {
-                    "start": segment.get("start", 0),
-                    "end": segment.get("end", 0),
-                    "text": segment.get("text", "").strip(),
-                }
-            )
+        segments_list = []
+        full_text = []
+        
+        for segment in segments:
+            segments_list.append({
+                "start": segment.start,
+                "end": segment.end,
+                "text": segment.text.strip()
+            })
+            full_text.append(segment.text)
 
-        print(f"[STT] 세그먼트별 전사 완료: {len(segments)}개 세그먼트")
+        print(f"[STT] 세그먼트별 전사 완료: {len(segments_list)}개 세그먼트")
 
         return {
-            "text": result.get("text", "").strip(),
-            "language": result.get("language", "unknown"),
-            "segments": segments,
+            "text": " ".join(full_text).strip(),
+            "language": info.language,
+            "segments": segments_list
         }
 
     except Exception as e:
@@ -161,6 +176,7 @@ def get_model_info() -> dict:
     return {
         "model_name": WHISPER_MODEL,
         "device": WHISPER_DEVICE,
+        "engine": "faster-whisper",
         "loaded": _whisper_model is not None,
         "cpu_threads": CPU_THREADS,
     }
@@ -171,13 +187,9 @@ def unload_model():
     global _whisper_model
 
     if _whisper_model is not None:
-        print("[STT] Whisper 모델 메모리 해제")
+        print("[STT] Faster-Whisper 모델 메모리 해제")
         del _whisper_model
         _whisper_model = None
-
-        # GPU 메모리 정리 (CUDA 사용 시)
-        if torch.cuda.is_available():
-            torch.cuda.empty_cache()
 
 
 def test_stt_service():

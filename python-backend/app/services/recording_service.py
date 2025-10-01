@@ -3,63 +3,14 @@ import subprocess
 from pathlib import Path
 from typing import Dict, Any, Tuple
 import time
-import whisper
 
+from .stt_service import transcribe_audio
 from .db_service import (
     save_transcript,
     save_summary,
     update_calendar_contents,
 )
 from .ai_service import generate_summary
-
-# 전역 Whisper 모델 (지연 로딩)
-_whisper_model = None
-
-
-def get_whisper_model():
-    """Whisper 모델 로드 (한 번만 로드)"""
-    global _whisper_model
-    if _whisper_model is None:
-        print("[STT] Whisper 모델 로딩 중... (medium 모델)")
-        _whisper_model = whisper.load_model("medium")
-        print("[STT] Whisper 모델 로딩 완료")
-    return _whisper_model
-
-
-def transcribe_audio(audio_path: Path, language: str = "ko") -> Tuple[str, float]:
-    """Whisper를 사용한 음성-텍스트 변환"""
-    try:
-        print(f"[STT] 전사 시작: {audio_path}")
-
-        model = get_whisper_model()
-        start_time = time.time()
-
-        result = model.transcribe(
-            str(audio_path),
-            language=language,
-            fp16=False,
-            verbose=False,
-            temperature=0.0,
-        )
-
-        processing_time = time.time() - start_time
-        text = result.get("text", "").strip()
-        detected_language = result.get("language", "unknown")
-
-        print(
-            f"[STT] 전사 완료: {len(text)}자, 언어={detected_language}, {processing_time:.2f}초"
-        )
-        print(f"[STT] 미리보기: {text[:100]}...")
-
-        return text, processing_time
-
-    except Exception as e:
-        print(f"[STT] 전사 실패: {e}")
-        import traceback
-
-        traceback.print_exc()
-        return "", 0.0
-
 
 async def process_complete_recording(session_data: Dict[str, Any]) -> Dict[str, Any]:
     """
