@@ -94,7 +94,7 @@ async def process_complete_recording(session_data: Dict[str, Any]) -> Dict[str, 
 
             with engine.connect() as conn:
                 query = text(
-                    "SELECT room_no FROM tb_meeting_room WHERE room_code = :room_code"
+                    "SELECT room_no FROM TB_MEETING_ROOM WHERE room_code = :room_code"
                 )
                 result = conn.execute(query, {"room_code": room_code})
                 row = result.fetchone()

@@ -7,8 +7,8 @@ from dotenv import load_dotenv
 load_dotenv()
 
 # 기본 경로 설정
-BASE_DIR = Path(__file__).resolve().parent.parent
-AUDIO_DIR = BASE_DIR / "audio_chunks"
+BASE_DIR = Path(os.getenv("BASE_DIR") or Path(__file__).resolve().parent.parent)
+AUDIO_DIR = Path(os.getenv("AUDIO_DIR") or (BASE_DIR / "audio_chunks"))
 AUDIO_DIR.mkdir(parents=True, exist_ok=True)
 
 # 데이터베이스 설정
@@ -21,7 +21,7 @@ DB_NAME = os.getenv("DB_NAME", "plun")
 DB_URL = f"mysql+pymysql://{DB_USER}:{DB_PASSWORD}@{DB_HOST}:{DB_PORT}/{DB_NAME}"
 
 # Whisper STT 설정
-WHISPER_MODEL = os.getenv("WHISPER_MODEL", "medium")  # tiny, base, small, medium, large
+WHISPER_MODEL = os.getenv("WHISPER_MODEL", "tiny")  # tiny, base, small, medium, large
 WHISPER_DEVICE = os.getenv("WHISPER_DEVICE", "cpu")   # cpu 또는 cuda
 CPU_THREADS = int(os.getenv("CPU_THREADS", str(os.cpu_count() or 4)))
 

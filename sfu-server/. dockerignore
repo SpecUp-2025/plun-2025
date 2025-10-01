@@ -1,7 +1,9 @@
 # Node.js
-node_modules/
-npm-debug.log
+node_modules
+**/node_modules
+npm-debug.log*
 yarn.lock
+pnpm-lock.yaml
 
 # OS/IDE 관련
 .DS_Store
@@ -26,4 +28,3 @@ coverage/
 *.spec.js
 __tests__/
 *.log
-Dockerfile

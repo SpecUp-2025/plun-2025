@@ -1,4 +1,4 @@
-FROM python:3.11-slim
+FROM python:3.9-slim
 
 RUN apt-get update && apt-get install -y \
     ffmpeg \
@@ -8,11 +8,12 @@ RUN apt-get update && apt-get install -y \
 
 WORKDIR /app
 
+# Whisper 먼저 (PyTorch 자동 설치)
+RUN pip install -U openai-whisper
+
+# requirements.txt (torch/whisper 제외)
 COPY requirements.txt .
-RUN pip install --no-cache-dir --index-url https://download.pytorch.org/whl/cpu \
-    torch==2.1.0 torchaudio==2.1.0
-RUN pip install --no-cache-dir -r requirements.txt
+RUN pip install -r requirements.txt
 
 COPY . .
-
 CMD ["python", "-u", "main.py"]
