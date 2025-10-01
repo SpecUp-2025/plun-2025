@@ -33,7 +33,7 @@ def save_transcript(room_no: int, transcript_text: str) -> bool:
         with engine.begin() as conn:
             # UPSERT 쿼리 (MySQL ON DUPLICATE KEY UPDATE)
             query = text("""
-                INSERT INTO tb_meeting_transcript (room_no, merged_text, updated_at)
+                INSERT INTO TB_MEETING_TRANSCRIPT (room_no, merged_text, updated_at)
                 VALUES (:room_no, :merged_text, NOW())
                 ON DUPLICATE KEY UPDATE
                 merged_text = VALUES(merged_text),
@@ -56,7 +56,7 @@ def get_transcript(room_no: int) -> Optional[str]:
     """전사 텍스트 조회"""
     try:
         with engine.connect() as conn:
-            query = text("SELECT merged_text FROM tb_meeting_transcript WHERE room_no = :room_no")
+            query = text("SELECT merged_text FROM TB_MEETING_TRANSCRIPT WHERE room_no = :room_no")
             result = conn.execute(query, {"room_no": room_no})
             row = result.fetchone()
             
@@ -77,7 +77,7 @@ def save_summary(room_no: int, summary: str, action_items: str, decisions: str) 
         with engine.begin() as conn:
             # UPSERT 쿼리
             query = text("""
-                INSERT INTO tb_meeting_summary (room_no, summary, action_items, decisions, updated_at)
+                INSERT INTO TB_MEETING_SUMMARY (room_no, summary, action_items, decisions, updated_at)
                 VALUES (:room_no, :summary, :action_items, :decisions, NOW())
                 ON DUPLICATE KEY UPDATE
                 summary = VALUES(summary),
@@ -105,7 +105,7 @@ def update_calendar_contents(room_no: int, contents: str) -> bool:
     try:
         with engine.begin() as conn:
             # 회의방의 cal_detail_no 조회
-            query = text("SELECT cal_detail_no FROM tb_meeting_room WHERE room_no = :room_no")
+            query = text("SELECT cal_detail_no FROM TB_MEETING_ROOM WHERE room_no = :room_no")
             result = conn.execute(query, {"room_no": room_no})
             row = result.fetchone()
             
@@ -117,7 +117,7 @@ def update_calendar_contents(room_no: int, contents: str) -> bool:
             
             # 달력 상세 내용 업데이트
             update_query = text("""
-                UPDATE tb_calendar_detail 
+                UPDATE TB_CALENDAR_DETAIL 
                 SET contents = :contents,
                     update_dt = NOW()
                 WHERE cal_detail_no = :cal_detail_no
@@ -142,7 +142,7 @@ def get_meeting_info(room_no: int) -> Optional[dict]:
             query = text("""
                 SELECT mr.room_no, mr.title, mr.room_code, mr.cal_detail_no,
                        cd.title as calendar_title
-                FROM tb_meeting_room mr
+                FROM TB_MEETING_ROOM mr
                 LEFT JOIN tb_calendar_detail cd ON mr.cal_detail_no = cd.cal_detail_no
                 WHERE mr.room_no = :room_no
             """)
