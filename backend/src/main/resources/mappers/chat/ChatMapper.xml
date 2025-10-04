@@ -44,9 +44,21 @@
   	SELECT room_no, room_name, create_date FROM TB_CHAT_ROOM ORDER BY create_date DESC
   </select>
   
+  <select id="getChatRoomsByUserNo" parameterType="map" resultType="com.spec.plun.chat.entity.ChatRoom">
+	SELECT
+	  cr.room_no AS roomNo,
+	  cr.room_name AS roomName,
+	  cr.create_date AS createDate
+	FROM TB_CHAT_ROOM cr
+	INNER JOIN TB_CHAT_MEMBER cm ON cr.room_no = cm.room_no
+	WHERE cm.user_no = #{userNo}
+	  AND cr.team_no = #{teamNo}
+	ORDER BY cr.create_date DESC
+  </select>
+  
   <insert id="createChatRoom" parameterType="com.spec.plun.chat.entity.ChatRoom" useGeneratedKeys="true" keyProperty="roomNo">
-  	INSERT INTO TB_CHAT_ROOM (room_name, create_date)
-  	VALUES (#{roomName}, NOW())
+  	INSERT INTO TB_CHAT_ROOM (room_name, team_no, create_date)
+  	VALUES (#{roomName}, #{teamNo} , NOW())
   </insert>
   
   <insert id="insertMessage" parameterType="com.spec.plun.chat.entity.ChatMessage" useGeneratedKeys="true" keyProperty="messageNo" keyColumn="message_no">

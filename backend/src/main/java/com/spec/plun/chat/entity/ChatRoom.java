@@ -9,6 +9,7 @@ import lombok.Data;
 @AllArgsConstructor
 public class ChatRoom {
 	private Integer roomNo;
+	private Integer teamNo;
 	private String roomName;
 	private LocalDateTime createDate;
 	

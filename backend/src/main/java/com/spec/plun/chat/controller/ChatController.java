@@ -111,14 +111,16 @@ public class ChatController {
 	    String roomName = request.getRoomName();
 	    List<Integer> memberUserNos = request.getMemberUserNos();
 	    int userNo = request.getUserNo();
+	    int teamNo = request.getTeamNo();
 	    
-	    ChatRoom createdRoom = chatService.createChatRoomWithMembers(roomName, memberUserNos, userNo);
+	    ChatRoom createdRoom = chatService.createChatRoomWithMembers(roomName, memberUserNos, userNo, teamNo);
 	    return ResponseEntity.ok(createdRoom);
 	}
 	// 채팅방 목록
 	@GetMapping("/rooms")
-	public List<ChatRoom> getChatRooms() {
-	    return chatService.getChatRooms();
+	public List<ChatRoom> getChatRooms(@RequestParam("userNo") Integer userNo,
+									   @RequestParam("teamNo") Integer teamNo) {
+	    return chatService.getChatRooms(userNo, teamNo);
 	}
 	// 특정 채팅방 메시지 목록
 	@GetMapping("/room/{roomNo}/messages")

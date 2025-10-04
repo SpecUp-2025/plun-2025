@@ -172,8 +172,8 @@ watch(teamNo, () => {
       </li>
     </ul>
 
-    <div v-else-if="loaded && !loading" style="margin-top:8px;">
-      표시할 회의가 없습니다.
+    <div v-else-if="loaded && !loading" style="margin-top: 8px; margin-bottom: 16px; color: #888;">
+      &nbsp;&nbsp;&nbsp;표시할 회의가 없습니다.
     </div>
     </div>
 

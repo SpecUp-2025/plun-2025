@@ -297,10 +297,11 @@ export default {
       const start = formatDate(info.start);
       const end = formatDate(info.end);
       const userNo = this.userStore.user?.userNo;
-      console.log('userNo:', userNo);
+      const teamNo = this.$route.params.teamNo;
+      console.log('userNo:', userNo, 'teamNo:', teamNo);
       try {
         const { data } = await instance.get('/calendar/events', {
-          params: { start, end, userNo },
+          params: { start, end, userNo, teamNo },
         });
 
         const events = data.map((item) => ({
@@ -330,12 +331,14 @@ export default {
     async fetchUserEvents() {
       try {
         const userNo = this.userStore.user?.userNo;
+        const teamNo = this.$route.params.teamNo;
 
         const { data } = await instance.get('/calendar/events', {
           params: {
             start: '2025-01-01',
             end: '2025-12-31',
             userNo,
+            teamNo,
           },
         });
         console.log('서버에서 받아온 이벤트 데이터:', data);
