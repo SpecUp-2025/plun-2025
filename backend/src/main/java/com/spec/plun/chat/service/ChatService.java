@@ -102,8 +102,12 @@ public class ChatService {
 		return messages;
 	}
 	// 채팅방 목록 조회
-	public List<ChatRoom> getChatRooms(){
-		return chatDAO.getChatRooms();
+//	public List<ChatRoom> getChatRooms(){
+//		return chatDAO.getChatRooms();
+//	}
+	// 채팅방 목록 조회
+	public List<ChatRoom> getChatRooms(Integer userNo, Integer teamNo) {
+	    return chatDAO.getChatRoomsByUserNo(userNo, teamNo);
 	}
 	// 채팅방 이름 변경
 	public void updateRoomName(Integer roomNo, String newName) {
@@ -199,11 +203,12 @@ public class ChatService {
 		return chatDAO.getChatRoom(roomNo);
 	}
 	// 팀원 초대 채팅방 초대
-	public ChatRoom createChatRoomWithMembers(String roomName, List<Integer> memberUserNos, Integer creatorUserNo) {
+	public ChatRoom createChatRoomWithMembers(String roomName, List<Integer> memberUserNos, Integer creatorUserNo, Integer teamNo) {
 	    // 1. 채팅방 생성
 	    ChatRoom room = new ChatRoom();
 	    room.setRoomName(roomName);
 	    room.setCreateDate(LocalDateTime.now());
+	    room.setTeamNo(teamNo);  // 여기에 팀번호 세팅 필수!
 	    chatDAO.createChatRoom(room); // DB에서 roomNo 생성됨
 
 	    // 2. 참여자 등록

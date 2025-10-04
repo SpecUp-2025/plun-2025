@@ -15,9 +15,12 @@ public interface ChatDAO {
 	// 채팅방의 모든 메시지 조회
 	List<ChatMessage> getChatMessageByRoomNo(Integer roomNo);
 	// 채팅방 생성
-	void createChatRoom(ChatRoom roomName);
+	void createChatRoom(ChatRoom room);
 	// 채팅방 목록
 	List<ChatRoom> getChatRooms();
+	// 사용자가 참여 중인 채팅방 목록 조회
+	List<ChatRoom> getChatRoomsByUserNo(@Param("userNo") Integer userNo,
+										@Param("teamNo") Integer teamNo);
 	// 메시지 저장
 	void insertMessage(ChatMessage message);
 	// 특정 채팅방의 참여자 목록 조회 (개선된 방식 - 파라미터 명시)

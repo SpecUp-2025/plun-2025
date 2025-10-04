@@ -1,5 +1,10 @@
 <template>
   <div class="chatroom-container">
+  <template v-if="loading">
+    <div style="margin-top: 8px; color: #888;">채팅방 목록 불러오는 중...</div>
+  </template>
+
+  <template v-else-if="chatRooms.length">
     <div
       v-for="room in chatRooms"
       :key="room.roomNo"
@@ -11,7 +16,25 @@
         <span v-if="hasUnreadByRoom[room.roomNo]" class="badge-new">New</span>
       </div>
     </div>
+  </template>
+
+  <div v-else style="margin-top: 0px; color: #888;">
+    표시할 채팅방이 없습니다.
   </div>
+</div>
+  <!-- <div class="chatroom-container">
+    <div
+      v-for="room in chatRooms"
+      :key="room.roomNo"
+      @click="enterRoom(room.roomNo)"
+      class="chatroom-item"
+    >
+      <div class="room-content">
+        <span class="room-name">{{ room.roomName }}</span>
+        <span v-if="hasUnreadByRoom[room.roomNo]" class="badge-new">New</span>
+      </div>
+    </div>
+  </div> -->
 </template>
 
 <script setup>
@@ -27,6 +50,9 @@ const chatRooms = ref([])
 const userStore = useUserStore()
 const userNo = userStore.user?.userNo
 
+const loading = ref(false)
+
+
 const props = defineProps({
   teamNo: { type: Number, required: true },
   roomNameUpdate: { type: Object, default: null }
@@ -39,11 +65,19 @@ const enterRoom = async (roomNo) => {
 }
 
 const fetchChatRooms = async () => {
+  loading.value = true
   try {
-    const res = await instance.get('/chat/rooms')
+    const res = await instance.get('/chat/rooms', {
+      params: { 
+        userNo,
+        teamNo: props.teamNo
+      }
+    })
     chatRooms.value = res.data
   } catch (error) {
     console.error('채팅방 목록 불러오기 실패:', error)
+  } finally {
+    loading.value = false
   }
 }
 
