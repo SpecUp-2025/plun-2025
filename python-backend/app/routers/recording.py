@@ -22,6 +22,7 @@ recording_sessions = {}
 class RecordingRequest(BaseModel):
     roomCode: str
     roomNo: Optional[int] = None
+    token: Optional[str] = None
 
 
 class RecordingResponse(BaseModel):
@@ -36,6 +37,7 @@ class RecordingSession:
     def __init__(self, room_code: str, room_no: int):
         self.room_code = room_code
         self.room_no = room_no
+        self.token = None
         self.status = "recording"  # recording, paused, processing, completed, error
         self.chunk_count = 0
         self.start_time = time.time()
@@ -66,6 +68,7 @@ class RecordingSession:
         return {
             "room_code": self.room_code,
             "room_no": self.room_no,
+            "token": self.token,
             "session_dir": str(self.session_dir),
             "status": self.status,
             "chunk_count": self.chunk_count,
@@ -244,7 +247,9 @@ async def stop_recording(request: RecordingRequest, background_tasks: Background
     try:
         room_code = request.roomCode
         room_no = request.roomNo
+        token = request.token
 
+        print(f"받은 토큰: {token[:50]}..." if token else "토큰 없음")
         print(f"[RECORDING] 녹음 종료 요청: {room_code}, roomNo: {room_no}")
 
         if room_code not in recording_sessions:
@@ -253,6 +258,7 @@ async def stop_recording(request: RecordingRequest, background_tasks: Background
         session = recording_sessions[room_code]
         session.status = "processing"
         session.save_metadata()
+        session.token = token
 
         print(f"[RECORDING] 총 {session.chunk_count}개 청크로 백그라운드 처리 시작")
 
@@ -304,7 +310,8 @@ async def process_recording_background(session_data: Dict[str, Any]):
         if results["success"]:
             await send_meeting_complete_notification(
                 room_no=session_data["room_no"],
-                room_code=room_code
+                room_code=room_code,
+                token=session_data["token"]
             )
 
         # 세션 상태 업데이트
@@ -383,7 +390,7 @@ def check_existing_meeting_data(room_code: str) -> Dict:
         print(f"[RECORDING] 기존 데이터 확인 실패: {e}")
         return {"has_data": False}
 
-async def send_meeting_complete_notification(room_no: int, room_code: str):
+async def send_meeting_complete_notification(room_no: int, room_code: str, token: str):
     """Spring 백엔드로 회의록 완료 알림 전송"""
     try:
         import httpx
@@ -423,10 +430,15 @@ async def send_meeting_complete_notification(room_no: int, room_code: str):
                 "meetingTitle": meeting_title
             }
 
+            headers = {
+                "Authorization": f"Bearer {token}"
+            }
+
             print(f"[NOTIFICATION] Spring API 호출: {url}")
             print(f"[NOTIFICATION] Payload: {payload}")
+            print(f"[NOTIFICATION] Authorization 헤더 포함됨")
 
-            response = await client.post(url, json=payload, timeout=10.0)
+            response = await client.post(url, json=payload, headers=headers, timeout=10.0)
 
             if response.status_code == 200:
                 print(f"[NOTIFICATION] 알림 전송 성공: {room_code}")
