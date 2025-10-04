@@ -6,35 +6,22 @@
 
   <template v-else-if="chatRooms.length">
     <div
-      v-for="room in chatRooms"
-      :key="room.roomNo"
-      @click="enterRoom(room.roomNo)"
-      class="chatroom-item"
-    >
-      <div class="room-content">
-        <span class="room-name">{{ room.roomName }}</span>
-        <span v-if="hasUnreadByRoom[room.roomNo]" class="badge-new">New</span>
+        v-for="room in chatRooms"
+        :key="room.roomNo"
+        @click="enterRoom(room.roomNo)"
+        class="chatroom-item"
+      >
+        <div class="room-content">
+          <span class="room-name">{{ room.roomName }}</span>
+          <span v-if="hasUnreadByRoom[room.roomNo]" class="badge-new">New</span>
+        </div>
       </div>
-    </div>
-  </template>
+    </template>
 
-  <div v-else style="margin-top: 0px; color: #888;">
-    표시할 채팅방이 없습니다.
-  </div>
-</div>
-  <!-- <div class="chatroom-container">
-    <div
-      v-for="room in chatRooms"
-      :key="room.roomNo"
-      @click="enterRoom(room.roomNo)"
-      class="chatroom-item"
-    >
-      <div class="room-content">
-        <span class="room-name">{{ room.roomName }}</span>
-        <span v-if="hasUnreadByRoom[room.roomNo]" class="badge-new">New</span>
-      </div>
+    <div v-else style="margin-top: 0px; color: #888;">
+      표시할 채팅방이 없습니다.
     </div>
-  </div> -->
+  </div>
 </template>
 
 <script setup>

@@ -117,11 +117,6 @@ public class ChatController {
 	    return ResponseEntity.ok(createdRoom);
 	}
 	// 채팅방 목록
-	//	@GetMapping("/rooms")
-	//	public List<ChatRoom> getChatRooms() {
-	//	    return chatService.getChatRooms();
-	//	}
-	// 채팅방 목록
 	@GetMapping("/rooms")
 	public List<ChatRoom> getChatRooms(@RequestParam("userNo") Integer userNo,
 									   @RequestParam("teamNo") Integer teamNo) {

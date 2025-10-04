@@ -102,10 +102,6 @@ public class ChatService {
 		return messages;
 	}
 	// 채팅방 목록 조회
-//	public List<ChatRoom> getChatRooms(){
-//		return chatDAO.getChatRooms();
-//	}
-	// 채팅방 목록 조회
 	public List<ChatRoom> getChatRooms(Integer userNo, Integer teamNo) {
 	    return chatDAO.getChatRoomsByUserNo(userNo, teamNo);
 	}
