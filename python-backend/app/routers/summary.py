@@ -111,7 +111,7 @@ def get_existing_summary(room_no: int):
             query = text(
                 """
                 SELECT summary, action_items, decisions, updated_at
-                FROM tb_meeting_summary 
+                FROM TB_MEETING_SUMMARY 
                 WHERE room_no = :room_no
             """
             )
