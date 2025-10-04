@@ -53,6 +53,7 @@
       FROM TB_CALENDAR c
       JOIN TB_CALENDAR_DETAIL cd ON c.cal_no = cd.cal_no
       WHERE c.user_no = #{userNo}
+      	AND c.team_no = #{teamNo}
         AND cd.start_date &lt;= #{end}
         AND cd.end_date &gt;= #{start}
         AND cd.delete_yn = 'N'
@@ -62,7 +63,9 @@
       SELECT cd.*
       FROM TB_CALENDAR_DETAIL_PARTICIPANT p
       JOIN TB_CALENDAR_DETAIL cd ON p.cal_detail_no = cd.cal_detail_no
+      JOIN TB_CALENDAR c ON cd.cal_no = c.cal_no
       WHERE p.user_no = #{userNo}
+      	AND c.team_no = #{teamNo}
         AND cd.start_date &lt;= #{end}
         AND cd.end_date &gt;= #{start}
         AND cd.delete_yn = 'N'

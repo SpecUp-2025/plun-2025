@@ -32,8 +32,8 @@ public class CalendarService {
 	    return calendarDAO.insertCalendar(calendar);
 	}
 
-	public List<CalendarDetail> getEventsBetween(Integer userNo, String start, String end) {
-	    List<CalendarDetail> events = calendarDAO.getEventsBetween(userNo, start, end);
+	public List<CalendarDetail> getEventsBetween(Integer userNo, Integer teamNo, String start, String end) {
+	    List<CalendarDetail> events = calendarDAO.getEventsBetween(userNo , teamNo, start, end);
 	    for (CalendarDetail event : events) {
 	    	Integer calDetailNo = event.getCalDetailNo();
 	        List<Integer> participants = calendarDAO.getParticipantsByCalDetailNo(event.getCalDetailNo());

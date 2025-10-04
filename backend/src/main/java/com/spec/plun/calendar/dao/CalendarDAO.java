@@ -18,6 +18,7 @@ public interface CalendarDAO {
 	int insertCalendar(Calendar calendar);
 	// 일정 조회
 	List<CalendarDetail> getEventsBetween(@Param("userNo") Integer userNo,
+			                              @Param("teamNo") Integer teamNo,
 			                              @Param("start") String start,
 			                              @Param("end") String end);
 	// 일정 등록

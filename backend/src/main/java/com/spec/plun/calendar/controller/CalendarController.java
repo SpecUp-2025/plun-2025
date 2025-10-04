@@ -49,11 +49,12 @@ public class CalendarController {
 	@GetMapping("/events")
 	public List<CalendarDetail> getEventsBetween(
 	    @RequestParam("userNo") Integer userNo,
+	    @RequestParam("teamNo") Integer teamNo,
 	    @RequestParam("start") String start,
 	    @RequestParam("end") String end) {
 
 		System.out.println("getEventsBetween called with userNo=" + userNo + ", start=" + start + ", end=" + end);
-	    return calendarService.getEventsBetween(userNo, start, end);
+	    return calendarService.getEventsBetween(userNo, teamNo, start, end);
 	}
 	// 일정 등록
 	@PostMapping("/event")
