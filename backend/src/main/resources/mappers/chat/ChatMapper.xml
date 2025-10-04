@@ -49,8 +49,8 @@
 	  cr.room_no AS roomNo,
 	  cr.room_name AS roomName,
 	  cr.create_date AS createDate
-	FROM tb_chat_room cr
-	INNER JOIN tb_chat_member cm ON cr.room_no = cm.room_no
+	FROM TB_CHAT_ROOM cr
+	INNER JOIN TB_CHAT_MEMBER cm ON cr.room_no = cm.room_no
 	WHERE cm.user_no = #{userNo}
 	  AND cr.team_no = #{teamNo}
 	ORDER BY cr.create_date DESC
