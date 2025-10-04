@@ -2,6 +2,9 @@ volumes:
   mariadb-data:
   backend-image:
   ollama-data:
+    external: true
+    name: plun_ollama_data
+  sfu-node-modules:
 
 services:
   mariadb:
@@ -34,6 +37,8 @@ services:
     depends_on:
       - redis
       - mariadb
+    ports:
+      - "8080:8080"
     restart: always
 
   frontend:
@@ -56,13 +61,13 @@ services:
     image: ${USERNAME}/plun-sfu-server
     container_name: plun-sfu-server
     env_file: .env
-    ports:    
-      - "127.0.0.1:4000:4000/tcp"
+    ports:
+      - "4000:4000/tcp"
       - "4443:4443/udp"
       - "4443:4443/tcp"
     volumes:
       - ./sfu-server:/usr/src/app
-      - /usr/src/app/node_modules
+      - sfu-node-modules:/usr/src/app/node_modules
     restart: always
 
   python-backend:
@@ -73,10 +78,9 @@ services:
     env_file: .env
     volumes:
       - ./audio:/app/audio
-    ports:
-      - "8000:8000"
     depends_on:
       - mariadb
+      - ollama
     restart: always
 
   ollama:
@@ -87,3 +91,8 @@ services:
     volumes:
       - ollama-data:/root/.ollama
     restart: always
+    healthcheck:
+      test: ["CMD", "ollama", "list"]
+      interval: 10s
+      timeout: 5s
+      retries: 12
