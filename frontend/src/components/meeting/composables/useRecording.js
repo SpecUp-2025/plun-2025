@@ -123,9 +123,13 @@ export function useRecording(roomCode, roomInfo, peers, localStream) {
       // 마지막 청크 처리 대기 후 서버 요청
       setTimeout(async () => {
         try {
+
+          const token = localStorage.getItem('accessToken')
+
           const requestData = {
             roomCode: roomCode.value,
-            roomNo: roomInfo.value?.roomNo
+            roomNo: roomInfo.value?.roomNo,
+            token: token
           }
 
           const response = await axios.post('/stt/stop-recording', requestData)
