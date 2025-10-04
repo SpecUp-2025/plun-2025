@@ -29,7 +29,7 @@ CPU_THREADS = int(os.getenv("CPU_THREADS", str(os.cpu_count() or 4)))
 AI_PROVIDER = "ollama"  # 더 이상 사용 안 함 (ollama 고정)
 # OLLAMA_HOST = "http://localhost:11434"
 OLLAMA_HOST = os.getenv("OLLAMA_HOST","http://127.0.0.1:11434")
-OLLAMA_MODEL = "llama3.2:3b"  # 또는 "qwen2.5:7b"
+OLLAMA_MODEL = os.getenv("OLLAMA_MODEL", "llama3.2:3b")
 
 # 파일 업로드 제한
 MAX_UPLOAD_BYTES = int(os.getenv("MAX_UPLOAD_BYTES", 10 * 1024 * 1024))  # 10MB

@@ -125,14 +125,14 @@ export function useRecording(roomCode, roomInfo, peers, localStream) {
         try {
 
           const token = localStorage.getItem('accessToken')
+          if (!token) console.warn('[stopRecording] access token 없음');
 
           const requestData = {
             roomCode: roomCode.value,
-            roomNo: roomInfo.value?.roomNo,
-            token: token
+            roomNo: roomInfo.value?.roomNo
           }
-
-          const response = await axios.post('/stt/stop-recording', requestData)
+          const headers = token ? { Authorization: `Bearer ${token}` } : {}
+          const response = await axios.post('/stt/stop-recording',requestData,{headers})
 
           if (response.data.success) {
             recordingState.value = 'idle'
