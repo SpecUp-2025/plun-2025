@@ -1,5 +1,5 @@
 # app/routers/recording.py
-from fastapi import APIRouter, File, UploadFile, Form, HTTPException, BackgroundTasks
+from fastapi import APIRouter, File, UploadFile, Form, HTTPException, BackgroundTasks, Request
 from pydantic import BaseModel
 from pathlib import Path
 from typing import Optional, Dict, Any
@@ -23,7 +23,6 @@ class RecordingRequest(BaseModel):
     roomCode: str
     roomNo: Optional[int] = None
     token: Optional[str] = None
-
 
 class RecordingResponse(BaseModel):
     success: bool
@@ -242,29 +241,34 @@ async def resume_recording(request: RecordingRequest):
 
 
 @router.post("/stt/stop-recording", response_model=RecordingResponse)
-async def stop_recording(request: RecordingRequest, background_tasks: BackgroundTasks):
+async def stop_recording(req: RecordingRequest, http: Request, background_tasks: BackgroundTasks):
     """녹음 종료 및 백그라운드 처리 시작"""
     try:
-        room_code = request.roomCode
-        room_no = request.roomNo
-        token = request.token
+        auth = http.headers.get("Authorization", "")
+        token = auth.split(" ", 1)[1].strip() if auth.lower().startswith("bearer ") else None
+
+        if not token and req.token:
+            token = req.token
+
+        room_code = req.roomCode
+        room_no = req.roomNo
 
         print(f"받은 토큰: {token[:50]}..." if token else "토큰 없음")
         print(f"[RECORDING] 녹음 종료 요청: {room_code}, roomNo: {room_no}")
 
         if room_code not in recording_sessions:
             raise HTTPException(status_code=404, detail="녹음 세션을 찾을 수 없습니다.")
-
+        
         session = recording_sessions[room_code]
         session.status = "processing"
+        session.token = token 
         session.save_metadata()
-        session.token = token
-
+        
         print(f"[RECORDING] 총 {session.chunk_count}개 청크로 백그라운드 처리 시작")
 
-        # 백그라운드 처리 시작
+        
         background_tasks.add_task(process_recording_background, session.to_dict())
-
+        
         return RecordingResponse(
             success=True,
             message="녹음이 종료되었습니다. 회의록 생성 중입니다.",
@@ -274,7 +278,7 @@ async def stop_recording(request: RecordingRequest, background_tasks: Background
                 "totalChunks": session.chunk_count,
             },
         )
-
+        
     except HTTPException:
         raise
     except Exception as e:
@@ -364,7 +368,7 @@ def check_existing_meeting_data(room_code: str) -> Dict:
         
         with engine.connect() as conn:
             # room_no 조회
-            room_query = text("SELECT room_no FROM tb_meeting_room WHERE room_code = :room_code")
+            room_query = text("SELECT room_no FROM TB_MEETING_ROOM WHERE room_code = :room_code")
             room_result = conn.execute(room_query, {"room_code": room_code})
             room_row = room_result.fetchone()
             
@@ -374,7 +378,7 @@ def check_existing_meeting_data(room_code: str) -> Dict:
             room_no = room_row[0]
             
             # 전사 데이터 확인
-            transcript_query = text("SELECT transcript FROM tb_meeting_transcript WHERE room_no = :room_no")
+            transcript_query = text("SELECT transcript FROM TB_MEETING_TRANSCRIPT WHERE room_no = :room_no")
             transcript_result = conn.execute(transcript_query, {"room_no": room_no})
             transcript_row = transcript_result.fetchone()
             
@@ -402,7 +406,7 @@ async def send_meeting_complete_notification(room_no: int, room_code: str, token
 
         # 1. 회의 제목 조회
         with engine.connect() as conn:
-            query = text("SELECT title FROM tb_meeting_room WHERE room_no = :room_no")
+            query = text("SELECT title FROM TB_MEETING_ROOM WHERE room_no = :room_no")
             result = conn.execute(query, {"room_no": room_no})
             row = result.fetchone()
             meeting_title = row[0] if row else "회의"
@@ -413,7 +417,7 @@ async def send_meeting_complete_notification(room_no: int, room_code: str, token
         with engine.connect() as conn:
             query = text("""
                 SELECT user_no
-                FROM tb_meeting_participant
+                FROM TB_MEETING_PARTICIPANT
                 WHERE room_no = :room_no
             """)
             result = conn.execute(query, {"room_no": room_no})
@@ -437,9 +441,7 @@ async def send_meeting_complete_notification(room_no: int, room_code: str, token
             print(f"[NOTIFICATION] Spring API 호출: {url}")
             print(f"[NOTIFICATION] Payload: {payload}")
             print(f"[NOTIFICATION] Authorization 헤더 포함됨")
-
-            response = await client.post(url, json=payload, headers=headers, timeout=10.0)
-
+            response = await client.post(url, json=payload, headers=headers, timeout=10.0)            
             if response.status_code == 200:
                 print(f"[NOTIFICATION] 알림 전송 성공: {room_code}")
             else:
