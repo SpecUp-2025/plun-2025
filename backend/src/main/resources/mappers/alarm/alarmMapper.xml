@@ -21,7 +21,7 @@
 	  a.*, 
 	  u.name AS sender_name
 	FROM TB_ALARM a
-	JOIN TB_MEMBER u ON a.sender_no = u.user_no
+	LEFT JOIN TB_MEMBER u ON a.sender_no = u.user_no
 	WHERE a.user_no = #{userNo}
 	ORDER BY a.create_date DESC
   </select>

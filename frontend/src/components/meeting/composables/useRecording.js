@@ -35,7 +35,7 @@ export function useRecording(roomCode, roomInfo, peers, localStream) {
         startRecordingTimer()
         startMediaRecorder()
         return { success: true }
-      } 
+      }
       // 실패 시 에러 정보 반환
       else {
         return {
@@ -46,7 +46,7 @@ export function useRecording(roomCode, roomInfo, peers, localStream) {
       }
     } catch (error) {
       console.error('Failed to start recording:', error)
-      
+
       // 서버 에러 응답 처리
       if (error.response?.data) {
         return {
@@ -55,7 +55,7 @@ export function useRecording(roomCode, roomInfo, peers, localStream) {
           data: error.response.data.data
         }
       }
-      
+
       // 네트워크 에러 등
       return {
         success: false,
@@ -277,31 +277,55 @@ export function useRecording(roomCode, roomInfo, peers, localStream) {
   }
 
   /**
-   * 회의 오디오 믹싱 - 로컬 + 모든 원격 참가자 오디오 합성
-   * Web Audio API로 실시간 믹싱
-   */
+ * 회의 오디오 믹싱 + 노이즈 필터링
+ * Web Audio API로 실시간 믹싱 및 품질 향상
+ */
   async function getRecordingStream() {
-    const audioContext = new AudioContext()
+    const audioContext = new AudioContext({ sampleRate: 48000 })
     const mixedOutput = audioContext.createMediaStreamDestination()
 
-    // 로컬 오디오 추가 (이미 화상회의에서 처리된 깨끗한 스트림)
+    // 1. 하이패스 필터 (저주파 노이즈 제거: 에어컨, 바람 소리)
+    const highpass = audioContext.createBiquadFilter()
+    highpass.type = 'highpass'
+    highpass.frequency.value = 85  // 85Hz 이하 차단
+    highpass.Q.value = 0.7
+
+    // 2. 컴프레서 (음량 평준화: 큰 소리 줄이고 작은 소리 키움)
+    const compressor = audioContext.createDynamicsCompressor()
+    compressor.threshold.value = -50
+    compressor.knee.value = 40
+    compressor.ratio.value = 12
+    compressor.attack.value = 0.003
+    compressor.release.value = 0.25
+
+    // 3. 게인 노드 (최종 음량 조절)
+    const gainNode = audioContext.createGain()
+    gainNode.gain.value = 1.1  // 10% 증폭
+
+    // 필터 체인 연결
+    const filterChain = highpass
+    highpass.connect(compressor)
+    compressor.connect(gainNode)
+    gainNode.connect(mixedOutput)
+
+    // 로컬 오디오 추가 (필터 통과)
     if (localStream?.value) {
       const localAudioTracks = localStream.value.getAudioTracks()
       if (localAudioTracks.length > 0) {
         const localSource = audioContext.createMediaStreamSource(
           new MediaStream([localAudioTracks[0]])
         )
-        localSource.connect(mixedOutput)
+        localSource.connect(filterChain)
       }
     }
 
-    // 원격 참가자 오디오 추가
+    // 원격 참가자 오디오 추가 (필터 통과)
     for (const [socketId, peer] of peers) {
       if (peer.audioTrack) {
         const remoteSource = audioContext.createMediaStreamSource(
           new MediaStream([peer.audioTrack])
         )
-        remoteSource.connect(mixedOutput)
+        remoteSource.connect(filterChain)
       }
     }
 
