@@ -9,7 +9,7 @@ def generate_summary_ollama(transcript_text: str) -> Tuple[str, str, str]:
     """Ollama 로컬 LLM을 사용한 회의록 요약"""
     print(f"[AI] Ollama 요약 시작 (모델: {OLLAMA_MODEL})")
 
-    # 컨텍스트 길이 제한 (Ollama 모델별 제한 고려)
+    # 컨텍스트 길이 제한
     text_limit = 8000
     input_text = (
         transcript_text[:text_limit]
@@ -17,27 +17,34 @@ def generate_summary_ollama(transcript_text: str) -> Tuple[str, str, str]:
         else transcript_text
     )
 
-    # 구조화된 프롬프트 설계
-    prompt = f"""다음 회의 전사 텍스트를 바탕으로 간결한 한국어 회의록을 작성하세요.
+    prompt = f"""회의 전사 내용을 자연스러운 한국어 회의록으로 작성하세요.
 
 전사 내용:
 \"\"\"{input_text}\"\"\"
 
-다음 형식으로 작성하세요:
-## 회의 요약
-- 핵심 사항을 3~5개 불릿으로 정리
+작성 규칙:
+1. 간결하고 읽기 쉬운 문장으로 작성
+2. 불필요한 마크다운 기호(#, *, -, []) 최소화
+3. 각 항목은 "- "로만 시작 (체크박스 없음)
+4. 담당자와 기한이 명확하지 않으면 생략
+5. 실제 회의 내용이 없으면 "없음" 표시
 
-## 액션 아이템
-- [ ] 실행 항목 (담당: , 기한: )
+출력 형식:
 
-## 결정 사항  
-- 합의된 내용 2~4개
+회의 요약
+- 핵심 내용 1
+- 핵심 내용 2
+- 핵심 내용 3
 
-규칙:
-- 마크다운 형식으로 작성
-- 각 섹션을 반드시 포함
-- 구체적이고 실행 가능한 내용으로 작성
-- 코드블록 사용 금지
+액션 아이템
+- 작업 내용 (담당: 이름, 기한: 날짜)
+- 작업 내용 (담당: 이름)
+
+결정 사항
+- 합의된 내용 1
+- 합의된 내용 2
+
+주의: 제목에 ## 같은 기호를 붙이지 마세요. 위 형식을 정확히 따르세요.
 """
 
     try:
@@ -48,8 +55,8 @@ def generate_summary_ollama(transcript_text: str) -> Tuple[str, str, str]:
             "prompt": prompt,
             "stream": False,
             "options": {
-                "temperature": 0.2,  # 일관된 출력을 위한 낮은 temperature
-                "num_predict": 600,  # 최대 토큰 수
+                "temperature": 0.3,
+                "num_predict": 600,
                 "top_p": 0.9,
             },
         }
@@ -58,7 +65,7 @@ def generate_summary_ollama(transcript_text: str) -> Tuple[str, str, str]:
             url,
             json=payload,
             headers={"Content-Type": "application/json"},
-            timeout=(30, 1800),  # 연결 5초, 읽기 120초
+            timeout=(30, 1800),
         )
 
         response.raise_for_status()
@@ -71,7 +78,6 @@ def generate_summary_ollama(transcript_text: str) -> Tuple[str, str, str]:
 
         print(f"[AI] Ollama 요약 완료 (길이: {len(full_response)}자)")
 
-        # 응답 정리 및 섹션 분리
         full_response = clean_markdown_response(full_response)
         summary, action_items, decisions = parse_summary_sections(full_response)
 
@@ -91,44 +97,55 @@ def clean_markdown_response(text: str) -> str:
     text = re.sub(r"```[\w]*\n?", "", text)
     text = re.sub(r"\n?```", "", text)
 
-    # 프롬프트 반복이나 설명 제거
-    text = re.sub(r"^.*?## 회의 요약", "## 회의 요약", text, flags=re.DOTALL)
+    # ## 제목 기호 제거
+    text = re.sub(r"^##\s+", "", text, flags=re.MULTILINE)
+
+    # 체크박스 제거 (- [ ] → -)
+    text = re.sub(r"-\s*\[\s*\]\s*", "- ", text)
+
+    # 연속된 # 기호 제거
+    text = re.sub(r"#{2,}", "", text)
+
+    # 빈 줄 정리 (3개 이상 연속 → 2개로)
+    text = re.sub(r"\n{3,}", "\n\n", text)
 
     return text.strip()
 
 
 def parse_summary_sections(full_text: str) -> Tuple[str, str, str]:
     """구조화된 응답에서 섹션별 내용 추출"""
-    # 기본값 설정
     summary = ""
     action_items = ""
     decisions = ""
 
     try:
-        # 정규식으로 각 섹션 추출
         summary_match = re.search(
-            r"## 회의 요약\s*\n(.*?)(?=## |$)", full_text, re.DOTALL
+            r"(?:##\s*)?회의\s*요약\s*\n(.*?)(?=(?:##\s*)?액션|$)",
+            full_text,
+            re.DOTALL | re.IGNORECASE,
         )
         if summary_match:
             summary = summary_match.group(1).strip()
 
         action_match = re.search(
-            r"## 액션 아이템\s*\n(.*?)(?=## |$)", full_text, re.DOTALL
+            r"(?:##\s*)?액션\s*아이템\s*\n(.*?)(?=(?:##\s*)?결정|$)",
+            full_text,
+            re.DOTALL | re.IGNORECASE,
         )
         if action_match:
             action_items = action_match.group(1).strip()
 
         decision_match = re.search(
-            r"## 결정 사항\s*\n(.*?)(?=## |$)", full_text, re.DOTALL
+            r"(?:##\s*)?결정\s*사항\s*\n(.*?)$", full_text, re.DOTALL | re.IGNORECASE
         )
         if decision_match:
             decisions = decision_match.group(1).strip()
 
-        # 빈 섹션에 대한 폴백 처리
+        # 빈 섹션 처리
         if not summary:
             summary = "- 회의 요약 정보 없음"
         if not action_items:
-            action_items = "- [ ] 액션 아이템 없음"
+            action_items = "- 액션 아이템 없음"
         if not decisions:
             decisions = "- 결정 사항 없음"
 
@@ -140,8 +157,7 @@ def parse_summary_sections(full_text: str) -> Tuple[str, str, str]:
 
     except Exception as e:
         print(f"[AI] 섹션 파싱 실패: {e}")
-        # 파싱 실패 시 전체 텍스트를 요약으로 반환
-        return full_text[:500], "- [ ] 액션 아이템 파싱 실패", "- 결정 사항 파싱 실패"
+        return full_text[:500], "- 액션 아이템 파싱 실패", "- 결정 사항 파싱 실패"
 
 
 def generate_summary(transcript_text: str) -> Tuple[str, str, str]:
