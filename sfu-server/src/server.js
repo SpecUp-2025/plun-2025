@@ -174,7 +174,11 @@ io.on("connection", (socket) => {
         ok: true,
         peers: existingPeers,
         rtpCapabilities: room.router.rtpCapabilities,
-        existingProducers
+        existingProducers,
+        iceServers: [
+          { urls: 'stun:stun.l.google.com:19302' },
+          { urls: 'stun:stun1.l.google.com:19302' }
+        ]
       })
 
     } catch (err) {
