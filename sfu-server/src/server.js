@@ -21,7 +21,15 @@ app.get("/healthz", (_req, res) => res.status(200).send("ok"))
 const server = http.createServer(app)
 const io = new Server(server, {
   path: IO_PATH,
-  cors: { origin: CLIENT_ORIGIN, credentials: true },
+  cors: { 
+    origin: [
+      "http://localhost:3000",
+      "http://localhost:5173", 
+      "https://plun.koreacentral.cloudapp.azure.com"
+    ],
+    credentials: true,
+    methods: ["GET", "POST"]
+  },
 })
 
 // 전역 변수들
