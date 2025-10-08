@@ -19,6 +19,9 @@ export class SfuClient {
     this._token = token
     this._autoConsume = !!autoConsume
 
+    // ICE 서버 저장소 추가
+    this._iceServers = []
+
     // 연결 객체들
     this.socket = null
     this.device = null
@@ -175,6 +178,14 @@ export class SfuClient {
         displayName: this.displayName
       }, (response) => {
         if (!response?.ok) throw new Error(response?.error || "sfu:join failed")
+
+        if (response.iceServers) {
+          this._iceServers = response.iceServers
+          console.log('ICE 서버 :', this._iceServers)
+        } else {
+          console.warn('ICE 서버 정보 없음')
+        }
+
         resolve(response)
       })
     })
@@ -269,9 +280,21 @@ export class SfuClient {
 
     if (!response?.ok) throw new Error(response?.error || "sfu:create-transport failed")
 
+    const transportOptions = {
+      ...response.transportOptions,
+      iceServers: this._iceServers.length > 0 ? this._iceServers : [
+        { urls: 'stun:stun.l.google.com:19302' }
+      ]
+    }
+
+    console.log(' Transport 생성:', {
+      direction,
+      iceServers: transportOptions.iceServers
+    })
+
     const transport = direction === "send"
-      ? this.device.createSendTransport(response.transportOptions)
-      : this.device.createRecvTransport(response.transportOptions)
+      ? this.device.createSendTransport(transportOptions)
+      : this.device.createRecvTransport(transportOptions)
 
     this.setupTransportEvents(transport, direction)
     return transport
