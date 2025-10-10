@@ -102,24 +102,44 @@ export default {
           this.contextMenuVisible = true;
         },
 
-        highlightMentions(text) {
-        // 멘션 패턴 예: @이름
-        if (!this.hasMentions) return this.escapeHtml(text);
+        convertUrlsToLinks(text) {
+          // URL 패턴 정규식 (http, https 지원)
+          const urlPattern = /(https?:\/\/[^\s]+)/g;
+          
+          return text.replace(urlPattern, (url) => {
+            return `<a href="${url}" target="_blank" rel="noopener noreferrer" class="message-link">${url}</a>`;
+          });
+        },
 
-        // 멘션 목록을 이용해 텍스트 내 멘션을 하이라이트 처리
-        let highlighted = this.escapeHtml(text);
+      highlightMentions(text) {
+        // 1. HTML escape
+        let processed = this.escapeHtml(text);
 
-        this.message.mentions.forEach(mention => {
-          // mention: { userId: '관리자1', userName: '관리자1' } 형태 가정
-          const mentionText = `@${mention.userName}`;
-          const mentionRegex = new RegExp(`(${mentionText})`, 'g');
-          highlighted = highlighted.replace(
-            mentionRegex,
-            `<span class="mention">$1</span>`
-          );
+        // 2. 멘션 하이라이트
+        if (this.hasMentions) {
+          this.message.mentions.forEach(mention => {
+            const mentionText = `@${mention.userName}`;
+            const mentionRegex = new RegExp(`(${this.escapeRegex(mentionText)})`, 'g');
+            processed = processed.replace(
+              mentionRegex,
+              `<span class="mention">$1</span>`
+            );
+          });
+        }
+
+        // 3. URL을 링크로 변환
+        processed = this.convertUrlsToLinks(processed);
+
+        return processed;
+      },
+
+      convertUrlsToLinks(text) {
+        // URL 패턴: http:// 또는 https://로 시작
+        const urlPattern = /(https?:\/\/[^\s<]+)/g;
+        
+        return text.replace(urlPattern, (url) => {
+          return `<a href="${url}" target="_blank" rel="noopener noreferrer" class="message-link">${url}</a>`;
         });
-
-        return highlighted;
       },
 
       escapeHtml(text) {

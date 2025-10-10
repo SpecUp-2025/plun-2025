@@ -18,7 +18,7 @@
   max-width: 250px;
   display: flex;
   flex-direction: column;
-  height: 88vh;
+  height: 86.5vh;
 }
 .side::before {
   content: '';
