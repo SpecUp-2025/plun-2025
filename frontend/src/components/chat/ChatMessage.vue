@@ -156,6 +156,10 @@ export default {
         });
       },
 
+        escapeRegex(string) {
+        return string.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+      },
+
     async deleteAttachment(attachmentNo) {
 
       if (!this.contextFile) return;
