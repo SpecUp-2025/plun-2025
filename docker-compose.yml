@@ -33,7 +33,7 @@ services:
     container_name: plun-backend
     env_file: .env
     volumes:
-      - backend-image:${FILE_UPLOAD_DIR}
+      - backend-image:${FILE_UPLOAD_PATH}
     depends_on:
       - redis
       - mariadb
