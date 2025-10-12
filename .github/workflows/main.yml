@@ -1,0 +1,27 @@
+name: Azure
+
+on:
+  push:
+    branches: [ "main" ]   # main 머지/푸시에 배포
+  workflow_dispatch:        # 수동 실행도 가능
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    steps:
+      - name: SSH to Azure VM and deploy
+        uses: appleboy/ssh-action@v1.2.0
+        with:
+          host: ${{ secrets.SERVER_HOST }}      # 예: 20.x.x.x
+          username: ${{ secrets.SERVER_USER }}  # 예: azureuser
+          key: ${{ secrets.SERVER_SSH_KEY }}    # 개인키 전체 내용
+          script: |
+            set -e
+            cd ${{ secrets.SERVER_DIR }}        # 예: /srv/app (compose, 코드 있는 폴더)
+            echo "[1/3] git pull"
+            git pull --rebase
+            echo "[2/3] docker compose build"
+            docker compose build --pull --no-cache
+            echo "[3/3] docker compose up"
+            docker compose up -d --remove-orphans
+            docker image prune -f
