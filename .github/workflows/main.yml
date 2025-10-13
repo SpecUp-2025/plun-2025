@@ -2,8 +2,8 @@ name: Azure
 
 on:
   push:
-    branches: [ "main" ]   # main 머지/푸시에 배포
-  workflow_dispatch:        # 수동 실행도 가능
+    branches: [ "main" ]
+  workflow_dispatch:
 
 jobs:
   deploy:
@@ -17,21 +17,25 @@ jobs:
           key: ${{ secrets.SERVER_SSH_KEY }}
           script: |
             set -e
-            cd ${{ secrets.SERVER_DIR }}  # /home/kimsuyoung/plun-2025
+            cd ${{ secrets.SERVER_DIR }}   # /home/kimsuyoung/plun-2025
 
-            echo "[1/4] git pull"
+            echo "[1/6] git pull"
             git pull --rebase
 
-            echo "[2/4] frontend npm build (on VM)"
+            echo "[2/6] docker compose DOWN (release ports)"
+            docker compose down
+
+            echo "[3/6] frontend npm build (on VM)"
             cd frontend
-            npm install
+            npm ci || npm install
             npm run build
             cd ..
 
-            echo "[3/4] docker compose build"
+            echo "[4/6] docker compose BUILD"
             docker compose build --pull --no-cache
 
-            echo "[4/4] docker compose up"
+            echo "[5/6] docker compose UP"
             docker compose up -d
 
+            echo "[6/6] cleanup"
             docker image prune -f
