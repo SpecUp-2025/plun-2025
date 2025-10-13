@@ -25,4 +25,3 @@ coverage/
 *.test.js
 *.spec.js
 __tests__/
-dist
