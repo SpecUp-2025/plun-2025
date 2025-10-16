@@ -1,6 +1,7 @@
-# 🎯 Plun - 통합 협업 플랫폼
+# Plun
 
 > 화상회의, 실시간 채팅, AI 기반 회의록 자동 생성을 하나의 플랫폼에서 제공
+<img width="200" height="400" alt="PLUN" src="https://github.com/user-attachments/assets/36056069-4bd9-48a2-a3d3-b4b45f9a5d4c" />
 
 <br>
 
@@ -9,12 +10,17 @@
 <br>
 
 ## 📋 목차
-- [프로젝트 소개](#-프로젝트-소개)
-- [주요 기능](#-주요-기능)
-- [기술 스택](#-기술-스택)
-- [시스템 아키텍처](#-시스템-아키텍처)
-- [팀 구성](#-팀-구성)
-- [설치 및 실행](#-설치-및-실행)
+- [🎯 프로젝트 소개](#-프로젝트-소개)
+- [🛠 기술 스택](#-기술-스택)
+- [🏗 시스템 아키텍처](#-시스템-아키텍처)
+- [👥 팀 구성](#-팀-구성)
+- [📦 설치 및 실행](#-설치-및-실행)
+- [📁 프로젝트 구조](#-프로젝트-구조)
+- [✨ 주요 기능](#-주요-기능)
+- [🔥 핵심 기술 포인트](#-핵심-기술-포인트)
+- [🤝 협업 방식](#-협업-방식)
+- [📞 문의](#-문의)
+- [📄 License](#-license)
 
 <br>
 
@@ -30,41 +36,6 @@
 - **통합 협업 환경**: 여러 툴을 오가지 않고 하나의 플랫폼에서 모든 협업 진행
 - **AI 자동화**: 회의록 작성 시간 90% 단축 (음성 전사 + 자동 요약)
 - **실시간 동기화**: WebSocket 기반 실시간 채팅, 알림, 일정 공유
-
-<br>
-
-## ✨ 주요 기능
-
-### 1️⃣ 화상회의 (WebRTC + mediasoup SFU)
-- 다자간 실시간 화상회의 (1:1 → 1:N 확장)
-- 화면 공유, 음소거, 카메라 제어
-- 네트워크 불안정 시 재연결 처리
-
-### 2️⃣ AI 회의록 자동화
-```
-음성 녹음 → 전처리(FFmpeg) → STT(Whisper) → AI 요약(Ollama) → 회의록 생성
-```
-- 실시간 음성 → 텍스트 변환
-- 회의 종료 즉시 요약본 자동 생성
-- 핵심 내용, 결정사항, 액션 아이템 자동 추출
-
-### 3️⃣ 실시간 채팅 & 알림
-- WebSocket 기반 실시간 양방향 통신
-- 1:1 채팅 및 팀 채팅
-- 파일/이미지 공유
-- 실시간 알림 배지 (채팅, 일정, 멘션)
-
-### 4️⃣ 캘린더 & 일정 관리
-- FullCalendar 연동 (월/주/일 뷰)
-- 회의 일정 자동 연동
-- 일정 등록 시 팀원에게 실시간 반영
-- 회의 시작 10분 전 자동 알림
-
-### 5️⃣ 회원 & 인증
-- JWT 기반 Access/Refresh Token
-- OAuth 2.0 소셜 로그인 (Google, Kakao, Naver)
-- 이메일 인증
-- 팀 생성 및 관리
 
 <br>
 
@@ -104,6 +75,7 @@
 ![Redis](https://img.shields.io/badge/Redis-DC382D?logo=redis&logoColor=white)
 
 ### Infrastructure
+![Nginx](https://img.shields.io/badge/Nginx-009639?logo=nginx&logoColor=white)
 ![Docker](https://img.shields.io/badge/Docker-2496ED?logo=docker&logoColor=white)
 ![Azure](https://img.shields.io/badge/Azure-0078D4?logo=microsoft-azure&logoColor=white)
 ![GitHub Actions](https://img.shields.io/badge/GitHub_Actions-2088FF?logo=github-actions&logoColor=white)
@@ -232,34 +204,99 @@ plun-2025/
 
 <br>
 
+## ✨ 주요 기능
+
+### 5️⃣ 회원 & 인증
+- JWT 기반 Access/Refresh Token
+- OAuth 2.0 소셜 로그인 (Google, Kakao, Naver)
+- 이메일 인증
+- 팀 생성 및 관리
+
+| 로그인 화면 | 회원가입 화면 |
+|:---:|:---:|
+| <img src="https://github.com/user-attachments/assets/12a964c2-eaf8-4102-bf00-3fb0e1cff3ad" width="400"/> | <img src="https://github.com/user-attachments/assets/97702126-45f4-4594-9197-41831f849b77" width="400"/> |
+
+
+### 1️⃣ 화상회의 (WebRTC + mediasoup SFU)
+- 다자간 실시간 화상회의 (1:1 → 1:N 확장)
+- 화면 공유, 음소거, 카메라 제어
+- 네트워크 불안정 시 재연결 처리
+
+| 화상회의 |
+|:---: |
+| <img src="https://github.com/user-attachments/assets/902e973f-d6a8-4efd-9abb-d11528c89014" width="700"/> |
+
+### 2️⃣ AI 회의록 자동화
+```
+음성 녹음 → 전처리(FFmpeg) → STT(Whisper) → AI 요약(Ollama) → 회의록 생성
+```
+- 실시간 음성 → 텍스트 변환
+- 회의 종료 즉시 요약본 자동 생성
+- 핵심 내용, 결정사항, 액션 아이템 자동 추출
+  
+| 전사된 화면 | 회의내용 요약 화면 |
+|:---:|:---:|
+| <img src="https://github.com/user-attachments/assets/ed8c6c1c-28d0-4e60-ab96-550562bf8c69" width="400"/> | <img src="https://github.com/user-attachments/assets/0e8e0a77-a3a3-471a-90a9-ebd6041f49b2" width="400"/> |
+
+
+
+### 3️⃣ 실시간 채팅 & 알림
+- WebSocket 기반 실시간 양방향 통신
+- 1:1 채팅 및 팀 채팅
+- 파일/이미지 공유
+- 실시간 알림 배지 (채팅, 일정, 멘션)
+
+
+| 채팅 화면 | 알림 화면 |
+|:---:|:---:|
+| <img src="https://github.com/user-attachments/assets/45c9a2f7-a367-4422-8833-c0984b43d635" width="700"/> | <img src="https://github.com/user-attachments/assets/ff95dd11-42bf-403b-aba3-67b3cd1692c0" width="300"/><br><img src="https://github.com/user-attachments/assets/02cb45bd-9d83-48a6-a86a-e9518d0a81e4" width="300"/> |
+
+
+
+### 4️⃣ 캘린더 & 일정 관리
+- FullCalendar 연동 (월/주/일 뷰)
+- 회의 일정 자동 연동
+- 일정 등록 시 팀원에게 실시간 반영
+- 회의 시작 10분 전 자동 알림
+
+
+| 일정 화면 | 일정 등록 화면 |
+|:---: |:---: |
+| <img src="https://github.com/user-attachments/assets/156fc517-30a5-4f23-9e6d-3059b6fcbab3" width="700"/> | <img src="https://github.com/user-attachments/assets/5b8c83f4-86d1-4490-94a1-4bacc0d51ac6" width="400"/> |
+
+
 ## 🔥 핵심 기술 포인트
 
 ### 1. 멀티 언어 백엔드 아키텍처
 - Spring Boot, Python FastAPI, Node.js를 각 기능에 최적화
 - REST API 및 HTTP 프록시로 서비스 간 통신
-- 각 언어의 강점을 살린 효율적인 설계
 
-### 2. WebRTC + mediasoup SFU
+### 2. JWT, 이메일 인증으로 인한 보안 강화
+- Google SMTP를 이용해 사용자 이메일 인증
+- JWT 기반 인증 토큰 발급 및 만료 관리
+- Redis 세션 관리로 보안 강화
+
+
+### 3. WebRTC + mediasoup SFU
 - P2P → SFU 구조로 확장하며 다자간 통신 구현
 - Socket.io 기반 시그널링 서버
 - 에코 방지 및 재연결 로직
 
-### 3. AI 음성 전사 및 요약 파이프라인
+### 4. AI 음성 전사 및 요약 파이프라인
 - Whisper 모델로 음성 → 텍스트 변환
 - Ollama 로컬 LLM으로 회의록 자동 요약
 - 외부 API 비용 없이 데이터 프라이버시 확보
 - **회의록 작성 시간 90% 단축**
 
-### 4. 실시간 통신 (WebSocket)
+### 5. 실시간 통신 (WebSocket)
 - STOMP 프로토콜 기반 실시간 채팅
-- Redis 기반 빠른 상태 관리
-- 알림 큐로 메시지 유실 방지
 
 <br>
 
 ## 🤝 협업 방식
 
 - **Git Flow**: main 브랜치 아래 기능별 브랜치
+- **Git Rules : 브랜치 정책을 설정하여 코드 충돌을 방지하고 효율적인 협업 환경을 구축
 - **일일 스크럼**: 매일 오전 9시 Discord 30분 회의
 - **API 문서화**: 백엔드-프론트엔드 API 명세 사전 정의
 
@@ -280,6 +317,6 @@ This project is licensed under the MIT License.
 
 <div align="center">
 
-**Made with ❤️ by KOSA 1ST SPEC-UP Team**
+**Made with by KOSA 1ST SPEC-UP Team**
 
 </div>
